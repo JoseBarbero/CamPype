@@ -25,4 +25,11 @@ def roary_call():
     pass
 
 if __name__ == "__main__":
-    pass
+    trimmomatic_call()
+    prinseq_call()
+    spades_call()
+    contigs_renamed_shorten()
+    mlst_call()
+    abricate_call()
+    prokka_call()
+    roary_call()
