@@ -5,3 +5,4 @@ conda install -c bioconda mlst
 conda install -c bioconda abricate
 conda install -c bioconda prokka
 conda install -c bioconda roary
+pip install pandas
