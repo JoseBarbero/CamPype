@@ -41,19 +41,37 @@ def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qu
                 trim_qual_window, "-trim_qual_type", trim_qual_type, "-out_format", out_format, "-out_bad", "null", "-log", log_name]
     return call(arguments)
 
+
 """
 Places prinseq output files in directories with the following structure: /OUTPUT[timestamp]/Prinseq_filtering2/sample
+
+Returns:
+    dict -- names of refactored files. key: forward or reverse (R1 or R2), value: filename
 """
-def refactor_prinseq_output(input_dir, output_dir):
+def refactor_prinseq_output(input_dir, output_dir, sample):
+    filenames = dict()
     for root, dirs, files in os.walk(input_dir):
         main_out_folder = root.split("/")[0]
         for file in files:
             if file.__contains__("prinseq"):
-                strain = file.split("_")[0]
-                shutil.move(os.path.join(root, file), main_out_folder+"/"+output_dir+"/"+strain)
+                shutil.move(os.path.join(root, file), main_out_folder+"/"+output_dir+"/"+sample)
+                if file.startswith(sample+"_R1"):
+                    filenames["R1"] = file
+                elif file.startswith(sample+"_R2"):
+                    filenames["R2"] = file
+    return filenames
 
-def spades_call():
-    pass
+
+"""
+Spades call
+
+Returns:
+    int -- Execution state (0 if everything is all right)
+"""
+def spades_call(forward_sample, reverse_sample, sample, out_dir):
+    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "-o", out_dir+"/"+sample]
+    return call(arguments)
+
 
 def contigs_rename_short():
     pass
@@ -75,17 +93,23 @@ def roary_call():
 
 if __name__ == "__main__":
 
-    # Creates output directory with a timestamp
+    # Create output directories
     now = datetime.datetime.now()
+    
     output_folder = "Workflow_OUTPUT_"+str(now.strftime('%Y%m%d_%H%M%S'))
-    os.mkdir(output_folder)
     trimmomatic_dir = "Trimmomatic_filtering1"
     prinseq_dir = "Prinseq_filtering2"
+    spades_dir = "SPAdes_assembly"
+
+    os.mkdir(output_folder)
     os.mkdir(output_folder+"/"+trimmomatic_dir)
     os.mkdir(output_folder+"/"+prinseq_dir)
+    os.mkdir(output_folder+"/"+spades_dir)
 
-    # Calls trimmomatic for every row in input_files.csv
+
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
+
+        # Trimmomatic call
         trimmomatic_call(input_file1=sample1,
                         input_file2=sample2,
                         phred="-phred33",
@@ -94,8 +118,11 @@ if __name__ == "__main__":
                         paired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
                         unpaired_out_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
                         unpaired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq")
-        
+
+        # Creates prinseq output directories
         os.mkdir(output_folder+"/"+prinseq_dir+"/"+sample_basename)
+
+        # Prinseq call
         prinseq_call(input_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
                      input_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq", 
                      min_len="40", 
@@ -106,8 +133,19 @@ if __name__ == "__main__":
                      out_format="3",
                      log_name=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+sample_basename+".log")
 
-    refactor_prinseq_output(output_folder+"/"+trimmomatic_dir, prinseq_dir)
-    spades_call()
+        # Prinseq output files refactor
+        prinseq_files = refactor_prinseq_output(output_folder+"/"+trimmomatic_dir, prinseq_dir, sample_basename)
+        
+        # Creates SPAdes output directories
+        os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename)
+
+        # SPAdes call
+        spades_call(forward_sample=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R1"],
+                    reverse_sample=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R2"],
+                    sample=sample_basename,
+                    out_dir=output_folder+"/"+spades_dir)
+
+
     contigs_rename_short()
     mlst_call()
     abricate_call()
