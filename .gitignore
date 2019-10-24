@@ -105,3 +105,4 @@ venv.bak/
 
 # aux files
 input_files.csv
+Workflow_OUTPUT*
