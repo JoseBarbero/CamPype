@@ -3,6 +3,8 @@ import datetime
 import os
 import shutil
 from subprocess import call
+from Bio import SeqIO
+
 
 """
 Gets every pair of reads on input_files.csv
@@ -26,7 +28,7 @@ Returns:
 def trimmomatic_call(input_file1, input_file2, phred, trimfile,
                     paired_out_file1, paired_out_file2, unpaired_out_file1, unpaired_out_file2):
     arguments = ["trimmomatic", "PE", phred, input_file1, input_file2, \
-                paired_out_file1, paired_out_file2, unpaired_out_file1, unpaired_out_file2, trimfile]
+                paired_out_file1, unpaired_out_file1, paired_out_file2, unpaired_out_file2, trimfile]
     return call(arguments)
 
 """
@@ -43,21 +45,21 @@ def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qu
 
 
 """
-Places prinseq output files in directories with the following structure: /OUTPUT[timestamp]/Prinseq_filtering2/sample
+Places prinseq output files into directories with the following structure: /OUTPUT[timestamp]/Prinseq_filtering2/sample
 
 Returns:
     dict -- names of refactored files. key: forward or reverse (R1 or R2), value: filename
 """
 def refactor_prinseq_output(input_dir, output_dir, sample):
-    filenames = dict()
+    filenames = dict()  # Files with good sequences (except singletons)
     for root, dirs, files in os.walk(input_dir):
         main_out_folder = root.split("/")[0]
         for file in files:
             if file.__contains__("prinseq"):
                 shutil.move(os.path.join(root, file), main_out_folder+"/"+output_dir+"/"+sample)
-                if file.startswith(sample+"_R1"):
+                if file.startswith(sample+"_R1") and not file.__contains__("singletons"):
                     filenames["R1"] = file
-                elif file.startswith(sample+"_R2"):
+                elif file.startswith(sample+"_R2") and not file.__contains__("singletons"):
                     filenames["R2"] = file
     return filenames
 
@@ -73,8 +75,17 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
     return call(arguments)
 
 
-def contigs_rename_short():
-    pass
+"""
+Creates new fasta file filtering sequences shorter than min_len and shortening sequence identifiers
+"""
+def contigs_trim_and_rename(contigs_file, output_dir, min_len):
+    large_sequences = []
+    for record in SeqIO.parse(contigs_file, "fasta"):
+        if len(record.seq) > min_len:
+            record.id = "C_"+"_".join(record.id.split("_")[1:4])
+            record.description = ""
+            large_sequences.append(record)
+    SeqIO.write(large_sequences, output_dir, "fasta")
 
 def quast_call():
     pass
@@ -100,12 +111,14 @@ if __name__ == "__main__":
     trimmomatic_dir = "Trimmomatic_filtering1"
     prinseq_dir = "Prinseq_filtering2"
     spades_dir = "SPAdes_assembly"
+    contigs_dir = "Contigs_renamed_shorten"
 
     os.mkdir(output_folder)
     os.mkdir(output_folder+"/"+trimmomatic_dir)
     os.mkdir(output_folder+"/"+prinseq_dir)
     os.mkdir(output_folder+"/"+spades_dir)
-
+    os.mkdir(output_folder+"/"+contigs_dir)
+    
 
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
 
@@ -115,8 +128,8 @@ if __name__ == "__main__":
                         phred="-phred33",
                         trimfile="ILLUMINACLIP:adapters.fa:1:30:11",
                         paired_out_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
-                        paired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
                         unpaired_out_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
+                        paired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
                         unpaired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq")
 
         # Creates prinseq output directories
@@ -145,8 +158,11 @@ if __name__ == "__main__":
                     sample=sample_basename,
                     out_dir=output_folder+"/"+spades_dir)
 
+        # Trim short contigs and shorten sequences id
+        contigs_trim_and_rename(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+"contigs.fasta", 
+                                output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
+                                200)
 
-    contigs_rename_short()
     mlst_call()
     abricate_call()
     prokka_call()
