@@ -9,9 +9,12 @@ from Bio import SeqIO
 def read_input_files(indexfile):
     """
     Gets every pair of reads on input_files.csv
-
+    
+    Arguments:
+        indexfile {string} -- Filename of the file containing inputs.
+    
     Returns:
-        list of tuples -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number)
+        files_tuples {list of tuples} -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number).
     """
     files_df = pandas.read_csv(indexfile, sep="\t")
     files_tuples = []
@@ -25,7 +28,17 @@ def trimmomatic_call(input_file1, input_file2, phred, trimfile,
                     paired_out_file1, paired_out_file2, unpaired_out_file1, unpaired_out_file2):
     """
     Trimmomatic call.
-
+    
+    Arguments:
+        input_file1 {string} -- Input file forward.
+        input_file2 {string} -- Input file reverse.
+        phred {string} -- Trimmomatic phred parameter.
+        trimfile {string} -- File with trimming sequences.
+        paired_out_file1 {string} -- Forward file paired output.
+        paired_out_file2 {string} -- Reverse file paired output.
+        unpaired_out_file1 {string} -- Forward file unpaired output.
+        unpaired_out_file2 {string} -- Reverse file unpaired output.
+    
     Returns:
         int -- Execution state (0 if everything is all right)
     """
@@ -34,23 +47,41 @@ def trimmomatic_call(input_file1, input_file2, phred, trimfile,
     return call(arguments)
 
 
-def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qual_right=25, trim_qual_window=15, trim_qual_type="mean", out_format=3, log_name=None):
+def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qual_right=25,
+                 trim_qual_window=15, trim_qual_type="mean", out_format=3):
     """
     Prinseq call
-
+    
+    Arguments:
+        input_file1 {string} -- Input file forward.
+        input_file2 {string} -- Input file reverse.
+    
+    Keyword Arguments:
+        min_len {int} -- Minimum read length. (default: {40})
+        min_qual_mean {int} -- Minimum read quality. (default: {25})
+        trim_qual_right {int} -- Trim sequence by quality score from the 3'-end with this threshold score. (default: {25})
+        trim_qual_window {int} -- Trim sequence by quality score from the 5'-end with this threshold score. (default: {15})
+        trim_qual_type {str} -- Type of quality score calculation to use. (default: {"mean"})
+        out_format {int} -- Output format 1 (FASTA only), 2 (FASTA and QUAL), 3 (FASTQ), 4 (FASTQ and FASTA), 5 (FASTQ, FASTA and QUAL) (default: {3})
+    
     Returns:
         int -- Execution state (0 if everything is all right)
     """
     arguments = ["prinseq-lite.pl", "-verbose", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", min_len, \
                 "-min_qual_mean", min_qual_mean, "-trim_qual_right", trim_qual_right, "-trim_qual_window", \
-                trim_qual_window, "-trim_qual_type", trim_qual_type, "-out_format", out_format, "-out_bad", "null", "-log", log_name]
+                trim_qual_window, "-trim_qual_type", trim_qual_type, "-out_format", out_format, "-out_bad", "null", "-log"]
     return call(arguments)
 
 
 def refactor_prinseq_output(input_dir, output_dir, sample):
     """
     Places prinseq output files into directories with the following structure: /OUTPUT[timestamp]/Prinseq_filtering2/sample
-
+    
+    Arguments:
+        input_dir {string} -- Input directory.
+        output_dir {string} -- Output directory.
+        sample {string} -- Sample basename.
+    
     Returns:
         dict -- names of refactored files. key: forward or reverse (R1 or R2), value: filename
     """
@@ -70,7 +101,13 @@ def refactor_prinseq_output(input_dir, output_dir, sample):
 def spades_call(forward_sample, reverse_sample, sample, out_dir):
     """
     Spades call
-
+    
+    Arguments:
+        forward_sample {string} -- Forward sample file name.
+        reverse_sample {string} -- Reverse sample file name.
+        sample {string} -- Sample basename.
+        out_dir {string} -- Output directory.
+    
     Returns:
         int -- Execution state (0 if everything is all right)
     """
@@ -80,7 +117,12 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
 
 def contigs_trim_and_rename(contigs_file, output_dir, min_len):
     """
-    Creates new fasta file filtering sequences shorter than min_len and shortening sequence identifiers
+    Creates new fasta file filtering sequences shorter than min_len and shortening sequence identifiers.
+    
+    Arguments:
+        contigs_file {string} -- Original contigs filename.
+        output_dir {string} -- Output directory.
+        min_len {int} -- Minimum sequence length.
     """
     large_sequences = []
     for record in SeqIO.parse(contigs_file, "fasta"):
@@ -91,8 +133,19 @@ def contigs_trim_and_rename(contigs_file, output_dir, min_len):
     SeqIO.write(large_sequences, output_dir, "fasta")
 
 
-def quast_call(input_file, output_file, min_contig):
-    arguments = ["quast", input_file, "-o", output_file, "--min-contig", str(min_contig), "--no-icarus", "--silent"]
+def quast_call(input_file, output_dir, min_contig):
+    """
+    Quast call.
+    
+    Arguments:
+        input_file {string} -- Input file.
+        output_dir {string} -- Output directory.
+        min_contig {int} -- Lower threshold for a contig length (in bp).
+    
+    Returns:
+        [type] -- [description]
+    """
+    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig), "--no-icarus", "--silent"]
     return call(arguments)
 
 def mlst_call():
