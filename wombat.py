@@ -40,7 +40,7 @@ def trimmomatic_call(input_file1, input_file2, phred, trimfile,
         unpaired_out_file2 {string} -- Reverse file unpaired output.
     
     Returns:
-        int -- Execution state (0 if everything is all right)
+        {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["trimmomatic", "PE", phred, input_file1, input_file2, \
                 paired_out_file1, unpaired_out_file1, paired_out_file2, unpaired_out_file2, trimfile]
@@ -48,7 +48,7 @@ def trimmomatic_call(input_file1, input_file2, phred, trimfile,
 
 
 def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qual_right=25,
-                 trim_qual_window=15, trim_qual_type="mean", out_format=3):
+                 trim_qual_window=15, trim_qual_type="mean", out_format=3, log_name=None):
     """
     Prinseq call
     
@@ -63,13 +63,14 @@ def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qu
         trim_qual_window {int} -- Trim sequence by quality score from the 5'-end with this threshold score. (default: {15})
         trim_qual_type {str} -- Type of quality score calculation to use. (default: {"mean"})
         out_format {int} -- Output format 1 (FASTA only), 2 (FASTA and QUAL), 3 (FASTQ), 4 (FASTQ and FASTA), 5 (FASTQ, FASTA and QUAL) (default: {3})
+        log_name {string} -- Output log file name.
     
     Returns:
         int -- Execution state (0 if everything is all right)
     """
     arguments = ["prinseq-lite.pl", "-verbose", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", min_len, \
                 "-min_qual_mean", min_qual_mean, "-trim_qual_right", trim_qual_right, "-trim_qual_window", \
-                trim_qual_window, "-trim_qual_type", trim_qual_type, "-out_format", out_format, "-out_bad", "null", "-log"]
+                trim_qual_window, "-trim_qual_type", trim_qual_type, "-out_format", out_format, "-out_bad", "null", "-log", log_name]
     return call(arguments)
 
 
@@ -83,7 +84,7 @@ def refactor_prinseq_output(input_dir, output_dir, sample):
         sample {string} -- Sample basename.
     
     Returns:
-        dict -- names of refactored files. key: forward or reverse (R1 or R2), value: filename
+        {dict} -- names of refactored files. key: forward or reverse (R1 or R2), value: filename
     """
     filenames = dict()  # Files with good sequences (except singletons)
     for root, dirs, files in os.walk(input_dir):
@@ -109,7 +110,7 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
         out_dir {string} -- Output directory.
     
     Returns:
-        int -- Execution state (0 if everything is all right)
+        {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "-o", out_dir+"/"+sample]
     return call(arguments)
@@ -143,7 +144,7 @@ def quast_call(input_file, output_dir, min_contig):
         min_contig {int} -- Lower threshold for a contig length (in bp).
     
     Returns:
-        [type] -- [description]
+        {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig), "--no-icarus", "--silent"]
     return call(arguments)
@@ -227,7 +228,7 @@ if __name__ == "__main__":
 
         # Quast call
         quast_call( input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
-                    output_file=output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir,
+                    output_dir=output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig=200)
 
 
