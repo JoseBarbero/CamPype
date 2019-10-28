@@ -91,8 +91,9 @@ def contigs_trim_and_rename(contigs_file, output_dir, min_len):
     SeqIO.write(large_sequences, output_dir, "fasta")
 
 
-def quast_call():
-    pass
+def quast_call(input_file, output_file, min_contig):
+    arguments = ["quast", input_file, "-o", output_file, "--min-contig", str(min_contig), "--no-icarus", "--silent"]
+    return call(arguments)
 
 def mlst_call():
     pass
@@ -116,6 +117,7 @@ if __name__ == "__main__":
     prinseq_dir = "Prinseq_filtering2"
     spades_dir = "SPAdes_assembly"
     contigs_dir = "Contigs_renamed_shorten"
+    quast_dir = "Sample_assembly_statistics"
 
     os.mkdir(output_folder)
     os.mkdir(output_folder+"/"+trimmomatic_dir)
@@ -166,8 +168,14 @@ if __name__ == "__main__":
                                 output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
                                 200)
 
+        # Creates Quast output directories
+
+        os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir)
+
         # Quast call
-        quast_call()
+        quast_call( input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
+                    output_file=output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir,
+                    min_contig=200)
 
 
     mlst_call()
