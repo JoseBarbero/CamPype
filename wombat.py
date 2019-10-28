@@ -6,79 +6,82 @@ from subprocess import call
 from Bio import SeqIO
 
 
-"""
-Gets every pair of reads on input_files.csv
-
-Returns:
-    list of tuples -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number)
-"""
 def read_input_files(indexfile):
+    """
+    Gets every pair of reads on input_files.csv
+
+    Returns:
+        list of tuples -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number)
+    """
     files_df = pandas.read_csv(indexfile, sep="\t")
     files_tuples = []
     for _, row in files_df.iterrows():
         files_tuples.append((row["Read1"], row["Read2"], str(row["Samples"])))
+
     return files_tuples
 
-"""
-Trimmomatic call.
 
-Returns:
-    int -- Execution state (0 if everything is all right)
-"""
 def trimmomatic_call(input_file1, input_file2, phred, trimfile,
                     paired_out_file1, paired_out_file2, unpaired_out_file1, unpaired_out_file2):
+    """
+    Trimmomatic call.
+
+    Returns:
+        int -- Execution state (0 if everything is all right)
+    """
     arguments = ["trimmomatic", "PE", phred, input_file1, input_file2, \
                 paired_out_file1, unpaired_out_file1, paired_out_file2, unpaired_out_file2, trimfile]
     return call(arguments)
 
-"""
-Prinseq call
 
-Returns:
-    int -- Execution state (0 if everything is all right)
-"""
 def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qual_right=25, trim_qual_window=15, trim_qual_type="mean", out_format=3, log_name=None):
+    """
+    Prinseq call
+
+    Returns:
+        int -- Execution state (0 if everything is all right)
+    """
     arguments = ["prinseq-lite.pl", "-verbose", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", min_len, \
                 "-min_qual_mean", min_qual_mean, "-trim_qual_right", trim_qual_right, "-trim_qual_window", \
                 trim_qual_window, "-trim_qual_type", trim_qual_type, "-out_format", out_format, "-out_bad", "null", "-log", log_name]
     return call(arguments)
 
 
-"""
-Places prinseq output files into directories with the following structure: /OUTPUT[timestamp]/Prinseq_filtering2/sample
-
-Returns:
-    dict -- names of refactored files. key: forward or reverse (R1 or R2), value: filename
-"""
 def refactor_prinseq_output(input_dir, output_dir, sample):
+    """
+    Places prinseq output files into directories with the following structure: /OUTPUT[timestamp]/Prinseq_filtering2/sample
+
+    Returns:
+        dict -- names of refactored files. key: forward or reverse (R1 or R2), value: filename
+    """
     filenames = dict()  # Files with good sequences (except singletons)
     for root, dirs, files in os.walk(input_dir):
         main_out_folder = root.split("/")[0]
-        for file in files:
-            if file.__contains__("prinseq"):
-                shutil.move(os.path.join(root, file), main_out_folder+"/"+output_dir+"/"+sample)
-                if file.startswith(sample+"_R1") and not file.__contains__("singletons"):
-                    filenames["R1"] = file
-                elif file.startswith(sample+"_R2") and not file.__contains__("singletons"):
-                    filenames["R2"] = file
+        for filename in files:
+            if filename.__contains__("prinseq"):
+                shutil.move(os.path.join(root, filename), main_out_folder+"/"+output_dir+"/"+sample)
+                if filename.startswith(sample+"_R1") and not filename.__contains__("singletons"):
+                    filenames["R1"] = filename
+                elif filename.startswith(sample+"_R2") and not filename.__contains__("singletons"):
+                    filenames["R2"] = filename
     return filenames
 
 
-"""
-Spades call
-
-Returns:
-    int -- Execution state (0 if everything is all right)
-"""
 def spades_call(forward_sample, reverse_sample, sample, out_dir):
+    """
+    Spades call
+
+    Returns:
+        int -- Execution state (0 if everything is all right)
+    """
     arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "-o", out_dir+"/"+sample]
     return call(arguments)
 
 
-"""
-Creates new fasta file filtering sequences shorter than min_len and shortening sequence identifiers
-"""
 def contigs_trim_and_rename(contigs_file, output_dir, min_len):
+    """
+    Creates new fasta file filtering sequences shorter than min_len and shortening sequence identifiers
+    """
     large_sequences = []
     for record in SeqIO.parse(contigs_file, "fasta"):
         if len(record.seq) > min_len:
@@ -86,6 +89,7 @@ def contigs_trim_and_rename(contigs_file, output_dir, min_len):
             record.description = ""
             large_sequences.append(record)
     SeqIO.write(large_sequences, output_dir, "fasta")
+
 
 def quast_call():
     pass
@@ -121,7 +125,6 @@ if __name__ == "__main__":
     
 
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
-
         # Trimmomatic call
         trimmomatic_call(input_file1=sample1,
                         input_file2=sample2,
@@ -162,6 +165,10 @@ if __name__ == "__main__":
         contigs_trim_and_rename(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+"contigs.fasta", 
                                 output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
                                 200)
+
+        # Quast call
+        quast_call()
+
 
     mlst_call()
     abricate_call()
