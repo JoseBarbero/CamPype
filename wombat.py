@@ -149,8 +149,30 @@ def quast_call(input_file, output_dir, min_contig):
     arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig), "--no-icarus", "--silent"]
     return call(arguments)
 
-def mlst_call():
-    pass
+
+def mlst_call(input_dir, output_dir, output_filename):
+    """
+    MLST call for every fasta file in input_dir.
+    
+    Arguments:
+        input_dir {string} -- Input directory containing contig files.
+        output_dir {string} -- Output directory.
+        output_file {string} -- Output file name.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    output_file = open(output_dir+"/"+output_filename, "w")
+    
+    input_filenames = []
+
+    for root, dirs, files in os.walk(input_dir):
+        for filename in files:
+            if filename.endswith(".fasta"):
+                input_filenames.append(input_dir+"/"+filename)
+
+    arguments = ["mlst", *input_filenames]
+    return call(arguments, stdout=output_file)
 
 def abricate_call():
     pass
@@ -172,12 +194,14 @@ if __name__ == "__main__":
     spades_dir = "SPAdes_assembly"
     contigs_dir = "Contigs_renamed_shorten"
     quast_dir = "Sample_assembly_statistics"
+    mlst_dir = "MLST"
 
     os.mkdir(output_folder)
     os.mkdir(output_folder+"/"+trimmomatic_dir)
     os.mkdir(output_folder+"/"+prinseq_dir)
     os.mkdir(output_folder+"/"+spades_dir)
     os.mkdir(output_folder+"/"+contigs_dir)
+    os.mkdir(output_folder+"/"+mlst_dir)
     
 
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
@@ -223,7 +247,6 @@ if __name__ == "__main__":
                                 200)
 
         # Creates Quast output directories
-
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
@@ -231,8 +254,16 @@ if __name__ == "__main__":
                     output_dir=output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig=200)
 
-
-    mlst_call()
+    # MLST call
+    mlst_call(input_dir=output_folder+"/"+contigs_dir,
+            output_dir=output_folder+"/"+mlst_dir,
+            output_filename="MLST.txt")
+    
+    # ABRicate call
     abricate_call()
+
+    # Prokka call
     prokka_call()
+
+    # Roary call
     roary_call()
