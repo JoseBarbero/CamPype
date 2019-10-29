@@ -157,7 +157,7 @@ def mlst_call(input_dir, output_dir, output_filename):
     Arguments:
         input_dir {string} -- Input directory containing contig files.
         output_dir {string} -- Output directory.
-        output_file {string} -- Output file name.
+        output_filename {string} -- Output file name.
     
     Returns:
         {int} -- Execution state (0 if everything is all right)
@@ -174,8 +174,32 @@ def mlst_call(input_dir, output_dir, output_filename):
     arguments = ["mlst", *input_filenames]
     return call(arguments, stdout=output_file)
 
-def abricate_call():
-    pass
+
+def abricate_call(input_dir, output_dir, output_filename, database):
+    """
+    ABRicate call.
+    
+    Arguments:
+        input_dir {string} -- Input directory containing contig files.
+        output_dir {string} -- Output directory.
+        output_filename {string} -- Output file name.
+        database {string} -- Database name.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    output_file = open(output_dir+"/"+output_filename, "w")
+    
+    input_filenames = []
+
+    for root, dirs, files in os.walk(input_dir):
+        for filename in files:
+            if filename.endswith(".fasta"):
+                input_filenames.append(input_dir+"/"+filename)
+
+    arguments = ["abricate", *input_filenames, "--db", database]
+    return call(arguments, stdout=output_file)
+
 
 def prokka_call():
     pass
@@ -195,6 +219,8 @@ if __name__ == "__main__":
     contigs_dir = "Contigs_renamed_shorten"
     quast_dir = "Sample_assembly_statistics"
     mlst_dir = "MLST"
+    abricate_vir_dir = "ABRicate_virulence_genes"
+    abricate_abr_dir = "ABRicateAntibioticResistanceGenes"
 
     os.mkdir(output_folder)
     os.mkdir(output_folder+"/"+trimmomatic_dir)
@@ -202,6 +228,8 @@ if __name__ == "__main__":
     os.mkdir(output_folder+"/"+spades_dir)
     os.mkdir(output_folder+"/"+contigs_dir)
     os.mkdir(output_folder+"/"+mlst_dir)
+    os.mkdir(output_folder+"/"+abricate_vir_dir)
+    os.mkdir(output_folder+"/"+abricate_abr_dir)
     
 
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
@@ -259,8 +287,17 @@ if __name__ == "__main__":
             output_dir=output_folder+"/"+mlst_dir,
             output_filename="MLST.txt")
     
-    # ABRicate call
-    abricate_call()
+    # ABRicate call (virulence genes)
+    abricate_call(input_dir=output_folder+"/"+contigs_dir,
+                 output_dir=output_folder+"/"+abricate_vir_dir,
+                 output_filename="SampleVirulenceGenes.tab",
+                 database = "vfdb")
+
+    # ABRicate call (antibiotic resistance genes)
+    abricate_call(input_dir=output_folder+"/"+contigs_dir,
+                 output_dir=output_folder+"/"+abricate_abr_dir,
+                 output_filename="SampleAntibioticResistanceGenes.tab",
+                 database = "resfinder")
 
     # Prokka call
     prokka_call()
