@@ -249,7 +249,7 @@ if __name__ == "__main__":
 
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
         # Trimmomatic call
-        print(f"\nStep 1 for sequence {sample_basename}: Trimmomatic\n")
+        print("\nStep 1 for sequence "+sample_basename+": Trimmomatic\n")
         trimmomatic_call(input_file1=sample1,
                         input_file2=sample2,
                         phred="-phred33",
@@ -263,7 +263,7 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+prinseq_dir+"/"+sample_basename)
 
         # Prinseq call
-        print("\nStep 2 for sequence {sample_basename}: Prinseq\n")
+        print("\nStep 2 for sequence "+sample_basename+": Prinseq\n")
         prinseq_call(input_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
                      input_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq", 
                      min_len="40", 
@@ -281,7 +281,7 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename)
 
         # SPAdes call
-        print("\nStep 3 for sequence {sample_basename}: SPAdes\n")
+        print("\nStep 3 for sequence "+sample_basename+": SPAdes\n")
         spades_call(forward_sample=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R1"],
                     reverse_sample=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R2"],
                     sample=sample_basename,
@@ -296,13 +296,13 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
-        print("\nStep 4 for sequence {sample_basename}: Quast\n")
+        print("\nStep 4 for sequence "+sample_basename+": Quast\n")
         quast_call( input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
                     output_dir=output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig=200)
 
         # Prokka call
-        print("\nStep 5 for sequence {sample_basename}: Prokka\n")
+        print("\nStep 5 for sequence "+sample_basename+": Prokka\n")
         prokka_call(locus_tag=sample_basename+"_L",
                     output_dir=output_folder+"/"+prokka_dir+"/"+sample_basename,
                     prefix=sample_basename,
