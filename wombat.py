@@ -200,9 +200,22 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     arguments = ["abricate", *input_filenames, "--db", database]
     return call(arguments, stdout=output_file)
 
-
-def prokka_call():
-    pass
+# <path to prokka> --locustag Sample_L --outdir Sample --prefix Sample --kingdom Bacteria --gcode 11 Sample.fasta
+def prokka_call(locus_tag, output_dir, prefix, input_file):
+    """
+    Prokka call.
+    
+    Arguments:
+        locus_tag {string} -- Locus tag prefix.
+        output_dir {string} -- Output directory.
+        prefix {string} -- Filename output prefix.
+        input_file {string} -- Input filename.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    arguments = ["prokka", "--locustag", locus_tag, "--outdir", output_dir, "--prefix", prefix, "--kingdom", "Bacteria", "--gcode", "11", input_file]
+    return call(arguments)
 
 def roary_call():
     pass
@@ -221,6 +234,7 @@ if __name__ == "__main__":
     mlst_dir = "MLST"
     abricate_vir_dir = "ABRicate_virulence_genes"
     abricate_abr_dir = "ABRicateAntibioticResistanceGenes"
+    prokka_dir = "Prokka_annotation"
 
     os.mkdir(output_folder)
     os.mkdir(output_folder+"/"+trimmomatic_dir)
@@ -230,10 +244,12 @@ if __name__ == "__main__":
     os.mkdir(output_folder+"/"+mlst_dir)
     os.mkdir(output_folder+"/"+abricate_vir_dir)
     os.mkdir(output_folder+"/"+abricate_abr_dir)
+    os.mkdir(output_folder+"/"+prokka_dir)
     
 
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
         # Trimmomatic call
+        print(f"\nStep 1 for sequence {sample_basename}: Trimmomatic\n")
         trimmomatic_call(input_file1=sample1,
                         input_file2=sample2,
                         phred="-phred33",
@@ -247,6 +263,7 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+prinseq_dir+"/"+sample_basename)
 
         # Prinseq call
+        print("\nStep 2 for sequence {sample_basename}: Prinseq\n")
         prinseq_call(input_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
                      input_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq", 
                      min_len="40", 
@@ -264,6 +281,7 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename)
 
         # SPAdes call
+        print("\nStep 3 for sequence {sample_basename}: SPAdes\n")
         spades_call(forward_sample=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R1"],
                     reverse_sample=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R2"],
                     sample=sample_basename,
@@ -278,29 +296,38 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
+        print("\nStep 4 for sequence {sample_basename}: Quast\n")
         quast_call( input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
                     output_dir=output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig=200)
 
+        # Prokka call
+        print("\nStep 5 for sequence {sample_basename}: Prokka\n")
+        prokka_call(locus_tag=sample_basename+"_L",
+                    output_dir=output_folder+"/"+prokka_dir+"/"+sample_basename,
+                    prefix=sample_basename,
+                    input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta")
+                    
     # MLST call
+    print("\nStep 6: MLST\n")
     mlst_call(input_dir=output_folder+"/"+contigs_dir,
             output_dir=output_folder+"/"+mlst_dir,
             output_filename="MLST.txt")
     
     # ABRicate call (virulence genes)
+    print("\nStep 7: ABRicate (virulence genes)\n")
     abricate_call(input_dir=output_folder+"/"+contigs_dir,
                  output_dir=output_folder+"/"+abricate_vir_dir,
                  output_filename="SampleVirulenceGenes.tab",
                  database = "vfdb")
 
     # ABRicate call (antibiotic resistance genes)
+    print("\nStep 8: ABRicate (antibiotic resistance genes)\n")
     abricate_call(input_dir=output_folder+"/"+contigs_dir,
                  output_dir=output_folder+"/"+abricate_abr_dir,
                  output_filename="SampleAntibioticResistanceGenes.tab",
                  database = "resfinder")
-
-    # Prokka call
-    prokka_call()
-
+                 
     # Roary call
+    print("\nStep 9: Roary\n")
     roary_call()
