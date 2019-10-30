@@ -1,0 +1,17 @@
+name: wombat
+channels:
+  - anaconda
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.5
+  - trimmomatic=0.38
+  - prinseq=0.20.4
+  - spades=3.13.0
+  - quast=5.0.2
+  - mlst=2.16.1
+  - abricate=0.8.10
+  - biopython=1.72
+  - prokka=1.13.4
+  - roary=3.12.0
+  - pandas=0.23.4
