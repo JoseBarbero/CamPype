@@ -112,7 +112,7 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "-o", out_dir+"/"+sample]
+    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "--cov-cutoff auto", "-o", out_dir+"/"+sample]
     return call(arguments)
 
 
