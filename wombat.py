@@ -11,7 +11,7 @@ def read_input_files(indexfile):
     Gets every pair of reads on input_files.csv
     
     Arguments:
-        indexfile {string} -- Filename of the file containing inputs.
+        indexfile {string} -- Filename (and route) of the file containing inputs.
     
     Returns:
         files_tuples {list of tuples} -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number).
@@ -30,8 +30,8 @@ def trimmomatic_call(input_file1, input_file2, phred, trimfile,
     Trimmomatic call.
     
     Arguments:
-        input_file1 {string} -- Input file forward.
-        input_file2 {string} -- Input file reverse.
+        input_file1 {string} -- Input file forward (and route).
+        input_file2 {string} -- Input file reverse (and route).
         phred {string} -- Trimmomatic phred parameter.
         trimfile {string} -- File with trimming sequences.
         paired_out_file1 {string} -- Forward file paired output.
@@ -53,8 +53,8 @@ def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qu
     Prinseq call
     
     Arguments:
-        input_file1 {string} -- Input file forward.
-        input_file2 {string} -- Input file reverse.
+        input_file1 {string} -- Input file forward (and route).
+        input_file2 {string} -- Input file reverse (and route).
     
     Keyword Arguments:
         min_len {int} -- Minimum read length. (default: {40})
@@ -104,8 +104,8 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
     Spades call
     
     Arguments:
-        forward_sample {string} -- Forward sample file name.
-        reverse_sample {string} -- Reverse sample file name.
+        forward_sample {string} -- Forward sample file name (and route).
+        reverse_sample {string} -- Reverse sample file name (and route).
         sample {string} -- Sample basename.
         out_dir {string} -- Output directory.
     
@@ -121,7 +121,7 @@ def contigs_trim_and_rename(contigs_file, output_dir, min_len):
     Creates new fasta file filtering sequences shorter than min_len and shortening sequence identifiers.
     
     Arguments:
-        contigs_file {string} -- Original contigs filename.
+        contigs_file {string} -- Original contigs filename (and route).
         output_dir {string} -- Output directory.
         min_len {int} -- Minimum sequence length.
     """
@@ -139,7 +139,7 @@ def quast_call(input_file, output_dir, min_contig):
     Quast call.
     
     Arguments:
-        input_file {string} -- Input file.
+        input_file {string} -- Input file (and route).
         output_dir {string} -- Output directory.
         min_contig {int} -- Lower threshold for a contig length (in bp).
     
@@ -157,7 +157,7 @@ def mlst_call(input_dir, output_dir, output_filename):
     Arguments:
         input_dir {string} -- Input directory containing contig files.
         output_dir {string} -- Output directory.
-        output_filename {string} -- Output file name.
+        output_filename {string} -- Output file name (and route).
     
     Returns:
         {int} -- Execution state (0 if everything is all right)
@@ -182,7 +182,7 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     Arguments:
         input_dir {string} -- Input directory containing contig files.
         output_dir {string} -- Output directory.
-        output_filename {string} -- Output file name.
+        output_filename {string} -- Output file name (and route).
         database {string} -- Database name.
     
     Returns:
@@ -200,7 +200,7 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     arguments = ["abricate", *input_filenames, "--db", database]
     return call(arguments, stdout=output_file)
 
-# <path to prokka> --locustag Sample_L --outdir Sample --prefix Sample --kingdom Bacteria --gcode 11 Sample.fasta
+
 def prokka_call(locus_tag, output_dir, prefix, input_file):
     """
     Prokka call.
@@ -209,7 +209,7 @@ def prokka_call(locus_tag, output_dir, prefix, input_file):
         locus_tag {string} -- Locus tag prefix.
         output_dir {string} -- Output directory.
         prefix {string} -- Filename output prefix.
-        input_file {string} -- Input filename.
+        input_file {string} -- Input filename (and route).
     
     Returns:
         {int} -- Execution state (0 if everything is all right)
@@ -217,8 +217,51 @@ def prokka_call(locus_tag, output_dir, prefix, input_file):
     arguments = ["prokka", "--locustag", locus_tag, "--outdir", output_dir, "--prefix", prefix, "--kingdom", "Bacteria", "--gcode", "11", input_file]
     return call(arguments)
 
-def roary_call():
-    pass
+
+def roary_call(input_files, output_dir):
+    """
+    Roary call.
+    
+    Arguments:
+        input_files {list} -- GFF files from prokka.
+        output_dir {string} -- Output directory.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    arguments = ["roary", "-f", output_dir, *input_files]
+    ex_state = call(arguments)
+    # Set Roary output directory name
+    for root, dirs, files in os.walk("."):
+        for dirname in dirs:
+            if dirname.startswith("Roary_pangenome_"):
+                os.rename(dirname, "Roary_pangenome")
+    return ex_state
+
+
+def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
+    """
+    Roary plots call
+    
+    Arguments:
+        input_newick {string} -- Filename (and route) to newick input file.
+        input_gene_presence_absence {[type]} -- Filename (and route) to gene presence/absence input file.
+        output_dir {[type]} -- Route to output files.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    arguments = ["python", "utils/roary_plots.py", input_newick, input_gene_presence_absence]
+    ex_state = call(arguments)
+    
+    # Roary_plots saves output files in the current directory, so we move them to our own
+    for root, dirs, files in os.walk("."):
+        for filename in files:
+            if filename.startswith("pangenome_"):
+                shutil.move(root+"/"+filename, output_dir+"/"+filename)
+    return ex_state
+
+
 
 if __name__ == "__main__":
 
@@ -235,6 +278,8 @@ if __name__ == "__main__":
     abricate_vir_dir = "ABRicate_virulence_genes"
     abricate_abr_dir = "ABRicateAntibioticResistanceGenes"
     prokka_dir = "Prokka_annotation"
+    roary_dir = "Roary_pangenome"
+    roary_plots_dir = "Roary_plots"
 
     os.mkdir(output_folder)
     os.mkdir(output_folder+"/"+trimmomatic_dir)
@@ -245,8 +290,8 @@ if __name__ == "__main__":
     os.mkdir(output_folder+"/"+abricate_vir_dir)
     os.mkdir(output_folder+"/"+abricate_abr_dir)
     os.mkdir(output_folder+"/"+prokka_dir)
-    
-
+        
+    roary_input_files = []
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
         # Trimmomatic call
         print("\nStep 1 for sequence "+sample_basename+": Trimmomatic\n")
@@ -307,6 +352,9 @@ if __name__ == "__main__":
                     output_dir=output_folder+"/"+prokka_dir+"/"+sample_basename,
                     prefix=sample_basename,
                     input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta")
+
+        # Set roary input files
+        roary_input_files.append(output_folder+"/"+prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff")
                     
     # MLST call
     print("\nStep 6: MLST\n")
@@ -330,4 +378,13 @@ if __name__ == "__main__":
                  
     # Roary call
     print("\nStep 9: Roary\n")
-    roary_call()
+    roary_call(input_files=roary_input_files, output_dir=output_folder+"/"+roary_dir)
+
+    # Roary plots call
+    os.mkdir(output_folder+"/"+roary_dir+"/"+roary_plots_dir)
+    print("\nStep 10: Roary Plots\n")
+    roary_plots_call(input_newick=output_folder+"/"+roary_dir+"/accessory_binary_genes.fa.newick",
+                     input_gene_presence_absence=output_folder+"/"+roary_dir+"/gene_presence_absence.csv",
+                     output_dir=output_folder+"/"+roary_dir+"/"+roary_plots_dir)
+    
+    print("\nDONE\n")

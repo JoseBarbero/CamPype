@@ -4,14 +4,15 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python=3.5
-  - trimmomatic=0.38
+  - python=3.6
+  - trimmomatic=0.39
   - prinseq=0.20.4
-  - spades=3.13.0
+  - spades=3.13.1
   - quast=5.0.2
-  - mlst=2.16.1
-  - abricate=0.8.10
+  - mlst=2.17.6
+  - abricate=0.8.13
   - biopython=1.72
-  - prokka=1.13.4
+  - prokka=1.14
   - roary=3.12.0
   - pandas=0.23.4
+  - seaborn=0.9.0
