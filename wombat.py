@@ -335,7 +335,7 @@ if __name__ == "__main__":
         # Trim short contigs and shorten sequences id
         contigs_trim_and_rename(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+"contigs.fasta", 
                                 output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
-                                200)
+                                500)    # TODO Para el futuro, este valor deberá ser el doble de la longitud de una read del archivo .fastq del secuenciador
 
         # Creates Quast output directories
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir)
