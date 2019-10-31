@@ -6,6 +6,15 @@ from subprocess import call
 from Bio import SeqIO
 
 
+def read_aux_files(inputfile):
+    files_df = pandas.read_csv(inputfile, sep="\t")
+    files_tuples = []
+    for _, row in files_df.iterrows():
+        files_tuples.append((row["Read1"], row["Read2"], str(row["Samples"])))
+
+    return files_tuples
+
+
 def read_input_files(indexfile):
     """
     Gets every pair of reads on input_files.csv
@@ -87,7 +96,7 @@ def refactor_prinseq_output(input_dir, output_dir, sample):
         {dict} -- names of refactored files. key: forward or reverse (R1 or R2), value: filename
     """
     filenames = dict()  # Files with good sequences (except singletons)
-    for root, dirs, files in os.walk(input_dir):
+    for root, _dirs, files in os.walk(input_dir):
         main_out_folder = root.split("/")[0]
         for filename in files:
             if filename.__contains__("prinseq"):
@@ -166,7 +175,7 @@ def mlst_call(input_dir, output_dir, output_filename):
     
     input_filenames = []
 
-    for root, dirs, files in os.walk(input_dir):
+    for _root, _dirs, files in os.walk(input_dir):
         for filename in files:
             if filename.endswith(".fasta"):
                 input_filenames.append(input_dir+"/"+filename)
@@ -192,7 +201,7 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     
     input_filenames = []
 
-    for root, dirs, files in os.walk(input_dir):
+    for _root, _dirs, files in os.walk(input_dir):
         for filename in files:
             if filename.endswith(".fasta"):
                 input_filenames.append(input_dir+"/"+filename)
@@ -232,7 +241,7 @@ def roary_call(input_files, output_dir):
     arguments = ["roary", "-f", output_dir, *input_files]
     ex_state = call(arguments)
     # Set Roary output directory name
-    for root, dirs, files in os.walk("."):
+    for _root, dirs, _files in os.walk("."):
         for dirname in dirs:
             if dirname.startswith("Roary_pangenome_"):
                 os.rename(dirname, "Roary_pangenome")
@@ -255,7 +264,7 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
     ex_state = call(arguments)
     
     # Roary_plots saves output files in the current directory, so we move them to our own
-    for root, dirs, files in os.walk("."):
+    for root, _dirs, files in os.walk("."):
         for filename in files:
             if filename.startswith("pangenome_"):
                 shutil.move(root+"/"+filename, output_dir+"/"+filename)
@@ -267,6 +276,8 @@ if __name__ == "__main__":
 
     # Create output directories
     now = datetime.datetime.now()
+
+    adapters_file, reference_annotation_file = read_aux_files("reference_files.csv")
     
     output_folder = "Workflow_OUTPUT_"+str(now.strftime('%Y%m%d_%H%M%S'))
     trimmomatic_dir = "Trimmomatic_filtering1"
@@ -298,7 +309,7 @@ if __name__ == "__main__":
         trimmomatic_call(input_file1=sample1,
                         input_file2=sample2,
                         phred="-phred33",
-                        trimfile="ILLUMINACLIP:adapters.fa:1:30:11",
+                        trimfile="ILLUMINACLIP:reference_files/adapters.fa:1:30:11",
                         paired_out_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
                         unpaired_out_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
                         paired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
@@ -355,7 +366,18 @@ if __name__ == "__main__":
 
         # Set roary input files
         roary_input_files.append(output_folder+"/"+prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff")
-                    
+
+    # Etiquetado del fichero fasta de referencia
+    if reference_annotation_step:
+        print("\nStep 5 for reference sequence: Prokka\n")
+        prokka_call(locus_tag=sample_basename+"_L",
+                    output_dir=output_folder+"/"+prokka_dir+"/"+sample_basename,
+                    prefix=sample_basename,
+                    input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta")
+
+        # Set roary input files
+        roary_input_files.append(output_folder+"/"+prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff")
+
     # MLST call
     print("\nStep 6: MLST\n")
     mlst_call(input_dir=output_folder+"/"+contigs_dir,
