@@ -7,12 +7,20 @@ from Bio import SeqIO
 
 
 def read_aux_files(inputfile):
+    """
+    File containing auxiliary files routes.
+    
+    Arguments:
+        inputfile {string} -- Filename (and route) of the file containing inputs.
+    
+    Returns:
+        files_routes {list} -- List of auxiliary files.
+    """
     files_df = pandas.read_csv(inputfile, sep="\t")
-    files_tuples = []
+    files_routes = []
     for _, row in files_df.iterrows():
-        files_tuples.append((row["Read1"], row["Read2"], str(row["Samples"])))
-
-    return files_tuples
+        files_routes.append(row["Route"])
+    return files_routes
 
 
 def read_input_files(indexfile):
@@ -121,7 +129,8 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "--cov-cutoff auto", "-o", out_dir+"/"+sample]
+    # TODO incluir --cov-cutoff auto
+    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "-o", out_dir+"/"+sample]
     return call(arguments)
 
 
@@ -367,23 +376,25 @@ if __name__ == "__main__":
         # Set roary input files
         roary_input_files.append(output_folder+"/"+prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff")
 
-    # Etiquetado del fichero fasta de referencia
-    if reference_annotation_step:
+    # Annotate reference fasta file 
+    if reference_annotation_file:
+        reference_annotation_filename = reference_annotation_file.split("/")[-1]
+        reference_annotation_basename = reference_annotation_filename.split(".")[-2]
         print("\nStep 5 for reference sequence: Prokka\n")
-        prokka_call(locus_tag=sample_basename+"_L",
-                    output_dir=output_folder+"/"+prokka_dir+"/"+sample_basename,
-                    prefix=sample_basename,
-                    input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta")
+        prokka_call(locus_tag=reference_annotation_basename+"_L",
+                    output_dir=output_folder+"/"+prokka_dir+"/"+reference_annotation_basename,
+                    prefix=reference_annotation_basename,
+                    input_file=reference_annotation_file)
 
         # Set roary input files
-        roary_input_files.append(output_folder+"/"+prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff")
+        roary_input_files.append(output_folder+"/"+prokka_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
 
     # MLST call
     print("\nStep 6: MLST\n")
     mlst_call(input_dir=output_folder+"/"+contigs_dir,
             output_dir=output_folder+"/"+mlst_dir,
             output_filename="MLST.txt")
-    
+
     # ABRicate call (virulence genes)
     print("\nStep 7: ABRicate (virulence genes)\n")
     abricate_call(input_dir=output_folder+"/"+contigs_dir,
@@ -397,7 +408,7 @@ if __name__ == "__main__":
                  output_dir=output_folder+"/"+abricate_abr_dir,
                  output_filename="SampleAntibioticResistanceGenes.tab",
                  database = "resfinder")
-                 
+
     # Roary call
     print("\nStep 9: Roary\n")
     roary_call(input_files=roary_input_files, output_dir=output_folder+"/"+roary_dir)
@@ -408,5 +419,5 @@ if __name__ == "__main__":
     roary_plots_call(input_newick=output_folder+"/"+roary_dir+"/accessory_binary_genes.fa.newick",
                      input_gene_presence_absence=output_folder+"/"+roary_dir+"/gene_presence_absence.csv",
                      output_dir=output_folder+"/"+roary_dir+"/"+roary_plots_dir)
-    
+
     print("\nDONE\n")
