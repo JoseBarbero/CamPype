@@ -36,7 +36,7 @@
     | adapters  | path/to/your/sequencing/adapters/file/adapters.fa |
     | reference_annotation_file  | path/to/your/reference/genome/file/NCTC11168.fasta |
 
-## Execution
+## Running the workflow
 
 1. Activate the environment
     ```bash
