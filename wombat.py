@@ -129,8 +129,8 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    # TODO incluir --cov-cutoff auto
-    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "-o", out_dir+"/"+sample]
+    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "--cov-cutoff", "auto", "-o", out_dir+"/"+sample]
+    print(arguments)
     return call(arguments)
 
 
@@ -278,7 +278,6 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
             if filename.startswith("pangenome_"):
                 shutil.move(root+"/"+filename, output_dir+"/"+filename)
     return ex_state
-
 
 
 if __name__ == "__main__":
