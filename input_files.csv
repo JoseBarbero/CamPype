@@ -1,0 +1,4 @@
+Samples	Read1	Read2
+[sample_basename]	/path/to/your/forward/fastq1_file.fastq	/path/to/your/reverse/fastq1_file.fastq
+[sample_basename]	/path/to/your/forward/fastq2_file.fastq	/path/to/your/reverse/fastq2_file.fastq
+[sample_basename]	/path/to/your/forward/fastq3_file.fastq	/path/to/your/reverse/fastq3_file.fastq
