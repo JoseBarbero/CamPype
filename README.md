@@ -12,7 +12,12 @@
     ```
 1. Create a conda environment
     ```bash
-    $ conda env create -f wombatenv.yml
+    $ conda env create -f wombatenv.yml https://loading.io/spinner/progress/
+    ```
+
+1. Setup prokka db
+    ```bash
+    $ prokka --setupdb
     ```
     
 ## Set input files 
