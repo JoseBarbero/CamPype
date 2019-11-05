@@ -17,7 +17,7 @@
     
 ## Set input files 
 
-1.  Set input files in input_files.csv (tab as separator):
+1.  Set input files in Wombat/input_files.csv (tab as separator):
 
     | Samples        | Read1           | Read2  |
     | ------------- |:-------------:| -----:|
@@ -25,7 +25,7 @@
     | [sample_basename]  | /path/to/your/forward/fastq2_file.fastq | /path/to/your/reverse/fastq2_file.fastq |
     | [sample_basename]  | /path/to/your/forward/fastq3_file.fastq | /path/to/your/reverse/fastq3_file.fastq |
    
-1.  Set auxiliary files in input_files.csv (tab as separator):
+1.  Set auxiliary files in Wombat/reference_files.csv (tab as separator):
 
     | File        | Route           |
     | ------------- |:-------------:|
