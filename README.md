@@ -1,4 +1,4 @@
-# Wombat
+# Wombat workflow
 
 ## Installation (Linux)
 
