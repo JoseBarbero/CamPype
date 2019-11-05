@@ -2,6 +2,7 @@ import pandas
 import datetime
 import os
 import shutil
+from terminal_banner import Banner
 from subprocess import call
 from Bio import SeqIO
 
@@ -129,8 +130,7 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "--cov-cutoff", "auto", "-o", out_dir+"/"+sample]
-    print(arguments)
+    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "--cov-cutoff", "auto", "-o", out_dir+"/"+sample]    
     return call(arguments)
 
 
@@ -313,7 +313,7 @@ if __name__ == "__main__":
     roary_input_files = []
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
         # Trimmomatic call
-        print("\nStep 1 for sequence "+sample_basename+": Trimmomatic\n")
+        print(Banner("\nStep 1 for sequence "+sample_basename+": Trimmomatic\n"))
         trimmomatic_call(input_file1=sample1,
                         input_file2=sample2,
                         phred="-phred33",
@@ -327,7 +327,7 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+prinseq_dir+"/"+sample_basename)
 
         # Prinseq call
-        print("\nStep 2 for sequence "+sample_basename+": Prinseq\n")
+        print(Banner("\nStep 2 for sequence "+sample_basename+": Prinseq\n"))
         prinseq_call(input_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
                      input_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq", 
                      min_len="40", 
@@ -345,7 +345,7 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename)
 
         # SPAdes call
-        print("\nStep 3 for sequence "+sample_basename+": SPAdes\n")
+        print(Banner("\nStep 3 for sequence "+sample_basename+": SPAdes\n"))
         spades_call(forward_sample=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R1"],
                     reverse_sample=output_folder+"/"+prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R2"],
                     sample=sample_basename,
@@ -360,13 +360,13 @@ if __name__ == "__main__":
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
-        print("\nStep 4 for sequence "+sample_basename+": Quast\n")
+        print(Banner("\nStep 4 for sequence "+sample_basename+": Quast\n"))
         quast_call( input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
                     output_dir=output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig=200)
 
         # Prokka call
-        print("\nStep 5 for sequence "+sample_basename+": Prokka\n")
+        print(Banner("\nStep 5 for sequence "+sample_basename+": Prokka\n"))
         prokka_call(locus_tag=sample_basename+"_L",
                     output_dir=output_folder+"/"+prokka_dir+"/"+sample_basename,
                     prefix=sample_basename,
@@ -379,7 +379,7 @@ if __name__ == "__main__":
     if reference_annotation_file:
         reference_annotation_filename = reference_annotation_file.split("/")[-1]
         reference_annotation_basename = reference_annotation_filename.split(".")[-2]
-        print("\nStep 5 for reference sequence: Prokka\n")
+        print(Banner("\nStep 5 for reference sequence: Prokka\n"))
         prokka_call(locus_tag=reference_annotation_basename+"_L",
                     output_dir=output_folder+"/"+prokka_dir+"/"+reference_annotation_basename,
                     prefix=reference_annotation_basename,
@@ -389,34 +389,34 @@ if __name__ == "__main__":
         roary_input_files.append(output_folder+"/"+prokka_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
 
     # MLST call
-    print("\nStep 6: MLST\n")
+    print(Banner("\nStep 6: MLST\n"))
     mlst_call(input_dir=output_folder+"/"+contigs_dir,
             output_dir=output_folder+"/"+mlst_dir,
             output_filename="MLST.txt")
 
     # ABRicate call (virulence genes)
-    print("\nStep 7: ABRicate (virulence genes)\n")
+    print(Banner("\nStep 7: ABRicate (virulence genes)\n"))
     abricate_call(input_dir=output_folder+"/"+contigs_dir,
                  output_dir=output_folder+"/"+abricate_vir_dir,
                  output_filename="SampleVirulenceGenes.tab",
                  database = "vfdb")
 
     # ABRicate call (antibiotic resistance genes)
-    print("\nStep 8: ABRicate (antibiotic resistance genes)\n")
+    print(Banner("\nStep 8: ABRicate (antibiotic resistance genes)\n"))
     abricate_call(input_dir=output_folder+"/"+contigs_dir,
                  output_dir=output_folder+"/"+abricate_abr_dir,
                  output_filename="SampleAntibioticResistanceGenes.tab",
                  database = "resfinder")
 
     # Roary call
-    print("\nStep 9: Roary\n")
+    print(Banner("\nStep 9: Roary\n"))
     roary_call(input_files=roary_input_files, output_dir=output_folder+"/"+roary_dir)
 
     # Roary plots call
     os.mkdir(output_folder+"/"+roary_dir+"/"+roary_plots_dir)
-    print("\nStep 10: Roary Plots\n")
+    print(Banner("\nStep 10: Roary Plots\n"))
     roary_plots_call(input_newick=output_folder+"/"+roary_dir+"/accessory_binary_genes.fa.newick",
                      input_gene_presence_absence=output_folder+"/"+roary_dir+"/gene_presence_absence.csv",
                      output_dir=output_folder+"/"+roary_dir+"/"+roary_plots_dir)
 
-    print("\nDONE\n")
+    print(Banner("\nDONE\n"))
