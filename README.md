@@ -50,7 +50,7 @@
     ```bash
     $ python wombat.py
     ```
-1. * You can deactivate the environment when you are finished
+1. \(*) You can deactivate the environment when you are finished
     ```bash
     $ conda deactivate
     ```
