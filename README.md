@@ -27,10 +27,6 @@
    
 1.  Set auxiliary files in input_files.csv (tab as separator):
 
-    File	Route
-    adapters	reference_files/adapters.fa
-    reference_annotation_file	reference_files/NCTC11168.fasta
-
     | File        | Route           |
     | ------------- |:-------------:|
     | adapters  | path/to/your/sequencing/adapters/file/adapters.fa |
