@@ -14,11 +14,6 @@
     ```bash
     $ conda env create -f wombatenv.yml 
     ```
-
-1. Setup prokka db
-    ```bash
-    $ prokka --setupdb
-    ```
     
 ## Set input files 
 
