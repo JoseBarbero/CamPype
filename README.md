@@ -31,6 +31,8 @@
     | ------------- |:-------------:|
     | adapters  | path/to/your/sequencing/adapters/file/adapters.fa |
     | reference_annotation_file  | path/to/your/reference/genome/file/NCTC11168.fasta |
+    
+    \* Remove the last line if you don't have a reference file to annotate.
 
 ## Running the workflow
 
