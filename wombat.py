@@ -323,7 +323,7 @@ if __name__ == "__main__":
                         paired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
                         unpaired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq")
 
-        # Creates prinseq output directories
+        # Create prinseq output directories
         os.mkdir(output_folder+"/"+prinseq_dir+"/"+sample_basename)
 
         # Prinseq call
@@ -341,7 +341,7 @@ if __name__ == "__main__":
         # Prinseq output files refactor
         prinseq_files = refactor_prinseq_output(output_folder+"/"+trimmomatic_dir, prinseq_dir, sample_basename)
         
-        # Creates SPAdes output directories
+        # Create SPAdes output directories
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename)
 
         # SPAdes call
@@ -356,7 +356,7 @@ if __name__ == "__main__":
                                 output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
                                 500)    # TODO Para el futuro, este valor deberá ser el doble de la longitud de una read del archivo .fastq del secuenciador
 
-        # Creates Quast output directories
+        # Create Quast output directories
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
