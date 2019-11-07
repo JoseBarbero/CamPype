@@ -317,7 +317,7 @@ if __name__ == "__main__":
         trimmomatic_call(input_file1=sample1,
                         input_file2=sample2,
                         phred="-phred33",
-                        trimfile="ILLUMINACLIP:reference_files/adapters.fa:1:30:11",
+                        trimfile="ILLUMINACLIP:"+adapters_file+":1:30:11",
                         paired_out_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
                         unpaired_out_file1=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
                         paired_out_file2=output_folder+"/"+trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
