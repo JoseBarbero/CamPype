@@ -111,11 +111,15 @@ def refactor_prinseq_output(input_dir, output_dir, sample):
         main_out_folder = root.split("/")[0]
         for filename in files:
             if filename.__contains__("prinseq"):
-                shutil.move(os.path.join(root, filename), main_out_folder+"/"+output_dir+"/"+sample)
-                if filename.startswith(sample+"_R1") and not filename.__contains__("singletons"):
-                    filenames["R1"] = filename
-                elif filename.startswith(sample+"_R2") and not filename.__contains__("singletons"):
-                    filenames["R2"] = filename
+                if filename.__contains__("singletons"):
+                    os.remove(os.path.join(root, filename))
+                else:
+                    # Move every prinseq file from trimmomatic folder to prinseq folder
+                    shutil.move(os.path.join(root, filename), main_out_folder+"/"+output_dir+"/"+sample)
+                    if filename.startswith(sample+"_R1"):
+                        filenames["R1"] = filename
+                    elif filename.startswith(sample+"_R2"):
+                        filenames["R2"] = filename
     return filenames
 
 
@@ -295,7 +299,6 @@ if __name__ == "__main__":
     prinseq_dir = "Prinseq_filtering2"
     spades_dir = "SPAdes_assembly"
     contigs_dir = "Contigs_renamed_shorten"
-    quast_dir = "Sample_assembly_statistics"
     mlst_dir = "MLST"
     abricate_vir_dir = "ABRicate_virulence_genes"
     abricate_abr_dir = "ABRicateAntibioticResistanceGenes"
@@ -360,6 +363,7 @@ if __name__ == "__main__":
                                 500)    # TODO Para el futuro, este valor deberá ser el doble de la longitud de una read del archivo .fastq del secuenciador
 
         # Create Quast output directories
+        quast_dir = sample_basename+"_assembly_statistics"
         os.mkdir(output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
