@@ -1,0 +1,3 @@
+#!/bin/bash
+python wombat.py 2>&1 | tee wombat_log.tmp.txt
+rm wombat_log.tmp.txt
