@@ -46,7 +46,7 @@
     ```
 1. Run the workflow
     ```bash
-    $ python wombat.py
+    $ ./wombat
     ```
 1. \(*) You can deactivate the environment when you are finished
     ```bash
