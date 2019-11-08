@@ -48,6 +48,10 @@
     ```bash
     $ ./wombat
     ```
+    You can set the annotator to dfast (it's set to prokka by default) by calling wombat like follows:
+    ```bash
+    $ ./wombat --annotator dfast
+    ```
 1. \(*) You can deactivate the environment when you are finished
     ```bash
     $ conda deactivate

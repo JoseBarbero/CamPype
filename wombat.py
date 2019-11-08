@@ -242,6 +242,31 @@ def prokka_call(locus_tag, output_dir, prefix, input_file):
     return call(arguments)
 
 
+def dfast_call(input_file, min_length, out_path, sample_basename):
+    """
+    Dfast call.
+    
+    Arguments:
+        input_file {string} -- Input filename (and route).
+        min_length {int} -- Minimum sequence length.
+        out_path {strin} -- Output folder.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    arguments = ["dfast", "--genome", input_file, "--minimum_length", str(min_length), "--out", out_path]
+    state = call(arguments)
+
+    # Replace default output filenames including string basename
+    for root, _dirs, files in os.walk(out_path):
+        for filename in files:
+            if filename.__contains__("genome"):
+                new_filename = filename.replace("genome", sample_basename)
+                shutil.move(os.path.join(root, filename), os.path.join(root, new_filename))
+
+    return state
+
+
 def roary_call(input_files, output_dir):
     """
     Roary call.
@@ -288,13 +313,19 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
 
 if __name__ == "__main__":
 
+    # Get selected annotation tool (prokka by default)
+    if len(sys.argv) > 2:
+        if sys.argv[2] == "--annotator":
+            annotator = sys.argv[3]
+    else:
+        annotator = "prokka"
 
     # Create output directories
     now = datetime.datetime.now()
 
     adapters_file, reference_annotation_file = read_aux_files("reference_files.csv")
     
-    output_folder = "Workflow_OUTPUT_"+str(now.strftime('%Y%m%d_%H%M%S'))
+    output_folder = sys.argv[1]
     trimmomatic_dir = "Trimmomatic_filtering1"
     prinseq_dir = "Prinseq_filtering2"
     spades_dir = "SPAdes_assembly"
@@ -303,10 +334,13 @@ if __name__ == "__main__":
     abricate_vir_dir = "ABRicate_virulence_genes"
     abricate_abr_dir = "ABRicateAntibioticResistanceGenes"
     prokka_dir = "Prokka_annotation"
+    dfast_dir = "Dfast_annotation"
     roary_dir = "Roary_pangenome"
     roary_plots_dir = "Roary_plots"
 
-    os.mkdir(output_folder)
+    if not os.path.exists(output_folder):
+        os.mkdir(output_folder)
+        
     os.mkdir(output_folder+"/"+trimmomatic_dir)
     os.mkdir(output_folder+"/"+prinseq_dir)
     os.mkdir(output_folder+"/"+spades_dir)
@@ -314,7 +348,10 @@ if __name__ == "__main__":
     os.mkdir(output_folder+"/"+mlst_dir)
     os.mkdir(output_folder+"/"+abricate_vir_dir)
     os.mkdir(output_folder+"/"+abricate_abr_dir)
-    os.mkdir(output_folder+"/"+prokka_dir)
+    if annotator == "dfast":
+        os.mkdir(output_folder+"/"+dfast_dir)
+    else:
+        os.mkdir(output_folder+"/"+prokka_dir)
 
     roary_input_files = []
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
@@ -372,28 +409,50 @@ if __name__ == "__main__":
                     output_dir=output_folder+"/"+spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig=200)
 
-        # Prokka call
-        print(Banner("\nStep 5 for sequence "+sample_basename+": Prokka\n"), flush=True)
-        prokka_call(locus_tag=sample_basename+"_L",
-                    output_dir=output_folder+"/"+prokka_dir+"/"+sample_basename,
-                    prefix=sample_basename,
-                    input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta")
+        # Annotation (Prokka or dfast)
+        if annotator.lower() == "dfast":
+            # Dfast call
+            annotation_dir = dfast_dir
+            print(Banner("\nStep 5 for sequence "+sample_basename+": Dfast\n"), flush=True)
+            dfast_call(input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta",
+                       min_length=0,
+                       out_path=output_folder+"/"+dfast_dir+"/"+sample_basename,
+                       sample_basename=sample_basename)
+        else:
+            # Prokka call
+            annotation_dir = prokka_dir
+            print(Banner("\nStep 5 for sequence "+sample_basename+": Prokka\n"), flush=True)
+            prokka_call(locus_tag=sample_basename+"_L",
+                        output_dir=output_folder+"/"+prokka_dir+"/"+sample_basename,
+                        prefix=sample_basename,
+                        input_file=output_folder+"/"+contigs_dir+"/"+sample_basename+"_contigs.fasta")
 
         # Set roary input files
-        roary_input_files.append(output_folder+"/"+prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff")
+        roary_input_files.append(output_folder+"/"+annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
 
     # Annotate reference fasta file 
     if reference_annotation_file:
         reference_annotation_filename = reference_annotation_file.split("/")[-1]
         reference_annotation_basename = reference_annotation_filename.split(".")[-2]
-        print(Banner("\nStep 5 for reference sequence: Prokka\n"), flush=True)
-        prokka_call(locus_tag=reference_annotation_basename+"_L",
-                    output_dir=output_folder+"/"+prokka_dir+"/"+reference_annotation_basename,
-                    prefix=reference_annotation_basename,
-                    input_file=reference_annotation_file)
+        if annotator.lower() == "dfast":
+            # Dfast call
+            annotation_dir = dfast_dir
+            print(Banner("\nStep 5 for reference sequence: Dfast\n"), flush=True)
+            dfast_call(input_file=reference_annotation_file,
+                        min_length=0,
+                        out_path=output_folder+"/"+dfast_dir+"/"+reference_annotation_basename,
+                        sample_basename=reference_annotation_basename)
+        else:
+            # Prokka call
+            annotation_dir = prokka_dir
+            print(Banner("\nStep 5 for reference sequence: Prokka\n"), flush=True)
+            prokka_call(locus_tag=reference_annotation_basename+"_L",
+                        output_dir=output_folder+"/"+prokka_dir+"/"+reference_annotation_basename,
+                        prefix=reference_annotation_basename,
+                        input_file=reference_annotation_file)
 
         # Set roary input files
-        roary_input_files.append(output_folder+"/"+prokka_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
+        roary_input_files.append(output_folder+"/"+annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
 
     # MLST call
     print(Banner("\nStep 6: MLST\n"), flush=True)
@@ -427,10 +486,3 @@ if __name__ == "__main__":
                     output_dir=output_folder+"/"+roary_dir+"/"+roary_plots_dir)
 
     print(Banner("\nDONE\n"), flush=True)
-
-    # If log file exists, gets moved to output folder
-    for root, _dirs, files in os.walk("."):
-        for filename in files:
-            if filename.startswith("wombat_log.tmp.txt"):
-                shutil.copy("wombat_log.tmp.txt", output_folder+"/wombat_log.txt")
-    

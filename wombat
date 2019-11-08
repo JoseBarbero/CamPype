@@ -1,3 +1,4 @@
 #!/bin/bash
-python wombat.py 2>&1 | tee wombat_log.tmp.txt
-rm wombat_log.tmp.txt
+OUTDIR=Workflow_OUTPUT_`date "+%Y%m%d_%H%M%S"`
+mkdir $OUTDIR
+python wombat.py $OUTDIR "$@" 2>&1 | tee $OUTDIR/wombat_log.tmp.txt
