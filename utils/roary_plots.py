@@ -75,10 +75,10 @@ if __name__ == "__main__":
     from Bio import Phylo
 
     t = Phylo.read(options.tree, 'newick')
-
+    
     # Max distance to create better plots
     mdist = max([t.distance(t.root, x) for x in t.get_terminals()])
-
+    
     # Load roary
     roary = pd.read_table(options.spreadsheet,
                          sep=',',
@@ -98,15 +98,17 @@ if __name__ == "__main__":
 
     # Pangenome frequency plot
     plt.figure(figsize=(7, 5))
-
+    
     plt.hist(roary.sum(axis=1), roary.shape[1],
              histtype="stepfilled", alpha=.7)
+    
 
     plt.xlabel('No. of genomes')
     plt.ylabel('No. of genes')
 
     sns.despine(left=True,
                 bottom=True)
+    
     plt.savefig('pangenome_frequency.%s'%options.format, dpi=300)
     plt.clf()
 
@@ -156,7 +158,7 @@ if __name__ == "__main__":
         else:
             Phylo.draw(t, axes=ax, 
                        show_confidence=False,
-                       label_func=lambda x: None,
+                       label_func=lambda x: x.name,
                        xticks=([],), yticks=([],),
                        ylabel=('',), xlabel=('',),
                        xlim=(-mdist*0.1,mdist+mdist*0.1),
