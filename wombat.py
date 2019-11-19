@@ -17,13 +17,13 @@ def read_aux_files(inputfile):
         inputfile {string} -- Filename (and route) of the file containing inputs.
     
     Returns:
-        files_routes {list} -- List of auxiliary files.
+        files_routes {tuple} -- Tuple of auxiliary files (adapters, reference_annotation_file, protein_reference). I return it like this to avoid length missmatches.
     """
     files_df = pandas.read_csv(inputfile, sep="\t")
     files_routes = []
     for _, row in files_df.iterrows():
         files_routes.append(row["Route"])
-    return files_routes
+    return files_routes[0], files_routes[1], files_routes[2] 
 
 
 def read_input_files(indexfile):
@@ -323,7 +323,7 @@ if __name__ == "__main__":
     # Create output directories
     now = datetime.datetime.now()
 
-    adapters_file, reference_annotation_file = read_aux_files("reference_files.csv")
+    adapters_file, reference_annotation_file, proteins_file = read_aux_files("reference_files.csv")
     
     output_folder = sys.argv[1]
     trimmomatic_dir = "Trimmomatic_filtering1"
