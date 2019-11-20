@@ -4,6 +4,7 @@ import os
 import shutil
 import logging
 import sys
+import workflow_config as cfg
 from terminal_banner import Banner
 from subprocess import call
 from Bio import SeqIO
@@ -313,12 +314,9 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
 
 if __name__ == "__main__":
 
-    # Get selected annotation tool (prokka by default)
-    if len(sys.argv) > 2:
-        if sys.argv[2] == "--annotator":
-            annotator = sys.argv[3]
-    else:
-        annotator = "prokka"
+    # Get config file parameters
+    annotator = cfg.config["annotator"]
+    run_blast = cfg.config["run_blast"]
 
     # Create output directories
     now = datetime.datetime.now()
@@ -348,6 +346,7 @@ if __name__ == "__main__":
     os.mkdir(output_folder+"/"+mlst_dir)
     os.mkdir(output_folder+"/"+abricate_vir_dir)
     os.mkdir(output_folder+"/"+abricate_abr_dir)
+
     if annotator == "dfast":
         os.mkdir(output_folder+"/"+dfast_dir)
     else:
