@@ -34,7 +34,7 @@
     
     \* Remove the last line if you don't have a reference file to annotate.
 
-1. You can modify running parameters in "workflow_config.py" file.
+1. Set your own running parameters in "workflow_config.py" file.
 
 ## Running the workflow
 
