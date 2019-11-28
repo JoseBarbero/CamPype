@@ -226,6 +226,53 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     return call(arguments, stdout=output_file)
 
 
+def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder):
+    """
+    Blast call.
+    
+    Arguments:
+        proteins_file_ori {string} -- Reference proteins file path (origin).
+        proteins_file_dest {string} -- Reference proteins file path (destination).
+        contigs_files_paths {list} -- List of contig files from SPAdes.
+        contigs_file_dest {string} -- [description]
+        blast_output_folder {string} -- [description]
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    # Move VF_custom.txt to ABRicateVirulenceGenes/BLAST_custom_proteins
+    shutil.copy(proteins_file_ori, proteins_file_dest)
+
+    # Concat every contig from SPAdes on DNA_database.fna (replacing sequences names)
+    with open(blast_database_output, "w") as output_file:
+        for contig_file_path in contigs_files_paths:
+            for record in SeqIO.parse(contig_file_path, "fasta"):
+                strain = contig_file_path.split("/")[-2]
+                record.id = record.name = record.description = strain+"_N_"+"_".join(record.id.split("_")[1:])
+                SeqIO.write(record, output_file, "fasta")
+                
+    # Create blast database
+    blast_db_path = os.path.dirname(os.path.abspath(blast_database_output))+"/DNA_database"
+    call(["makeblastdb", "-in", blast_database_output, "-dbtype", "nucl", 
+          "-out", blast_db_path, "-title", "DNA_Database"])
+
+    # Call tblastn
+    tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest, "-evalue", "10e-4", "-outfmt", 
+                        "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq", 
+                        "-out", blast_output_folder+"BLASToutput_VS_custom.txt"])
+
+    # Add header to tblastn output
+    with open(blast_output_folder+"BLASToutput_VS_custom.txt", 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        headers = ["query id", "subject id", "% identity", "alignment length", "mismatches", "gap opens", 
+                   "query start", "query end", "subject start", "subject end", "evalue", "score", "aligned part of subject sequence"]
+
+        f.write("\t".join(headers) + '\n' + content)
+
+    return tblastn_state
+
+
 def prokka_call(locus_tag, output_dir, prefix, input_file):
     """
     Prokka call.
@@ -329,16 +376,18 @@ if __name__ == "__main__":
     spades_dir = "SPAdes_assembly"
     contigs_dir = "Contigs_renamed_shorten"
     mlst_dir = "MLST"
-    abricate_vir_dir = "ABRicate_virulence_genes"
+    abricate_vir_dir = "ABRicateVirulenceGenes"
     abricate_abr_dir = "ABRicateAntibioticResistanceGenes"
     prokka_dir = "Prokka_annotation"
     dfast_dir = "Dfast_annotation"
     roary_dir = "Roary_pangenome"
     roary_plots_dir = "Roary_plots"
+    blast_proteins_dir = "BLAST_custom_proteins"
+    dna_database_blast = "DNA_database"
 
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
-        
+    
     os.mkdir(output_folder+"/"+trimmomatic_dir)
     os.mkdir(output_folder+"/"+prinseq_dir)
     os.mkdir(output_folder+"/"+spades_dir)
@@ -346,6 +395,7 @@ if __name__ == "__main__":
     os.mkdir(output_folder+"/"+mlst_dir)
     os.mkdir(output_folder+"/"+abricate_vir_dir)
     os.mkdir(output_folder+"/"+abricate_abr_dir)
+    os.mkdir(output_folder+"/"+abricate_vir_dir+"/"+blast_proteins_dir)
 
     if annotator == "dfast":
         os.mkdir(output_folder+"/"+dfast_dir)
@@ -473,13 +523,22 @@ if __name__ == "__main__":
                 output_filename="SampleAntibioticResistanceGenes.tab",
                 database = "resfinder")
 
+    # Blast call
+    print(Banner("\nStep 9: Blast\n"), flush=True)
+    contig_files = [output_folder+"/"+spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in os.listdir(output_folder+"/"+spades_dir)]
+    blast_call( proteins_file_ori=proteins_file, 
+                proteins_file_dest=output_folder+"/"+abricate_vir_dir+"/"+blast_proteins_dir+"/VF_custom.txt", 
+                contigs_files_paths=contig_files, 
+                blast_database_output=output_folder+"/DNA_database.fna", 
+                blast_output_folder=output_folder+"/"+abricate_vir_dir+"/"+blast_proteins_dir)
+
     # Roary call
-    print(Banner("\nStep 9: Roary\n"), flush=True)
+    print(Banner("\nStep 10: Roary\n"), flush=True)
     roary_call(input_files=roary_input_files, output_dir=output_folder+"/"+roary_dir)
 
     # Roary plots call
     os.mkdir(output_folder+"/"+roary_dir+"/"+roary_plots_dir)
-    print(Banner("\nStep 10: Roary Plots\n"), flush=True)
+    print(Banner("\nStep 11: Roary Plots\n"), flush=True)
     roary_plots_call(input_newick=output_folder+"/"+roary_dir+"/accessory_binary_genes.fa.newick",
                     input_gene_presence_absence=output_folder+"/"+roary_dir+"/gene_presence_absence.csv",
                     output_dir=output_folder+"/"+roary_dir+"/"+roary_plots_dir)
