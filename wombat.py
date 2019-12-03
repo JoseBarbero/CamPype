@@ -1,4 +1,4 @@
-import pandas
+import pandas as pd
 import datetime
 import os
 import shutil
@@ -20,7 +20,7 @@ def read_aux_files(inputfile):
     Returns:
         files_routes {tuple} -- Tuple of auxiliary files (adapters, reference_annotation_file, protein_reference). I return it like this to avoid length missmatches.
     """
-    files_df = pandas.read_csv(inputfile, sep="\t")
+    files_df = pd.read_csv(inputfile, sep="\t")
     files_routes = []
     for _, row in files_df.iterrows():
         files_routes.append(row["Route"])
@@ -37,7 +37,7 @@ def read_input_files(indexfile):
     Returns:
         files_tuples {list of tuples} -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number).
     """
-    files_df = pandas.read_csv(indexfile, sep="\t")
+    files_df = pd.read_csv(indexfile, sep="\t")
     files_tuples = []
     for _, row in files_df.iterrows():
         files_tuples.append((row["Read1"], row["Read2"], str(row["Samples"])))
@@ -226,7 +226,7 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     return call(arguments, stdout=output_file)
 
 
-def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder):
+def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name):
     """
     Blast call.
     
@@ -236,6 +236,7 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
         contigs_files_paths {list} -- List of contig files from SPAdes.
         blast_database_output {string} -- Destination folder to blast database.
         blast_output_folder {string} -- Destination folder to blast output.
+        blast_output_name {string} -- Output file name.
     
     Returns:
         {int} -- Execution state (0 if everything is all right)
@@ -259,10 +260,10 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
     # Call tblastn
     tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest, "-evalue", "10e-4", "-outfmt", 
                         "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq", 
-                        "-out", blast_output_folder+"BLASToutput_VS_custom.txt"])
+                        "-out", blast_output_folder+"/"+blast_output_name])
 
     # Add header to tblastn output
-    with open(blast_output_folder+"BLASToutput_VS_custom.txt", 'r+') as f:
+    with open(blast_output_folder+"/"+blast_output_name, 'r+') as f:
         content = f.read()
         f.seek(0, 0)
         headers = ["query id", "subject id", "% identity", "alignment length", "mismatches", "gap opens", 
@@ -357,6 +358,47 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
             if filename.startswith("pangenome_"):
                 shutil.move(root+"/"+filename, output_dir+"/"+filename)
     return ex_state
+
+
+
+def blast_postprocessing(blast_file, database_file, output_folder):
+    """
+    Blast post processing.
+    
+    Arguments:
+        blast_file {string} -- Blast output file.
+        database_file {string} -- Proteins database file.
+        output_folder {string} -- Output folder.
+    """
+    
+    # Read blast file as dataframe
+    blast_output = pd.read_csv(blast_file, sep="\t")
+
+    # Remove low identity rows 
+    blast_output = blast_output[blast_output["% identity"] > 50]
+
+    # Add query length and protein cover % columns
+    blast_output.insert(2, "query length", "")
+    blast_output.insert(3, "protein cover %", "")
+    
+    # Parse fasta database into dict
+    proteins_database = {}
+    for record in SeqIO.parse(database_file, "fasta"):
+        proteins_database[record.id] = (record.description, record.seq)
+    
+    # Fill query length and protein cover % columns
+    for index, row in blast_output.iterrows():
+        query_id = row["query id"]
+        query_length = len(proteins_database[query_id][1])
+        blast_output.at[index, "query length"] = query_length
+
+        # (query end - query start + 1) / query length * 100
+        query_end = row["query end"]
+        query_start = row["query start"]
+        protein_cover = (query_end - query_start + 1) / query_length * 100
+        blast_output.at[index, "protein cover %"] = protein_cover
+
+    blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)
 
 
 if __name__ == "__main__":
@@ -527,11 +569,17 @@ if __name__ == "__main__":
     # Blast call
     print(Banner("\nStep 9: Blast\n"), flush=True)
     contig_files = [spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in os.listdir(spades_dir)]
+    proteins_database_name = "VF_custom.txt"
+    blast_output_name = "BLASToutput_VS_custom.txt"
     blast_call( proteins_file_ori=proteins_file, 
-                proteins_file_dest=blast_proteins_dir+"/VF_custom.txt", 
+                proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
                 contigs_files_paths=contig_files, 
                 blast_database_output=dna_database_blast+"/DNA_database.fna", 
-                blast_output_folder=blast_proteins_dir)
+                blast_output_folder=blast_proteins_dir,
+                blast_output_name=blast_output_name)
+    blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
+                        database_file=blast_proteins_dir+"/"+proteins_database_name,
+                        output_folder=blast_proteins_dir)
 
     # Roary call
     print(Banner("\nStep 10: Roary\n"), flush=True)
