@@ -109,5 +109,5 @@ Workflow_OUTPUT*
 reference_files
 reference_files.csv
 
-#VSCode configuration
+# VSCode configuration
 .vscode

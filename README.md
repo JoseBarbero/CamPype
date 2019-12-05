@@ -15,7 +15,7 @@
     $ conda env create -f wombatenv.yml 
     ```
     
-## Set input files 
+## Set input files and configuration
 
 1.  Set input files in Wombat/input_files.csv (tab as separator):
 
@@ -34,6 +34,8 @@
     
     \* Remove the last line if you don't have a reference file to annotate.
 
+1. Set your own running parameters in "workflow_config.py" file.
+
 ## Running the workflow
 
 1. Activate the environment
@@ -47,10 +49,6 @@
 1. Run the workflow
     ```bash
     $ ./wombat
-    ```
-    You can set the annotator to dfast (it's set to prokka by default) by calling wombat like follows:
-    ```bash
-    $ ./wombat --annotator dfast
     ```
 1. \(*) You can deactivate the environment when you are finished
     ```bash
