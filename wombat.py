@@ -68,8 +68,7 @@ def trimmomatic_call(input_file1, input_file2, phred, trimfile,
     return call(arguments)
 
 
-def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qual_right=25,
-                 trim_qual_window=15, trim_qual_type="mean", out_format=3, log_name=None):
+def prinseq_call(input_file1, input_file2, log_name=None):
     """
     Prinseq call
     
@@ -78,20 +77,14 @@ def prinseq_call(input_file1, input_file2, min_len=40, min_qual_mean=25, trim_qu
         input_file2 {string} -- Input file reverse (and route).
     
     Keyword Arguments:
-        min_len {int} -- Minimum read length. (default: {40})
-        min_qual_mean {int} -- Minimum read quality. (default: {25})
-        trim_qual_right {int} -- Trim sequence by quality score from the 3'-end with this threshold score. (default: {25})
-        trim_qual_window {int} -- Trim sequence by quality score from the 5'-end with this threshold score. (default: {15})
-        trim_qual_type {str} -- Type of quality score calculation to use. (default: {"mean"})
-        out_format {int} -- Output format 1 (FASTA only), 2 (FASTA and QUAL), 3 (FASTQ), 4 (FASTQ and FASTA), 5 (FASTQ, FASTA and QUAL) (default: {3})
         log_name {string} -- Output log file name.
     
     Returns:
         int -- Execution state (0 if everything is all right)
     """
-    arguments = ["prinseq-lite.pl", "-verbose", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", min_len, \
-                "-min_qual_mean", min_qual_mean, "-trim_qual_right", trim_qual_right, "-trim_qual_window", \
-                trim_qual_window, "-trim_qual_type", trim_qual_type, "-out_format", out_format, "-out_bad", "null", "-log", log_name]
+    arguments = ["prinseq-lite.pl", "-verbose", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["prinseq"]["min_len"]), \
+                "-min_qual_mean", str(cfg.config["prinseq"]["min_qual_mean"]), "-trim_qual_right", str(cfg.config["prinseq"]["trim_qual_right"]), "-trim_qual_window", \
+                str(cfg.config["prinseq"]["trim_qual_window"]), "-trim_qual_type", cfg.config["prinseq"]["trim_qual_type"], "-out_format", str(cfg.config["prinseq"]["out_format"]), "-out_bad", cfg.config["prinseq"]["out_bad"], "-log", log_name]
     return call(arguments)
 
 
@@ -137,7 +130,7 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, "--careful", "--cov-cutoff", "auto", "-o", out_dir+"/"+sample]    
+    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"], "--cov-cutoff", cfg.config["spades"]["cov_cutoff"], "-o", out_dir+"/"+sample]    
     return call(arguments)
 
 
@@ -159,19 +152,18 @@ def contigs_trim_and_rename(contigs_file, output_dir, min_len):
     SeqIO.write(large_sequences, output_dir, "fasta")
 
 
-def quast_call(input_file, output_dir, min_contig):
+def quast_call(input_file, output_dir):
     """
     Quast call.
     
     Arguments:
         input_file {string} -- Input file (and route).
         output_dir {string} -- Output directory.
-        min_contig {int} -- Lower threshold for a contig length (in bp).
     
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig), "--no-icarus", "--silent"]
+    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(cfg.config["quast"]["min_contig"]), cfg.config["quast"]["icarus"], cfg.config["quast"]["mode"]]
     return call(arguments)
 
 
@@ -254,12 +246,12 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
                 
     # Create blast database
     blast_db_path = os.path.dirname(os.path.abspath(blast_database_output))+"/DNA_database"
-    call(["makeblastdb", "-in", blast_database_output, "-dbtype", "nucl", 
+    call(["makeblastdb", "-in", blast_database_output, "-dbtype", cfg.config["blast"]["dbtype"], 
           "-out", blast_db_path, "-title", "DNA_Database"])
 
     # Call tblastn
-    tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest, "-evalue", "10e-4", "-outfmt", 
-                        "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq", 
+    tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest, "-evalue", str(cfg.config["blast"]["evalue"]), "-outfmt", 
+                        cfg.config["blast"]["outfmt"],
                         "-out", blast_output_folder+"/"+blast_output_name])
 
     # Add header to tblastn output
@@ -287,11 +279,11 @@ def prokka_call(locus_tag, output_dir, prefix, input_file):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["prokka", "--locustag", locus_tag, "--outdir", output_dir, "--prefix", prefix, "--kingdom", "Bacteria", "--gcode", "11", input_file]
+    arguments = ["prokka", "--locustag", locus_tag, "--outdir", output_dir, "--prefix", prefix, "--kingdom", cfg.config["prokka"]["kingdom"], "--gcode", str(cfg.config["prokka"]["gcode"]), input_file]
     return call(arguments)
 
 
-def dfast_call(input_file, min_length, out_path, sample_basename):
+def dfast_call(input_file, out_path, sample_basename):
     """
     Dfast call.
     
@@ -303,7 +295,7 @@ def dfast_call(input_file, min_length, out_path, sample_basename):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["dfast", "--genome", input_file, "--minimum_length", str(min_length), "--out", out_path]
+    arguments = ["dfast", "--genome", input_file, "--minimum_length", str(cfg.config["dfast"]["min_length"]), "--out", out_path]
     state = call(arguments)
 
     # Replace default output filenames including string basename
@@ -405,7 +397,6 @@ if __name__ == "__main__":
 
     # Get config file parameters
     annotator = cfg.config["annotator"]
-    run_blast = cfg.config["run_blast"]
 
     # Create output directories
     now = datetime.datetime.now()
@@ -437,8 +428,6 @@ if __name__ == "__main__":
     os.mkdir(mlst_dir)
     os.mkdir(abricate_vir_dir)
     os.mkdir(abricate_abr_dir)
-    os.mkdir(blast_proteins_dir)
-    os.mkdir(dna_database_blast)
 
     if annotator == "dfast":
         os.mkdir(dfast_dir)
@@ -465,12 +454,6 @@ if __name__ == "__main__":
         print(Banner("\nStep 2 for sequence "+sample_basename+": Prinseq\n"), flush=True)
         prinseq_call(input_file1=trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
                     input_file2=trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq", 
-                    min_len="40", 
-                    min_qual_mean="25", 
-                    trim_qual_right="25", 
-                    trim_qual_window="15", 
-                    trim_qual_type="mean",
-                    out_format="3",
                     log_name=prinseq_dir+"/"+sample_basename+"/"+sample_basename+".log")
 
         # Prinseq output files refactor
@@ -498,8 +481,7 @@ if __name__ == "__main__":
         # Quast call
         print(Banner("\nStep 4 for sequence "+sample_basename+": Quast\n"), flush=True)
         quast_call( input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta",
-                    output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir,
-                    min_contig=200)
+                    output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Annotation (Prokka or dfast)
         if annotator.lower() == "dfast":
@@ -507,7 +489,6 @@ if __name__ == "__main__":
             annotation_dir = dfast_dir
             print(Banner("\nStep 5 for sequence "+sample_basename+": Dfast\n"), flush=True)
             dfast_call(input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta",
-                       min_length=0,
                        out_path=dfast_dir+"/"+sample_basename,
                        sample_basename=sample_basename)
         else:
@@ -531,7 +512,6 @@ if __name__ == "__main__":
             annotation_dir = dfast_dir
             print(Banner("\nStep 5 for reference sequence: Dfast\n"), flush=True)
             dfast_call(input_file=reference_annotation_file,
-                        min_length=0,
                         out_path=dfast_dir+"/"+reference_annotation_basename,
                         sample_basename=reference_annotation_basename)
         else:
@@ -557,29 +537,32 @@ if __name__ == "__main__":
     abricate_call(input_dir=contigs_dir,
                 output_dir=abricate_vir_dir,
                 output_filename="SampleVirulenceGenes.tab",
-                database = "vfdb")
+                database = cfg.config["abricate"]["virus_database"])
 
     # ABRicate call (antibiotic resistance genes)
     print(Banner("\nStep 8: ABRicate (antibiotic resistance genes)\n"), flush=True)
     abricate_call(input_dir=contigs_dir,
                 output_dir=abricate_abr_dir,
                 output_filename="SampleAntibioticResistanceGenes.tab",
-                database = "resfinder")
+                database = cfg.config["abricate"]["bacteria_database"])
 
     # Blast call
-    print(Banner("\nStep 9: Blast\n"), flush=True)
-    contig_files = [spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in os.listdir(spades_dir)]
-    proteins_database_name = "VF_custom.txt"
-    blast_output_name = "BLASToutput_VS_custom.txt"
-    blast_call( proteins_file_ori=proteins_file, 
-                proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
-                contigs_files_paths=contig_files, 
-                blast_database_output=dna_database_blast+"/DNA_database.fna", 
-                blast_output_folder=blast_proteins_dir,
-                blast_output_name=blast_output_name)
-    blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
-                        database_file=blast_proteins_dir+"/"+proteins_database_name,
-                        output_folder=blast_proteins_dir)
+    if cfg.config["run_blast"]:
+        print(Banner("\nStep 9: Blast\n"), flush=True)
+        os.mkdir(blast_proteins_dir)
+        os.mkdir(dna_database_blast)
+        contig_files = [spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in os.listdir(spades_dir)]
+        proteins_database_name = "VF_custom.txt"
+        blast_output_name = "BLASToutput_VS_custom.txt"
+        blast_call( proteins_file_ori=proteins_file, 
+                    proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
+                    contigs_files_paths=contig_files, 
+                    blast_database_output=dna_database_blast+"/DNA_database.fna", 
+                    blast_output_folder=blast_proteins_dir,
+                    blast_output_name=blast_output_name)
+        blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
+                            database_file=blast_proteins_dir+"/"+proteins_database_name,
+                            output_folder=blast_proteins_dir)
 
     # Roary call
     print(Banner("\nStep 10: Roary\n"), flush=True)
