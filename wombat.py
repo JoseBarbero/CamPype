@@ -102,7 +102,6 @@ def refactor_prinseq_output(input_dir, output_dir, sample):
     """
     filenames = dict()  # Files with good sequences (except singletons)
     for root, _dirs, files in os.walk(input_dir):
-        main_out_folder = root.split("/")[0]
         for filename in files:
             if filename.__contains__("prinseq"):
                 if filename.__contains__("singletons"):
