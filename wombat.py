@@ -403,8 +403,8 @@ if __name__ == "__main__":
     
     output_folder = sys.argv[1]
 
-    trimmomatic_dir = output_folder+"/Trimmomatic_filtering1"
-    prinseq_dir = output_folder+"/Prinseq_filtering2"
+    trimmomatic_dir = output_folder+"/Trimmomatic_filtering"
+    prinseq_dir = output_folder+"/Prinseq_filtering"
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Contigs_renamed_shorten"
     mlst_dir = output_folder+"/MLST"
@@ -418,7 +418,7 @@ if __name__ == "__main__":
     dna_database_blast = blast_proteins_dir+"/DNA_database"
 
     # Create directories
-    
+
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
     
