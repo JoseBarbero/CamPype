@@ -68,13 +68,14 @@ def trimmomatic_call(input_file1, input_file2, phred, trimfile,
     return call(arguments)
 
 
-def prinseq_call(input_file1, input_file2, log_name=None):
+def prinseq_call(input_file1, input_file2, output_folder, sample, log_name=None):
     """
     Prinseq call
     
     Arguments:
         input_file1 {string} -- Input file forward (and route).
         input_file2 {string} -- Input file reverse (and route).
+        output_folder {string} -- Output folder.
     
     Keyword Arguments:
         log_name {string} -- Output log file name.
@@ -84,17 +85,16 @@ def prinseq_call(input_file1, input_file2, log_name=None):
     """
     arguments = ["prinseq-lite.pl", "-verbose", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["prinseq"]["min_len"]), \
                 "-min_qual_mean", str(cfg.config["prinseq"]["min_qual_mean"]), "-trim_qual_right", str(cfg.config["prinseq"]["trim_qual_right"]), "-trim_qual_window", \
-                str(cfg.config["prinseq"]["trim_qual_window"]), "-trim_qual_type", cfg.config["prinseq"]["trim_qual_type"], "-out_format", str(cfg.config["prinseq"]["out_format"]), "-out_bad", cfg.config["prinseq"]["out_bad"], "-log", log_name]
+                str(cfg.config["prinseq"]["trim_qual_window"]), "-trim_qual_type", cfg.config["prinseq"]["trim_qual_type"], "-out_format", str(cfg.config["prinseq"]["out_format"]), "-out_good", output_folder+"/"+sample, "-out_bad", cfg.config["prinseq"]["out_bad"], "-log", log_name]
     return call(arguments)
 
 
-def refactor_prinseq_output(input_dir, output_dir, sample):
+def refactor_prinseq_output(input_dir, sample):
     """
-    Places prinseq output files into directories with the following structure: /OUTPUT[timestamp]/Prinseq_filtering2/sample
+    Rename and remove some files from prinseq.
     
     Arguments:
-        input_dir {string} -- Input directory.
-        output_dir {string} -- Output directory.
+        input_dir {list} -- Input directory.
         sample {string} -- Sample basename.
     
     Returns:
@@ -103,16 +103,17 @@ def refactor_prinseq_output(input_dir, output_dir, sample):
     filenames = dict()  # Files with good sequences (except singletons)
     for root, _dirs, files in os.walk(input_dir):
         for filename in files:
-            if filename.__contains__("prinseq"):
-                if filename.__contains__("singletons"):
-                    os.remove(os.path.join(root, filename))
-                else:
-                    # Move every prinseq file from trimmomatic folder to prinseq folder
-                    shutil.move(os.path.join(root, filename), output_dir+"/"+sample)
-                    if filename.startswith(sample+"_R1"):
-                        filenames["R1"] = filename
-                    elif filename.startswith(sample+"_R2"):
-                        filenames["R2"] = filename
+            if filename.__contains__("singletons"):
+                os.remove(os.path.join(root, filename))
+            else:
+                if filename.__contains__("_1"):
+                    new_filename = os.path.join(root, sample+"_R1.fastq")
+                    os.rename(os.path.join(root, filename), new_filename)
+                    filenames["R1"] = new_filename
+                elif filename.__contains__("_2"):
+                    new_filename = os.path.join(root, sample+"_R2.fastq")
+                    os.rename(os.path.join(root, filename), new_filename)
+                    filenames["R2"] = new_filename
     return filenames
 
 
@@ -467,20 +468,23 @@ if __name__ == "__main__":
         # Prinseq call
         print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Prinseq\n"), flush=True)
         prinseq_call(input_file1=prinseq_input1,
-                    input_file2=prinseq_input2, 
+                    input_file2=prinseq_input2,
+                    output_folder=prinseq_dir+"/"+sample_basename,
+                    sample=sample_basename,
                     log_name=prinseq_dir+"/"+sample_basename+"/"+sample_basename+".log")
         step_counter += 1
-
+        
         # Prinseq output files refactor
-        prinseq_files = refactor_prinseq_output(trimmomatic_dir, prinseq_dir, sample_basename)
+        prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
         
         # Create SPAdes output directories
         os.mkdir(spades_dir+"/"+sample_basename)
 
         # SPAdes call
         print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": SPAdes\n"), flush=True)
-        spades_call(forward_sample=prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R1"],
-                    reverse_sample=prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R2"],
+        
+        spades_call(forward_sample=prinseq_files["R1"],
+                    reverse_sample=prinseq_files["R2"],
                     sample=sample_basename,
                     out_dir=spades_dir)
         step_counter += 1
