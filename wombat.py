@@ -303,7 +303,6 @@ def dfast_call(input_file, out_path, sample_basename):
             if filename.__contains__("genome"):
                 new_filename = filename.replace("genome", sample_basename)
                 shutil.move(os.path.join(root, filename), os.path.join(root, new_filename))
-
     return state
 
 
@@ -403,6 +402,7 @@ if __name__ == "__main__":
     adapters_file, reference_annotation_file, proteins_file = read_aux_files("reference_files.csv")
     
     output_folder = sys.argv[1]
+
     trimmomatic_dir = output_folder+"/Trimmomatic_filtering1"
     prinseq_dir = output_folder+"/Prinseq_filtering2"
     spades_dir = output_folder+"/SPAdes_assembly"
@@ -417,16 +417,22 @@ if __name__ == "__main__":
     blast_proteins_dir = abricate_vir_dir+"/BLAST_custom_proteins"
     dna_database_blast = blast_proteins_dir+"/DNA_database"
 
+    # Create directories
+    
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
     
-    os.mkdir(trimmomatic_dir)
+    if cfg.config["run_trimmomatic"]:
+        os.mkdir(trimmomatic_dir)
+
     os.mkdir(prinseq_dir)
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
     os.mkdir(mlst_dir)
     os.mkdir(abricate_vir_dir)
     os.mkdir(abricate_abr_dir)
+
+    step_counter = 1 # Just to let the user know the number of each step
 
     if annotator == "dfast":
         os.mkdir(dfast_dir)
@@ -435,25 +441,35 @@ if __name__ == "__main__":
 
     roary_input_files = []
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
-        # Trimmomatic call
-        print(Banner("\nStep 1 for sequence "+sample_basename+": Trimmomatic\n"), flush=True)
-        trimmomatic_call(input_file1=sample1,
-                        input_file2=sample2,
-                        phred="-phred33",
-                        trimfile="ILLUMINACLIP:"+adapters_file+":1:30:11",
-                        paired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
-                        unpaired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
-                        paired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
-                        unpaired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq")
+        
+        # Run trimmomatic or not
+        if cfg.config["run_trimmomatic"]:
+
+            print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Trimmomatic\n"), flush=True)
+            trimmomatic_call(input_file1=sample1,
+                            input_file2=sample2,
+                            phred="-phred33",
+                            trimfile="ILLUMINACLIP:"+adapters_file+":1:30:11",
+                            paired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
+                            unpaired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
+                            paired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
+                            unpaired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq")
+            step_counter += 1
+            prinseq_input1 = trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq"
+            prinseq_input2 = trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq"
+        else:
+            prinseq_input1 = sample1
+            prinseq_input2 = sample2
 
         # Create prinseq output directories
         os.mkdir(prinseq_dir+"/"+sample_basename)
 
         # Prinseq call
-        print(Banner("\nStep 2 for sequence "+sample_basename+": Prinseq\n"), flush=True)
-        prinseq_call(input_file1=trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
-                    input_file2=trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq", 
+        print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Prinseq\n"), flush=True)
+        prinseq_call(input_file1=prinseq_input1,
+                    input_file2=prinseq_input2, 
                     log_name=prinseq_dir+"/"+sample_basename+"/"+sample_basename+".log")
+        step_counter += 1
 
         # Prinseq output files refactor
         prinseq_files = refactor_prinseq_output(trimmomatic_dir, prinseq_dir, sample_basename)
@@ -462,11 +478,12 @@ if __name__ == "__main__":
         os.mkdir(spades_dir+"/"+sample_basename)
 
         # SPAdes call
-        print(Banner("\nStep 3 for sequence "+sample_basename+": SPAdes\n"), flush=True)
+        print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": SPAdes\n"), flush=True)
         spades_call(forward_sample=prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R1"],
                     reverse_sample=prinseq_dir+"/"+sample_basename+"/"+prinseq_files["R2"],
                     sample=sample_basename,
                     out_dir=spades_dir)
+        step_counter += 1
 
         # Trim short contigs and shorten sequences id
         contigs_trim_and_rename(spades_dir+"/"+sample_basename+"/"+"contigs.fasta", 
@@ -478,27 +495,32 @@ if __name__ == "__main__":
         os.mkdir(spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
-        print(Banner("\nStep 4 for sequence "+sample_basename+": Quast\n"), flush=True)
+        print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Quast\n"), flush=True)
         quast_call( input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta",
                     output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir)
+        step_counter += 1
 
         # Annotation (Prokka or dfast)
         if annotator.lower() == "dfast":
             # Dfast call
             annotation_dir = dfast_dir
-            print(Banner("\nStep 5 for sequence "+sample_basename+": Dfast\n"), flush=True)
+            print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Dfast\n"), flush=True)
             dfast_call(input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta",
                        out_path=dfast_dir+"/"+sample_basename,
                        sample_basename=sample_basename)
+            step_counter += 1
         else:
             # Prokka call
             annotation_dir = prokka_dir
-            print(Banner("\nStep 5 for sequence "+sample_basename+": Prokka\n"), flush=True)
+            print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Prokka\n"), flush=True)
             prokka_call(locus_tag=sample_basename+"_L",
                         output_dir=prokka_dir+"/"+sample_basename,
                         prefix=sample_basename,
                         input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta")
+            step_counter += 1
 
+        step_counter = 0 # Restart the counter to every sample
+        
         # Set roary input files
         roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
 
@@ -509,37 +531,40 @@ if __name__ == "__main__":
         if annotator.lower() == "dfast":
             # Dfast call
             annotation_dir = dfast_dir
-            print(Banner("\nStep 5 for reference sequence: Dfast\n"), flush=True)
+            print(Banner(f"\nStep {step_counter} for reference sequence: Dfast\n"), flush=True)
             dfast_call(input_file=reference_annotation_file,
                         out_path=dfast_dir+"/"+reference_annotation_basename,
                         sample_basename=reference_annotation_basename)
         else:
             # Prokka call
             annotation_dir = prokka_dir
-            print(Banner("\nStep 5 for reference sequence: Prokka\n"), flush=True)
+            print(Banner(f"\nStep {step_counter} for reference sequence: Prokka\n"), flush=True)
             prokka_call(locus_tag=reference_annotation_basename+"_L",
                         output_dir=prokka_dir+"/"+reference_annotation_basename,
                         prefix=reference_annotation_basename,
                         input_file=reference_annotation_file)
-
+        step_counter += 1
         # Set roary input files
         roary_input_files.append(annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
 
     # MLST call
-    print(Banner("\nStep 6: MLST\n"), flush=True)
+    print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
+    step_counter += 1
     mlst_call(input_dir=contigs_dir,
             output_dir=mlst_dir,
             output_filename="MLST.txt")
 
     # ABRicate call (virulence genes)
-    print(Banner("\nStep 7: ABRicate (virulence genes)\n"), flush=True)
+    print(Banner(f"\nStep {step_counter}: ABRicate (virulence genes)\n"), flush=True)
+    step_counter += 1
     abricate_call(input_dir=contigs_dir,
                 output_dir=abricate_vir_dir,
                 output_filename="SampleVirulenceGenes.tab",
                 database = cfg.config["abricate"]["virus_database"])
 
     # ABRicate call (antibiotic resistance genes)
-    print(Banner("\nStep 8: ABRicate (antibiotic resistance genes)\n"), flush=True)
+    print(Banner(f"\nStep {step_counter}: ABRicate (antibiotic resistance genes)\n"), flush=True)
+    step_counter += 1
     abricate_call(input_dir=contigs_dir,
                 output_dir=abricate_abr_dir,
                 output_filename="SampleAntibioticResistanceGenes.tab",
@@ -547,7 +572,8 @@ if __name__ == "__main__":
 
     # Blast call
     if cfg.config["run_blast"]:
-        print(Banner("\nStep 9: Blast\n"), flush=True)
+        print(Banner(f"\nStep {step_counter}: Blast\n"), flush=True)
+        step_counter += 1
         os.mkdir(blast_proteins_dir)
         os.mkdir(dna_database_blast)
         contig_files = [spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in os.listdir(spades_dir)]
@@ -564,12 +590,14 @@ if __name__ == "__main__":
                             output_folder=blast_proteins_dir)
 
     # Roary call
-    print(Banner("\nStep 10: Roary\n"), flush=True)
+    print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
+    step_counter += 1
     roary_call(input_files=roary_input_files, output_dir=roary_dir)
 
     # Roary plots call
     os.mkdir(roary_plots_dir)
-    print(Banner("\nStep 11: Roary Plots\n"), flush=True)
+    print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
+    step_counter += 1
     roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
                     input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
                     output_dir=roary_plots_dir)

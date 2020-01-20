@@ -1,4 +1,5 @@
 config = {
+    "run_trimmomatic": False, # Set to true or false
     "prinseq": {
         "min_len": 40, # Minimum read length. (default: {40})
         "min_qual_mean": 25, # Minimum read quality. (default: {25})
