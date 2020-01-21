@@ -7,7 +7,7 @@ dependencies:
   - python=3.6
   - trimmomatic=0.39
   - prinseq=0.20.4
-  - spades=3.13.1
+  - spades=3.14.0
   - quast=5.0.2
   - mlst=2.17.6
   - abricate=0.8.13
@@ -18,6 +18,7 @@ dependencies:
   - seaborn=0.9.0
   - dfast=1.2.3
   - blast=2.9.0
+  - flash=1.2.11
   - pip
   - pip:
     - terminal-banner

@@ -117,11 +117,28 @@ def refactor_prinseq_output(input_dir, sample):
     return filenames
 
 
-def spades_call(forward_sample, reverse_sample, sample, out_dir):
+def flash_call(input_file_1, input_file_2, output_filename, output_dir):
+    """Flash call.
+    
+    Arguments:
+        input_file_1 {string} -- Forward prinseq file.
+        input_file_2 {string} -- Reverse prinseq file.
+        output_filename {string} -- Output filename.
+        output_dir {string} -- Output folder.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    arguments = ["flash", input_file_1, input_file_2, "-o", output_filename, "-d", output_dir]
+    return call(arguments)
+
+
+def spades_call(merged_sample, forward_sample, reverse_sample, sample, out_dir):
     """
     Spades call
     
     Arguments:
+        merged_sample {string} -- Merged sample file name (and route).
         forward_sample {string} -- Forward sample file name (and route).
         reverse_sample {string} -- Reverse sample file name (and route).
         sample {string} -- Sample basename.
@@ -130,7 +147,7 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"], "--cov-cutoff", cfg.config["spades"]["cov_cutoff"], "-o", out_dir+"/"+sample]    
+    arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"], "--cov-cutoff", cfg.config["spades"]["cov_cutoff"], "-o", out_dir+"/"+sample]    
     return call(arguments)
 
 
@@ -406,6 +423,7 @@ if __name__ == "__main__":
 
     trimmomatic_dir = output_folder+"/Trimmomatic_filtering"
     prinseq_dir = output_folder+"/Prinseq_filtering"
+    flash_dir = output_folder+"/Flash_filtering"
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Contigs_renamed_shorten"
     mlst_dir = output_folder+"/MLST"
@@ -427,6 +445,7 @@ if __name__ == "__main__":
         os.mkdir(trimmomatic_dir)
 
     os.mkdir(prinseq_dir)
+    os.mkdir(flash_dir)
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
     os.mkdir(mlst_dir)
@@ -477,14 +496,21 @@ if __name__ == "__main__":
         # Prinseq output files refactor
         prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
         
+        # Flash call
+        flash_call(input_file_1=prinseq_files["R1"],
+                   input_file_2=prinseq_files["R2"],
+                   output_filename=sample_basename,
+                   output_dir=flash_dir+"/"+sample_basename)
+
         # Create SPAdes output directories
         os.mkdir(spades_dir+"/"+sample_basename)
 
         # SPAdes call
         print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": SPAdes\n"), flush=True)
         
-        spades_call(forward_sample=prinseq_files["R1"],
-                    reverse_sample=prinseq_files["R2"],
+        spades_call(merged_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq",
+                    forward_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
+                    reverse_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
                     sample=sample_basename,
                     out_dir=spades_dir)
         step_counter += 1
@@ -523,7 +549,7 @@ if __name__ == "__main__":
                         input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta")
             step_counter += 1
 
-        step_counter = 0 # Restart the counter to every sample
+        step_counter = 1 # Restart the counter to every sample
         
         # Set roary input files
         roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
