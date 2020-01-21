@@ -184,6 +184,21 @@ def quast_call(input_file, output_dir):
     return call(arguments)
 
 
+def quast_report_unification(input_dir, samples, output_dir):
+    """
+    Create a report unifying reports from every sample.
+    
+    Arguments:
+        input_dir {string} -- Input directory.
+        samples {list} -- List of names of samples.
+        output_dir {string} -- Output directory.
+    """
+    first_col_df = pd.read_csv(input_dir+"/"+samples[0]+"/"+samples[0]+"_assembly_statistics/report.tsv", sep="\t")
+    combined_df = pd.concat([pd.read_csv(input_dir+"/"+sample+"/"+sample+"_assembly_statistics/report.tsv", sep="\t").iloc[:, 1] for sample in samples[1:]], axis=1)
+    final_df = pd.concat([first_col_df, combined_df], axis=1)
+    final_df.to_csv(output_dir+"/quality_assembly_report.tsv", sep="\t")
+
+
 def mlst_call(input_dir, output_dir, output_filename):
     """
     MLST call for every fasta file in input_dir.
@@ -452,16 +467,19 @@ if __name__ == "__main__":
     os.mkdir(abricate_vir_dir)
     os.mkdir(abricate_abr_dir)
 
-    step_counter = 1 # Just to let the user know the number of each step
-
     if annotator == "dfast":
         os.mkdir(dfast_dir)
     else:
         os.mkdir(prokka_dir)
 
+    samples_basenames = [] # Keeping track of them to use it later
+
     roary_input_files = []
     for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
         
+        step_counter = 1 # Just to let the user know the number of each step
+        samples_basenames.append(sample_basename)
+
         # Run trimmomatic or not
         if cfg.config["run_trimmomatic"]:
 
@@ -517,7 +535,7 @@ if __name__ == "__main__":
 
         # Trim short contigs and shorten sequences id
         contigs_trim_and_rename(spades_dir+"/"+sample_basename+"/"+"contigs.fasta", 
-                                contigs_dir+"/"+sample_basename+"_contigs.fasta",
+                                contigs_dir+"/"+sample_basename+".fasta",
                                 500)    # TODO Para el futuro, este valor deberá ser el doble de la longitud de una read del archivo .fastq del secuenciador
 
         # Create Quast output directories
@@ -526,7 +544,7 @@ if __name__ == "__main__":
 
         # Quast call
         print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Quast\n"), flush=True)
-        quast_call( input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta",
+        quast_call( input_file=contigs_dir+"/"+sample_basename+".fasta",
                     output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir)
         step_counter += 1
 
@@ -535,7 +553,7 @@ if __name__ == "__main__":
             # Dfast call
             annotation_dir = dfast_dir
             print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Dfast\n"), flush=True)
-            dfast_call(input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta",
+            dfast_call(input_file=contigs_dir+"/"+sample_basename+".fasta",
                        out_path=dfast_dir+"/"+sample_basename,
                        sample_basename=sample_basename)
             step_counter += 1
@@ -546,14 +564,15 @@ if __name__ == "__main__":
             prokka_call(locus_tag=sample_basename+"_L",
                         output_dir=prokka_dir+"/"+sample_basename,
                         prefix=sample_basename,
-                        input_file=contigs_dir+"/"+sample_basename+"_contigs.fasta")
+                        input_file=contigs_dir+"/"+sample_basename+".fasta")
             step_counter += 1
-
-        step_counter = 1 # Restart the counter to every sample
         
         # Set roary input files
         roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
 
+    # Quast report unification
+    quast_report_unification(spades_dir, samples_basenames, spades_dir)
+        
     # Annotate reference fasta file 
     if reference_annotation_file:
         reference_annotation_filename = reference_annotation_file.split("/")[-1]
@@ -606,7 +625,7 @@ if __name__ == "__main__":
         step_counter += 1
         os.mkdir(blast_proteins_dir)
         os.mkdir(dna_database_blast)
-        contig_files = [spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in os.listdir(spades_dir)]
+        contig_files = [spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in next(os.walk(spades_dir))[1]]
         proteins_database_name = "VF_custom.txt"
         blast_output_name = "BLASToutput_VS_custom.txt"
         blast_call( proteins_file_ori=proteins_file, 
