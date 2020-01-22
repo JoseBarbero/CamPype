@@ -19,6 +19,7 @@ dependencies:
   - dfast=1.2.3
   - blast=2.9.0
   - flash=1.2.11
+  - mauve=2.4.0
   - pip
   - pip:
     - terminal-banner
