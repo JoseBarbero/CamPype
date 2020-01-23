@@ -14,7 +14,6 @@ config = {
         "cov_cutoff": "auto" 
     },
     "quast": {
-        "min_contig": 200,  # Lower threshold for a contig length (in bp).
         "icarus": "--no-icarus",    # TODO
         "mode": "--silent"  # TODO
     },

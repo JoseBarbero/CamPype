@@ -169,18 +169,30 @@ def contigs_trim_and_rename(contigs_file, output_dir, min_len):
     SeqIO.write(large_sequences, output_dir, "fasta")
 
 
-def quast_call(input_file, output_dir):
+def get_reads_length(input_file):
+    """
+    Returns first read length form fastq file.
+    
+    Arguments:
+        input_file {string} -- Fastq file.
+    """
+    first_record = next(SeqIO.parse(input_file, "fastq"))
+    return len(first_record.seq)
+
+
+def quast_call(input_file, output_dir, min_contig_len):
     """
     Quast call.
     
     Arguments:
         input_file {string} -- Input file (and route).
         output_dir {string} -- Output directory.
+        min_contig_len -- Lower threshold for a contig length (in bp).
     
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(cfg.config["quast"]["min_contig"]), cfg.config["quast"]["icarus"], cfg.config["quast"]["mode"]]
+    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig_len), cfg.config["quast"]["icarus"], cfg.config["quast"]["mode"]]
     return call(arguments)
 
 
@@ -383,7 +395,6 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
     return ex_state
 
 
-
 def blast_postprocessing(blast_file, database_file, output_folder):
     """
     Blast post processing.
@@ -533,10 +544,14 @@ if __name__ == "__main__":
                     out_dir=spades_dir)
         step_counter += 1
 
+
+        # Get minimum contig length
+        min_contig_threshold = get_reads_length(prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R1.fastq")
+
         # Trim short contigs and shorten sequences id
         contigs_trim_and_rename(spades_dir+"/"+sample_basename+"/"+"contigs.fasta", 
                                 contigs_dir+"/"+sample_basename+".fasta",
-                                500)    # TODO Para el futuro, este valor deberá ser el doble de la longitud de una read del archivo .fastq del secuenciador
+                                min_contig_threshold * 2)
 
         # Create Quast output directories
         quast_dir = sample_basename+"_assembly_statistics"
@@ -545,7 +560,8 @@ if __name__ == "__main__":
         # Quast call
         print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Quast\n"), flush=True)
         quast_call( input_file=contigs_dir+"/"+sample_basename+".fasta",
-                    output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir)
+                    output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir,
+                    min_contig_len=min_contig_threshold * 2)
         step_counter += 1
 
         # Annotation (Prokka or dfast)
