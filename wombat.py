@@ -453,13 +453,13 @@ if __name__ == "__main__":
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Contigs_renamed_shorten"
     mlst_dir = output_folder+"/MLST"
-    abricate_vir_dir = output_folder+"/ABRicateVirulenceGenes"
-    abricate_abr_dir = output_folder+"/ABRicateAntibioticResistanceGenes"
+    abricate_vir_dir = output_folder+"/ABRicate_virulence_genes"
+    abricate_abr_dir = output_folder+"/ABRicate_antibiotic_resistanceGenes"
     prokka_dir = output_folder+"/Prokka_annotation"
     dfast_dir = output_folder+"/Dfast_annotation"
     roary_dir = output_folder+"/Roary_pangenome"
     roary_plots_dir = roary_dir+"/Roary_plots"
-    blast_proteins_dir = abricate_vir_dir+"/BLAST_custom_proteins"
+    blast_proteins_dir = output_folder+"/BLAST_custom_virulence_genes"
     dna_database_blast = blast_proteins_dir+"/DNA_database"
 
     # Create directories
@@ -627,17 +627,9 @@ if __name__ == "__main__":
                 output_filename="SampleVirulenceGenes.tab",
                 database = cfg.config["abricate"]["virus_database"])
 
-    # ABRicate call (antibiotic resistance genes)
-    print(Banner(f"\nStep {step_counter}: ABRicate (antibiotic resistance genes)\n"), flush=True)
-    step_counter += 1
-    abricate_call(input_dir=contigs_dir,
-                output_dir=abricate_abr_dir,
-                output_filename="SampleAntibioticResistanceGenes.tab",
-                database = cfg.config["abricate"]["bacteria_database"])
-
     # Blast call
     if cfg.config["run_blast"]:
-        print(Banner(f"\nStep {step_counter}: Blast\n"), flush=True)
+        print(Banner(f"\nStep {step_counter}: BLAST (virulence genes against custom database)\n"), flush=True)
         step_counter += 1
         os.mkdir(blast_proteins_dir)
         os.mkdir(dna_database_blast)
@@ -653,6 +645,16 @@ if __name__ == "__main__":
         blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
                             database_file=blast_proteins_dir+"/"+proteins_database_name,
                             output_folder=blast_proteins_dir)
+
+    # ABRicate call (antibiotic resistance genes)
+    print(Banner(f"\nStep {step_counter}: ABRicate (antibiotic resistance genes)\n"), flush=True)
+    step_counter += 1
+    abricate_call(input_dir=contigs_dir,
+                output_dir=abricate_abr_dir,
+                output_filename="SampleAntibioticResistanceGenes.tab",
+                database = cfg.config["abricate"]["bacteria_database"])
+
+    
 
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
