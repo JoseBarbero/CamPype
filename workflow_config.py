@@ -23,7 +23,8 @@ config = {
         "gcode": 11 # TODO
     },
     "dfast": {
-        "min_lenght": 0 # TODO
+        "min_length": 0, # TODO
+        "use_original_name": "true" # TODO
     },
     "mlst": {},
     "abricate": {

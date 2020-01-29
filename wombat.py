@@ -339,7 +339,8 @@ def dfast_call(input_file, out_path, sample_basename):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["dfast", "--genome", input_file, "--minimum_length", str(cfg.config["dfast"]["min_length"]), "--out", out_path]
+    arguments = ["dfast", "--genome", input_file, "--minimum_length", str(cfg.config["dfast"]["min_length"]), "--out", out_path,
+                "--use_original_name", str(cfg.config["dfast"]["use_original_name"])]
     state = call(arguments)
 
     # Replace default output filenames including string basename
@@ -510,6 +511,7 @@ if __name__ == "__main__":
             prinseq_input1 = sample1
             prinseq_input2 = sample2
 
+
         # Create prinseq output directories
         os.mkdir(prinseq_dir+"/"+sample_basename)
 
@@ -525,11 +527,13 @@ if __name__ == "__main__":
         # Prinseq output files refactor
         prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
         
+
         # Flash call
         flash_call(input_file_1=prinseq_files["R1"],
                    input_file_2=prinseq_files["R2"],
                    output_filename=sample_basename,
                    output_dir=flash_dir+"/"+sample_basename)
+
 
         # Create SPAdes output directories
         os.mkdir(spades_dir+"/"+sample_basename)
@@ -564,6 +568,7 @@ if __name__ == "__main__":
                     min_contig_len=min_contig_threshold * 2)
         step_counter += 1
 
+
         # Annotation (Prokka or dfast)
         if annotator.lower() == "dfast":
             # Dfast call
@@ -583,12 +588,14 @@ if __name__ == "__main__":
                         input_file=contigs_dir+"/"+sample_basename+".fasta")
             step_counter += 1
         
+
         # Set roary input files
         roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
 
     # Quast report unification
     quast_report_unification(spades_dir, samples_basenames, spades_dir)
-        
+
+
     # Annotate reference fasta file 
     if reference_annotation_file:
         reference_annotation_filename = reference_annotation_file.split("/")[-1]
@@ -612,12 +619,14 @@ if __name__ == "__main__":
         # Set roary input files
         roary_input_files.append(annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
 
+
     # MLST call
     print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
     step_counter += 1
     mlst_call(input_dir=contigs_dir,
             output_dir=mlst_dir,
             output_filename="MLST.txt")
+
 
     # ABRicate call (virulence genes)
     print(Banner(f"\nStep {step_counter}: ABRicate (virulence genes)\n"), flush=True)
@@ -626,6 +635,7 @@ if __name__ == "__main__":
                 output_dir=abricate_vir_dir,
                 output_filename="SampleVirulenceGenes.tab",
                 database = cfg.config["abricate"]["virus_database"])
+
 
     # Blast call
     if cfg.config["run_blast"]:
@@ -646,6 +656,7 @@ if __name__ == "__main__":
                             database_file=blast_proteins_dir+"/"+proteins_database_name,
                             output_folder=blast_proteins_dir)
 
+
     # ABRicate call (antibiotic resistance genes)
     print(Banner(f"\nStep {step_counter}: ABRicate (antibiotic resistance genes)\n"), flush=True)
     step_counter += 1
@@ -653,13 +664,13 @@ if __name__ == "__main__":
                 output_dir=abricate_abr_dir,
                 output_filename="SampleAntibioticResistanceGenes.tab",
                 database = cfg.config["abricate"]["bacteria_database"])
-
     
 
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
     step_counter += 1
     roary_call(input_files=roary_input_files, output_dir=roary_dir)
+
 
     # Roary plots call
     os.mkdir(roary_plots_dir)
