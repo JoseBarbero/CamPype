@@ -20,6 +20,9 @@ dependencies:
   - blast=2.9.0
   - flash=1.2.11
   - mauve=2.4.0
+  - snippy=4.3.6
+  - samtools=1.9
+  - bcftools=1.9
   - pip
   - pip:
     - terminal-banner

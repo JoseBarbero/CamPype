@@ -151,6 +151,29 @@ def spades_call(merged_sample, forward_sample, reverse_sample, sample, out_dir):
     return call(arguments)
 
 
+def mauve_call():
+    arguments = []    
+    return call(arguments)
+
+
+
+def snippy_call(reference_genome, contigs, output_dir, prefix):
+    """
+    Snippy call. (SNP identifier)
+    
+    Arguments:
+        referece_genome {string} -- Reference genome file route.
+        contigs {string} -- Contigs file route.
+        output_dir {string} -- Output directory.
+        prefix {string} -- Sample name as prefix.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    arguments = ["snippy", "--ref", reference_genome, "--ctgs", contigs, "--outdir", output_dir, "--prefix", prefix, "--report"]    
+    return call(arguments)
+
+
 def contigs_trim_and_rename(contigs_file, output_dir, min_len):
     """
     Creates new fasta file filtering sequences shorter than min_len and shortening sequence identifiers.
@@ -453,6 +476,7 @@ if __name__ == "__main__":
     flash_dir = output_folder+"/Flash_filtering"
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Contigs_renamed_shorten"
+    snps_dir = output_folder+"/SNP_SNIPPŶ"
     mlst_dir = output_folder+"/MLST"
     abricate_vir_dir = output_folder+"/ABRicate_virulence_genes"
     abricate_abr_dir = output_folder+"/ABRicate_antibiotic_resistanceGenes"
@@ -475,6 +499,7 @@ if __name__ == "__main__":
     os.mkdir(flash_dir)
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
+    os.mkdir(snps_dir)
     os.mkdir(mlst_dir)
     os.mkdir(abricate_vir_dir)
     os.mkdir(abricate_abr_dir)
@@ -484,20 +509,24 @@ if __name__ == "__main__":
     else:
         os.mkdir(prokka_dir)
 
-    samples_basenames = [] # Keeping track of them to use it later
+    sample_counter = 0
+    samples_basenames = [] # Keeping track of them
+    n_samples = len(read_input_files("input_files.csv"))
 
     roary_input_files = []
-    for sample1, sample2, sample_basename in read_input_files("input_files.csv"):
+
+    for sample_fw, sample_rv, sample_basename in read_input_files("input_files.csv"):
         
         step_counter = 1 # Just to let the user know the number of each step
+        sample_counter += 1
         samples_basenames.append(sample_basename)
 
         # Run trimmomatic or not
         if cfg.config["run_trimmomatic"]:
-
-            print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Trimmomatic\n"), flush=True)
-            trimmomatic_call(input_file1=sample1,
-                            input_file2=sample2,
+            
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples}({sample_basename}): Trimmomatic\n"), flush=True)
+            trimmomatic_call(input_file1=sample_fw,
+                            input_file2=sample_rv,
                             phred="-phred33",
                             trimfile="ILLUMINACLIP:"+adapters_file+":1:30:11",
                             paired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
@@ -508,15 +537,15 @@ if __name__ == "__main__":
             prinseq_input1 = trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq"
             prinseq_input2 = trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq"
         else:
-            prinseq_input1 = sample1
-            prinseq_input2 = sample2
+            prinseq_input1 = sample_fw
+            prinseq_input2 = sample_rv
 
 
         # Create prinseq output directories
         os.mkdir(prinseq_dir+"/"+sample_basename)
 
         # Prinseq call
-        print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Prinseq\n"), flush=True)
+        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Prinseq\n"), flush=True)
         prinseq_call(input_file1=prinseq_input1,
                     input_file2=prinseq_input2,
                     output_folder=prinseq_dir+"/"+sample_basename,
@@ -539,7 +568,7 @@ if __name__ == "__main__":
         os.mkdir(spades_dir+"/"+sample_basename)
 
         # SPAdes call
-        print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": SPAdes\n"), flush=True)
+        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SPAdes\n"), flush=True)
         
         spades_call(merged_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq",
                     forward_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
@@ -562,7 +591,7 @@ if __name__ == "__main__":
         os.mkdir(spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
-        print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Quast\n"), flush=True)
+        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Quast\n"), flush=True)
         quast_call( input_file=contigs_dir+"/"+sample_basename+".fasta",
                     output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig_len=min_contig_threshold * 2)
@@ -573,7 +602,7 @@ if __name__ == "__main__":
         if annotator.lower() == "dfast":
             # Dfast call
             annotation_dir = dfast_dir
-            print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Dfast\n"), flush=True)
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
             dfast_call(input_file=contigs_dir+"/"+sample_basename+".fasta",
                        out_path=dfast_dir+"/"+sample_basename,
                        sample_basename=sample_basename)
@@ -581,7 +610,7 @@ if __name__ == "__main__":
         else:
             # Prokka call
             annotation_dir = prokka_dir
-            print(Banner(f"\nStep {step_counter} for sequence "+sample_basename+": Prokka\n"), flush=True)
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Prokka\n"), flush=True)
             prokka_call(locus_tag=sample_basename+"_L",
                         output_dir=prokka_dir+"/"+sample_basename,
                         prefix=sample_basename,
@@ -591,6 +620,14 @@ if __name__ == "__main__":
 
         # Set roary input files
         roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
+
+        # SNPs identification (SNIPPY)
+        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SNIPPY\n"), flush=True)
+        step_counter += 1
+        snippy_call(reference_genome=reference_annotation_file,
+                    contigs=contigs_dir+"/"+sample_basename+".fasta",
+                    output_dir=snps_dir+"/"+sample_basename,
+                    prefix=sample_basename)
 
     # Quast report unification
     quast_report_unification(spades_dir, samples_basenames, spades_dir)
