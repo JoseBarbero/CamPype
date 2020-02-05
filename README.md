@@ -17,11 +17,11 @@
 
 ## How to update Wombat (Linux)
 
-1. Make sure you are not into Wombat conda environment
+1. Make sure you are not inside Wombat conda environment
     ```bash
     $ conda deactivate
     ```
-1. Save a copy of your configuration files. Updating Wombat will overwrite you configuration files because this files properties may change with new versions.
+1. Save a copy of your configuration files. Updating Wombat will overwrite you configuration files because this files properties may change with newer versions.
 
 1. Run ./updatewombat
     ```bash
@@ -30,7 +30,7 @@
 
 ## How to uninstall Wombat (Linux)
 
-1. Make sure you are not into Wombat conda environment
+1. Make sure you are not inside Wombat conda environment
     ```bash
     $ conda deactivate
     ```
