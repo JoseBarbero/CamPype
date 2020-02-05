@@ -23,6 +23,7 @@ dependencies:
   - snippy=4.3.6
   - samtools=1.9
   - bcftools=1.9
+  - tbl2asn-forever=25.7.1f
   - pip
   - pip:
     - terminal-banner
