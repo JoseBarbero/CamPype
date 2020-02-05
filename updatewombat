@@ -11,3 +11,4 @@ then
     #conda remove --name wombat --all
     #conda env create -f wombatenv.yml 
 fi
+echo "Wombat has been updated"
