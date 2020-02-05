@@ -1,4 +1,9 @@
 #!/bin/bash
-conda remove --name wombat --all
-cd ..
-rm -rf Wombat
+read -p "Are you sure you want to remove Wombat folder and all of its content? (y/n)" -n 1 -r
+echo    
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    conda remove --name wombat --all
+    cd ..
+    rm -rf Wombat
+fi
