@@ -14,7 +14,37 @@
     ```bash
     $ conda env create -f wombatenv.yml 
     ```
-    
+
+## How to update Wombat (Linux)
+
+1. Make sure you are not into Wombat conda environment
+    ```bash
+    $ conda deactivate
+    ```
+1. Save a copy of your configuration files. Updating Wombat will overwrite you configuration files because this files properties may change with new versions.
+
+1. Run ./updatewombat
+    ```bash
+    $ ./updatewombat
+    ```
+
+## How to uninstall Wombat (Linux)
+
+1. Make sure you are not into Wombat conda environment
+    ```bash
+    $ conda deactivate
+    ```
+1. Every file into Wombat folder will be deleted. Make sure you don't have anything important in this directory.
+
+1. Run ./uninstallwombat
+    ```bash
+    $ ./uninstallwombat
+    ```
+
+
+
+
+
 ## Set input files and configuration
 
 1.  Set input files in Wombat/input_files.csv (tab as separator):
