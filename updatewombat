@@ -7,7 +7,6 @@ if [[ $REPLY =~ ^[Yy]$ ]]
 then
     git reset --hard HEAD
     git pull
-    conda deactivate
     conda remove --name wombat --all
     conda env create -f wombatenv.yml 
 fi

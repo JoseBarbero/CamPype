@@ -1,4 +1,4 @@
 #!/bin/bash
-conda deactivate
 conda remove --name wombat --all
-rm -rf .git
+cd ..
+rm -rf Wombat
