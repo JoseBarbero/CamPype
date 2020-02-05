@@ -1,0 +1,6 @@
+#!/bin/bash
+conda deactivate
+conda remove --name wombat --all
+git reset --hard HEAD
+git pull
+conda env create -f wombatenv.yml
