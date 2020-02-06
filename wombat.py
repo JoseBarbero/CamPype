@@ -151,10 +151,24 @@ def spades_call(merged_sample, forward_sample, reverse_sample, sample, out_dir):
     return call(arguments)
 
 
-def mauve_call():
-    arguments = []    
-    return call(arguments)
+def mauve_call(output_folder, reference_sequence, input_contigs, sample_basename):
+    """Mauve call. (Reordering contigs).
 
+    MauveCM will output a series of folders called alignment1-alignmentX, representing each iteration of the reorder.
+    
+    Arguments:
+        output_folder {string} -- [description]
+        reference_sequence {string} -- [description]
+        input_contigs {string} -- [description]
+    
+    Returns:
+        {string} -- Mauve reordered contigs file path
+    """
+    arguments = ["MauveCM", "-output", output_folder, "-ref", reference_sequence, "-draft", input_contigs]    
+    call(arguments)
+    # Here we take the fasta file from the last iteration folder.
+    shutil.copyfile(output_folder+"/"+max(next(os.walk(output_folder))[1])+"/"+sample_basename+".fasta", output_folder+"/../contigs/"+sample_basename+".fasta")
+    return output_folder+"/../contigs/"+sample_basename+".fasta"
 
 
 def snippy_call(reference_genome, contigs, output_dir, prefix):
@@ -476,7 +490,9 @@ if __name__ == "__main__":
     flash_dir = output_folder+"/Flash_filtering"
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Contigs_renamed_shorten"
-    snps_dir = output_folder+"/SNP_SNIPPŶ"
+    mauve_dir = output_folder+"/Mauve_reordered_contigs"
+    mauve_contigs_dir = mauve_dir+"/contigs"
+    snps_dir = output_folder+"/SNP_SNIPPY"
     mlst_dir = output_folder+"/MLST"
     abricate_vir_dir = output_folder+"/ABRicate_virulence_genes"
     abricate_abr_dir = output_folder+"/ABRicate_antibiotic_resistanceGenes"
@@ -499,6 +515,8 @@ if __name__ == "__main__":
     os.mkdir(flash_dir)
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
+    os.mkdir(mauve_dir)
+    os.mkdir(mauve_contigs_dir)
     os.mkdir(snps_dir)
     os.mkdir(mlst_dir)
     os.mkdir(abricate_vir_dir)
@@ -586,13 +604,21 @@ if __name__ == "__main__":
                                 contigs_dir+"/"+sample_basename+".fasta",
                                 min_contig_threshold * 2)
 
+        
+        # Reordering contigs by a reference genome with MauveCM
+        mauve_contigs = mauve_call(output_folder=mauve_dir+"/"+sample_basename,
+                                    reference_sequence=reference_annotation_file,
+                                    input_contigs=contigs_dir+"/"+sample_basename+".fasta",
+                                    sample_basename=sample_basename)
+
+
         # Create Quast output directories
         quast_dir = sample_basename+"_assembly_statistics"
         os.mkdir(spades_dir+"/"+sample_basename+"/"+quast_dir)
 
         # Quast call
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Quast\n"), flush=True)
-        quast_call( input_file=contigs_dir+"/"+sample_basename+".fasta",
+        quast_call( input_file=mauve_contigs,
                     output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig_len=min_contig_threshold * 2)
         step_counter += 1
@@ -603,7 +629,7 @@ if __name__ == "__main__":
             # Dfast call
             annotation_dir = dfast_dir
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
-            dfast_call(input_file=contigs_dir+"/"+sample_basename+".fasta",
+            dfast_call(input_file=mauve_contigs,
                        out_path=dfast_dir+"/"+sample_basename,
                        sample_basename=sample_basename)
             step_counter += 1
@@ -614,7 +640,7 @@ if __name__ == "__main__":
             prokka_call(locus_tag=sample_basename+"_L",
                         output_dir=prokka_dir+"/"+sample_basename,
                         prefix=sample_basename,
-                        input_file=contigs_dir+"/"+sample_basename+".fasta")
+                        input_file=mauve_contigs)
             step_counter += 1
         
 
@@ -625,7 +651,7 @@ if __name__ == "__main__":
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SNIPPY\n"), flush=True)
         step_counter += 1
         snippy_call(reference_genome=reference_annotation_file,
-                    contigs=contigs_dir+"/"+sample_basename+".fasta",
+                    contigs=mauve_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)
 
@@ -660,7 +686,7 @@ if __name__ == "__main__":
     # MLST call
     print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
     step_counter += 1
-    mlst_call(input_dir=contigs_dir,
+    mlst_call(input_dir=mauve_contigs_dir,
             output_dir=mlst_dir,
             output_filename="MLST.txt")
 
@@ -668,7 +694,7 @@ if __name__ == "__main__":
     # ABRicate call (virulence genes)
     print(Banner(f"\nStep {step_counter}: ABRicate (virulence genes)\n"), flush=True)
     step_counter += 1
-    abricate_call(input_dir=contigs_dir,
+    abricate_call(input_dir=mauve_contigs_dir,
                 output_dir=abricate_vir_dir,
                 output_filename="SampleVirulenceGenes.tab",
                 database = cfg.config["abricate"]["virus_database"])
@@ -697,7 +723,7 @@ if __name__ == "__main__":
     # ABRicate call (antibiotic resistance genes)
     print(Banner(f"\nStep {step_counter}: ABRicate (antibiotic resistance genes)\n"), flush=True)
     step_counter += 1
-    abricate_call(input_dir=contigs_dir,
+    abricate_call(input_dir=mauve_contigs_dir,
                 output_dir=abricate_abr_dir,
                 output_filename="SampleAntibioticResistanceGenes.tab",
                 database = cfg.config["abricate"]["bacteria_database"])

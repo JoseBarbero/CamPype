@@ -27,3 +27,4 @@ dependencies:
   - pip
   - pip:
     - terminal-banner
+    - rinoh-typeface-dejavuserif
