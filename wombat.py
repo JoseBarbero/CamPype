@@ -157,9 +157,10 @@ def mauve_call(output_folder, reference_sequence, input_contigs, sample_basename
     MauveCM will output a series of folders called alignment1-alignmentX, representing each iteration of the reorder.
     
     Arguments:
-        output_folder {string} -- [description]
-        reference_sequence {string} -- [description]
-        input_contigs {string} -- [description]
+        output_folder {string} -- Output folder route.
+        reference_sequence {string} -- Reference sequence route.
+        input_contigs {string} -- Contigs file route.
+        sample_basename -- Sample basename.
     
     Returns:
         {string} -- Mauve reordered contigs file path
@@ -487,7 +488,7 @@ if __name__ == "__main__":
 
     trimmomatic_dir = output_folder+"/Trimmomatic_filtering"
     prinseq_dir = output_folder+"/Prinseq_filtering"
-    flash_dir = output_folder+"/Flash_filtering"
+    flash_dir = output_folder+"/Flash_read_extension"
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Contigs_renamed_shorten"
     mauve_dir = output_folder+"/Mauve_reordered_contigs"
