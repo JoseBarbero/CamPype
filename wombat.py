@@ -189,22 +189,26 @@ def snippy_call(reference_genome, contigs, output_dir, prefix):
     return call(arguments)
 
 
-def contigs_trim_and_rename(contigs_file, output_dir, min_len):
+def contigs_trim_and_rename(contigs_file, output_filename, output_dir, min_len):
     """
     Creates new fasta file filtering sequences shorter than min_len and shortening sequence identifiers.
     
     Arguments:
         contigs_file {string} -- Original contigs filename (and route).
+        output_filename {string} -- Output file name.
         output_dir {string} -- Output directory.
         min_len {int} -- Minimum sequence length.
     """
+    with open(output_dir+"/Min_contig_len_"+str(min_len)+".txt", 'w') as f:
+        f.write("Minimum contig length was set to "+str(min_len))
+
     large_sequences = []
     for record in SeqIO.parse(contigs_file, "fasta"):
         if len(record.seq) > min_len:
             record.id = "C_"+"_".join(record.id.split("_")[1:4])
             record.description = ""
             large_sequences.append(record)
-    SeqIO.write(large_sequences, output_dir, "fasta")
+    SeqIO.write(large_sequences, output_dir+"/"+output_filename, "fasta")
 
 
 def get_reads_length(input_file):
@@ -598,12 +602,14 @@ if __name__ == "__main__":
 
 
         # Get minimum contig length
-        min_contig_threshold = get_reads_length(prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R1.fastq")
+        # min_contig_threshold = get_reads_length(prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R1.fastq") * 2
+        min_contig_threshold = cfg.config["min_contig_len"]
 
         # Trim short contigs and shorten sequences id
-        contigs_trim_and_rename(spades_dir+"/"+sample_basename+"/"+"contigs.fasta", 
-                                contigs_dir+"/"+sample_basename+".fasta",
-                                min_contig_threshold * 2)
+        contigs_trim_and_rename(contigs_file=spades_dir+"/"+sample_basename+"/"+"contigs.fasta",
+                                output_filename=sample_basename+".fasta",
+                                output_dir=contigs_dir,
+                                min_len=min_contig_threshold)
 
         
         # Reordering contigs by a reference genome with MauveCM
@@ -621,7 +627,7 @@ if __name__ == "__main__":
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Quast\n"), flush=True)
         quast_call( input_file=mauve_contigs,
                     output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir,
-                    min_contig_len=min_contig_threshold * 2)
+                    min_contig_len=min_contig_threshold)
         step_counter += 1
 
 
