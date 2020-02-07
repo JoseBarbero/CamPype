@@ -26,7 +26,7 @@ config = {
         "icarus": "--no-icarus",    # TODO
         "mode": "--silent"  # TODO
     },
-    "annotator": "dfast",  # Set this to "prokka" or "dfast"
+    "annotator": "prokka",  # Set this to "prokka" or "dfast"
     "prokka": {
         "kingdom": "Bacteria",  # TODO
         "gcode": 11 # TODO
