@@ -695,7 +695,11 @@ if __name__ == "__main__":
             prokka_call(locus_tag=reference_annotation_basename+"_L",
                         output_dir=prokka_dir+"/"+reference_annotation_basename,
                         prefix=reference_annotation_basename,
-                        input_file=reference_annotation_file)
+                        input_file=reference_annotation_file,
+                        genus=cfg.config["annotation_reference"]["genus"],
+                        species=cfg.config["annotation_reference"]["species"],
+                        strain=cfg.config["annotation_reference"]["strain"]
+                        )
         step_counter += 1
         # Set roary input files
         roary_input_files.append(annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
