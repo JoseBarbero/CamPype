@@ -21,7 +21,7 @@
 
 ## How to update Wombat (Linux)
 
-1. Make sure you are not inside Wombat conda environment
+1. Make sure you are not in Wombat conda environment
     ```bash
     $ conda deactivate
     ```
@@ -34,11 +34,11 @@
 
 ## How to uninstall Wombat (Linux)
 
-1. Make sure you are not inside Wombat conda environment
+1. Make sure you are not in Wombat conda environment
     ```bash
     $ conda deactivate
     ```
-1. Every file into Wombat folder will be deleted. Make sure you don't have anything important in this directory.
+1. Every file in Wombat folder will be deleted. Make sure you don't have anything important in this directory.
 
 1. Run ./uninstallwombat
     ```bash
@@ -64,7 +64,7 @@
     ```bash
     $ conda activate wombat
     ```
-1. Go to Wombat's folder
+1. Go to Wombat folder
     ```bash
     $ cd your/path/to/Wombat
     ```
