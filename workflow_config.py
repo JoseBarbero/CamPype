@@ -1,4 +1,12 @@
 config = {
+    "adapters_reference_file": "reference_files/adapters.fa", # TODO make this generic for other users
+    "annotation_reference": {
+        "file": "reference_files/NCTC11168.fasta", # TODO make this generic for other users
+        "genus": "Campylobacter",   # TODO make this generic for other users
+        "species": "jejuni",    # TODO make this generic for other users
+        "strain": "NCTC11168" # TODO make this generic for other users
+    },
+    "proteins_reference_file": "reference_files/VF_custom.txt", # TODO make this generic for other users
     "run_trimmomatic": False, # Set to true or false,
     "min_contig_len": 500,
     "prinseq": {
@@ -18,14 +26,16 @@ config = {
         "icarus": "--no-icarus",    # TODO
         "mode": "--silent"  # TODO
     },
-    "annotator": "prokka",  # Set this to "prokka" or "dfast"
+    "annotator": "dfast",  # Set this to "prokka" or "dfast"
     "prokka": {
         "kingdom": "Bacteria",  # TODO
         "gcode": 11 # TODO
     },
     "dfast": {
         "min_length": 0, # TODO
-        "use_original_name": "true" # TODO
+        "use_original_name": "true", # TODO
+        "sort": "false",
+        "step": 1
     },
     "mlst": {},
     "abricate": {

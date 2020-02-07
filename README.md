@@ -46,27 +46,15 @@
     ```
 
 
-
-
-
 ## Set input files and configuration
 
 1.  Set input files in Wombat/input_files.csv (tab as separator):
 
-    | Samples        | Read1           | Read2  |
-    | ------------- |:-------------:| -----:|
-    | [sample_basename]  | /path/to/your/forward/fastq1_file.fastq | /path/to/your/reverse/fastq1_file.fastq |
-    | [sample_basename]  | /path/to/your/forward/fastq2_file.fastq | /path/to/your/reverse/fastq2_file.fastq |
-    | [sample_basename]  | /path/to/your/forward/fastq3_file.fastq | /path/to/your/reverse/fastq3_file.fastq |
-   
-1.  Set auxiliary files in Wombat/reference_files.csv (tab as separator):
-
-    | File        | Route           |
-    | ------------- |:-------------:|
-    | adapters  | path/to/your/sequencing/adapters/file/adapters.fa |
-    | reference_annotation_file  | path/to/your/reference/genome/file/NCTC11168.fasta |
-    
-    \* Remove the last line if you don't have a reference file to annotate.
+    | Samples        | Forward           | Reverse  | Genus  | Species  |
+    | ------------- |:-------------:|:-----:|:-----:|:-----:|
+    | [sample_basename]  | /path/to/your/forward/fastq1_file.fastq | /path/to/your/reverse/fastq1_file.fastq | YourStrainGenus | YourStrainSpecies
+    | [sample_basename]  | /path/to/your/forward/fastq2_file.fastq | /path/to/your/reverse/fastq2_file.fastq | YourStrainGenus | YourStrainSpecies
+    | [sample_basename]  | /path/to/your/forward/fastq3_file.fastq | /path/to/your/reverse/fastq3_file.fastq | YourStrainGenus | YourStrainSpecies
 
 1. Set your own running parameters in "workflow_config.py" file.
 

@@ -1,4 +1,4 @@
-Samples	Read1	Read2
-[sample_basename]	/path/to/your/forward/fastq1_file.fastq	/path/to/your/reverse/fastq1_file.fastq
-[sample_basename]	/path/to/your/forward/fastq2_file.fastq	/path/to/your/reverse/fastq2_file.fastq
-[sample_basename]	/path/to/your/forward/fastq3_file.fastq	/path/to/your/reverse/fastq3_file.fastq
+Samples	Forward	Reverse	Genus	Species
+680	/hdd/Forward/680_GCTACGCT-TATCCTCT_L004_R1_001.fastq	/hdd/Reverse/680_GCTACGCT-TATCCTCT_L004_R2_001.fastq	Campylobacter	jejuni
+681	/hdd/Forward/681_GCTACGCT-AGAGTAGA_L004_R1_001.fastq	/hdd/Reverse/681_GCTACGCT-AGAGTAGA_L004_R2_001.fastq	Campylobacter	jejuni
+590	/hdd/Forward/590_CGAGGCTG-GCGTAAGA_L004_R1_001.fastq	/hdd/Reverse/590_CGAGGCTG-GCGTAAGA_L004_R2_001.fastq	Campylobacter	jejuni

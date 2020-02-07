@@ -10,23 +10,6 @@ from subprocess import call
 from Bio import SeqIO
 
 
-def read_aux_files(inputfile):
-    """
-    File containing auxiliary files routes.
-    
-    Arguments:
-        inputfile {string} -- Filename (and route) of the file containing inputs.
-    
-    Returns:
-        files_routes {tuple} -- Tuple of auxiliary files (adapters, reference_annotation_file, protein_reference). I return it like this to avoid length missmatches.
-    """
-    files_df = pd.read_csv(inputfile, sep="\t")
-    files_routes = []
-    for _, row in files_df.iterrows():
-        files_routes.append(row["Route"])
-    return files_routes[0], files_routes[1], files_routes[2] 
-
-
 def read_input_files(indexfile):
     """
     Gets every pair of reads on input_files.csv
@@ -35,14 +18,13 @@ def read_input_files(indexfile):
         indexfile {string} -- Filename (and route) of the file containing inputs.
     
     Returns:
-        files_tuples {list of tuples} -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number).
+        files_data {list of tuples} -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number).
     """
     files_df = pd.read_csv(indexfile, sep="\t")
-    files_tuples = []
+    files_data = []
     for _, row in files_df.iterrows():
-        files_tuples.append((row["Read1"], row["Read2"], str(row["Samples"])))
-
-    return files_tuples
+        files_data.append((str(row["Samples"]), {"FW": row["Forward"], "RV": row["Reverse"], "Genus": row["Genus"], "Species": row["Species"]}))
+    return files_data
 
 
 def trimmomatic_call(input_file1, input_file2, phred, trimfile,
@@ -352,7 +334,7 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
     return tblastn_state
 
 
-def prokka_call(locus_tag, output_dir, prefix, input_file):
+def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain):
     """
     Prokka call.
     
@@ -365,28 +347,44 @@ def prokka_call(locus_tag, output_dir, prefix, input_file):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["prokka", "--locustag", locus_tag, "--outdir", output_dir, "--prefix", prefix, "--kingdom", cfg.config["prokka"]["kingdom"], "--gcode", str(cfg.config["prokka"]["gcode"]), input_file]
+    arguments = ["prokka", 
+                "--locustag", locus_tag, 
+                "--outdir", output_dir, 
+                "--prefix", prefix, 
+                "--kingdom", cfg.config["prokka"]["kingdom"], 
+                "--genus", genus,
+                "--species", species,
+                "--strain", strain,
+                "--gcode", str(cfg.config["prokka"]["gcode"]), 
+                input_file]
     return call(arguments)
 
 
-def dfast_call(input_file, out_path, sample_basename):
+def dfast_call(contigs_file, output_dir, sample_basename, organism):
     """
     Dfast call.
     
     Arguments:
-        input_file {string} -- Input filename (and route).
+        input_file {string} -- Contigs filename (and route).
         min_length {int} -- Minimum sequence length.
         out_path {strin} -- Output folder.
     
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["dfast", "--genome", input_file, "--minimum_length", str(cfg.config["dfast"]["min_length"]), "--out", out_path,
-                "--use_original_name", str(cfg.config["dfast"]["use_original_name"])]
+    arguments = ["dfast", 
+                "--genome", contigs_file,
+                "--sort_sequence", cfg.config["dfast"]["sort"],
+                "--minimum_length", str(cfg.config["min_contig_len"]),
+                "--use_original_name", str(cfg.config["dfast"]["use_original_name"]),
+                "--step", str(cfg.config["dfast"]["step"]),
+                "--organism", organism, 
+                "--strain", sample_basename,
+                "--out", output_dir]
     state = call(arguments)
 
     # Replace default output filenames including string basename
-    for root, _dirs, files in os.walk(out_path):
+    for root, _dirs, files in os.walk(output_dir):
         for filename in files:
             if filename.__contains__("genome"):
                 new_filename = filename.replace("genome", sample_basename)
@@ -486,7 +484,10 @@ if __name__ == "__main__":
     # Create output directories
     now = datetime.datetime.now()
 
-    adapters_file, reference_annotation_file, proteins_file = read_aux_files("reference_files.csv")
+    # Get reference files from workflow_config.py
+    adapters_file =  cfg.config["adapters_reference_file"]
+    reference_annotation_file = cfg.config["annotation_reference"]["file"]
+    proteins_file = cfg.config["proteins_reference_file"]
     
     output_folder = sys.argv[1]
 
@@ -538,8 +539,13 @@ if __name__ == "__main__":
 
     roary_input_files = []
 
-    for sample_fw, sample_rv, sample_basename in read_input_files("input_files.csv"):
-        
+    for sample_basename, data in read_input_files("input_files.csv"):
+        sample_fw = data["FW"]
+        sample_rv = data["RV"]
+        genus = data["Genus"]
+        species = data["Species"]
+        organism = genus+" "+species
+
         step_counter = 1 # Just to let the user know the number of each step
         sample_counter += 1
         samples_basenames.append(sample_basename)
@@ -636,9 +642,10 @@ if __name__ == "__main__":
             # Dfast call
             annotation_dir = dfast_dir
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
-            dfast_call(input_file=mauve_contigs,
-                       out_path=dfast_dir+"/"+sample_basename,
-                       sample_basename=sample_basename)
+            dfast_call(contigs_file=mauve_contigs,
+                       output_dir=dfast_dir+"/"+sample_basename,
+                       sample_basename=sample_basename,
+                       organism=organism)
             step_counter += 1
         else:
             # Prokka call
@@ -647,7 +654,10 @@ if __name__ == "__main__":
             prokka_call(locus_tag=sample_basename+"_L",
                         output_dir=prokka_dir+"/"+sample_basename,
                         prefix=sample_basename,
-                        input_file=mauve_contigs)
+                        input_file=mauve_contigs,
+                        genus=genus,
+                        species=species,
+                        strain=sample_basename)
             step_counter += 1
         
 
@@ -674,9 +684,10 @@ if __name__ == "__main__":
             # Dfast call
             annotation_dir = dfast_dir
             print(Banner(f"\nStep {step_counter} for reference sequence: Dfast\n"), flush=True)
-            dfast_call(input_file=reference_annotation_file,
-                        out_path=dfast_dir+"/"+reference_annotation_basename,
-                        sample_basename=reference_annotation_basename)
+            dfast_call(contigs_file=reference_annotation_file,
+                        output_dir=dfast_dir+"/"+reference_annotation_basename,
+                        sample_basename=reference_annotation_basename,
+                        organism=organism)
         else:
             # Prokka call
             annotation_dir = prokka_dir
