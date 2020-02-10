@@ -1,4 +1,5 @@
 config = {
+    "output_directory": "/hdd",    # "." is Wombat's directory. (You need to have writing permissions to save Wombat's output in certain directories.)
     "adapters_reference_file": "reference_files/adapters.fa", # TODO make this generic for other users
     "annotation_reference": {
         "file": "reference_files/NCTC11168.fasta", # TODO make this generic for other users
