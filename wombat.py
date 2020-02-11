@@ -476,6 +476,52 @@ def blast_postprocessing(blast_file, database_file, output_folder):
     blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)
 
 
+def generate_report(samples):
+    
+    csv_report = pd.DataFrame(["Sample", "Reads", "AvgReadLen", "Contigs", "GenomeLen", "AvgContigLen", "N50", "GC", "DepthCov (X)"])
+
+    for sample in samples:
+
+        # Name of the sample
+        sample = ""
+
+        # Total number of reads after quality filtering
+        n_reads = 0
+
+        # Average read length (bp) after quality filtering
+        avg_read_len = 0
+
+        # Number of contigs of the genome (>500bp)
+        n_contigs = 0
+
+        # Length (bp) of the genome
+        genome_len = 0
+
+        # Average contig length (bp) (>500bp)
+        avg_contig_len = 0
+
+        # Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly
+        n50 = 0
+
+        # GC content (%) of the draft genome.
+        gc = 0
+
+        # Number of times each nucleotide position in the draft genome has a read that align to that position.
+        depth_cov = 0
+
+
+    csv_report.append({ "Sample": sample, 
+                        "Reads": n_reads, 
+                        "AvgReadLen": avg_read_len, 
+                        "Contigs": n_contigs, 
+                        "GenomeLen": genome_len, 
+                        "AvgContigLen": avg_contig_len, 
+                        "N50": n50, 
+                        "GC": gc, 
+                        "DepthCov (X)": depth_cov})
+
+
+
 if __name__ == "__main__":
 
     # Get config file parameters
@@ -718,7 +764,7 @@ if __name__ == "__main__":
     step_counter += 1
     abricate_call(input_dir=mauve_contigs_dir,
                 output_dir=abricate_vir_dir,
-                output_filename="SampleVirulenceGenes.tab",
+                output_filename="VirulenceGenes.tab",
                 database = cfg.config["abricate"]["virus_database"])
 
 
@@ -747,7 +793,7 @@ if __name__ == "__main__":
     step_counter += 1
     abricate_call(input_dir=mauve_contigs_dir,
                 output_dir=abricate_abr_dir,
-                output_filename="SampleAntibioticResistanceGenes.tab",
+                output_filename="AntibioticResistanceGenes.tab",
                 database = cfg.config["abricate"]["bacteria_database"])
     
 
