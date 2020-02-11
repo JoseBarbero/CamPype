@@ -14,27 +14,27 @@ config = {
         "min_len": 40, # Minimum read length. (default: {40})
         "min_qual_mean": 25, # Minimum read quality. (default: {25})
         "trim_qual_right": 25,  # Trim sequence by quality score from the 3'-end with this threshold score. (default: {25})
-        "trim_qual_window": 15,     # Trim sequence by quality score from the 5'-end with this threshold score. (default: {15})
+        "trim_qual_window": 15,     # The sliding window size used to calculate quality score by type. To stop at the first base that fails the rule defined, use a window size of 1
         "trim_qual_type": "mean",   # Type of quality score calculation to use. (default: {"mean"})
         "out_format": 3,    # Output format 1 (FASTA only), 2 (FASTA and QUAL), 3 (FASTQ), 4 (FASTQ and FASTA), 5 (FASTQ, FASTA and QUAL) (default: {3})
-        "out_bad": "null"
+        "out_bad": "null"   # Data not passing anyfilter will be ignored.
         },  
     "spades": {
-        "mode": "--careful",
-        "cov_cutoff": "auto" 
+        "mode": "--careful",    # Minimize number ofmismatches in the final contigs.
+        "cov_cutoff": "auto"    # Read coverage cutoff value. Must be a positive float value, or 'auto', or 'off'. Default value is 'auto', when SPAdes automatically computes coverage threshold using conservative strategy. 
     },
     "quast": {
-        "icarus": "--no-icarus",    # TODO
-        "mode": "--silent"  # TODO
+        "icarus": "--no-icarus",    # Do not build Icarusviewers.
+        "mode": "--silent"  # Do not print detailed information about each step in standard output. This option does not affect quast.log file.
     },
     "annotator": "prokka",  # Set this to "prokka" or "dfast"
     "prokka": {
-        "kingdom": "Bacteria",  # TODO
-        "gcode": 11 # TODO
+        "kingdom": "Bacteria",  # Annotation mode: Archaea|Bacteria|Mitochondria|Viruses (default 'Bacteria')
+        "gcode": 11 # Genetic code / Translation table (set if --kingdom is set) (default '11')
     },
     "dfast": {
-        "min_length": 0, # TODO
-        "use_original_name": "true", # TODO
+        "min_length": 0,    # Minimum sequence length (default '0').
+        "use_original_name": "true",    # Use original sequence names in a query FASTA file (default 'true')
         "sort": "false",
         "step": 1
     },
