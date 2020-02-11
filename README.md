@@ -14,7 +14,7 @@
     ```bash
     $ conda env create -f wombatenv.yml 
     ```
-1. *(On Ubuntu systems you may find missing font problems running Mauve. We recomend you to install the required fonts just in case.)
+1. *(On Ubuntu systems you may find missing font problems running Mauve. We recommend you to install the required fonts just in case.)
     ```bash
     $ sudo apt-get install ttf-dejavu
     ```
