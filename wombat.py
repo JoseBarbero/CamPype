@@ -234,7 +234,7 @@ def quast_report_unification(input_dir, samples, output_dir):
     final_df = pd.concat([first_col_df, combined_df], axis=1)
     final_df.to_csv(output_dir+"/quality_assembly_report.tsv", sep="\t")
 
-
+ 
 def mlst_call(input_dir, output_dir, output_filename):
     """
     MLST call for every fasta file in input_dir.
@@ -751,7 +751,7 @@ if __name__ == "__main__":
                         )
         step_counter += 1
         # Set roary input files
-        roary_input_files.append(annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
+        roary_input_files.insert(0, annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
 
 
     # MLST call
