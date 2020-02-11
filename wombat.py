@@ -360,7 +360,7 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
     return call(arguments)
 
 
-def dfast_call(contigs_file, output_dir, sample_basename, organism):
+def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
     """
     Dfast call.
     
@@ -380,6 +380,7 @@ def dfast_call(contigs_file, output_dir, sample_basename, organism):
                 "--step", str(cfg.config["dfast"]["step"]),
                 "--organism", organism, 
                 "--strain", sample_basename,
+                "--locus_tag_prefix", locus_tag,
                 "--out", output_dir]
     state = call(arguments)
 
@@ -688,7 +689,8 @@ if __name__ == "__main__":
             # Dfast call
             annotation_dir = dfast_dir
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
-            dfast_call(contigs_file=mauve_contigs,
+            dfast_call(locus_tag=sample_basename+"_L",
+                       contigs_file=mauve_contigs,
                        output_dir=dfast_dir+"/"+sample_basename,
                        sample_basename=sample_basename,
                        organism=organism)
@@ -713,7 +715,7 @@ if __name__ == "__main__":
         # SNPs identification (SNIPPY)
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SNIPPY\n"), flush=True)
         step_counter += 1
-        snippy_call(reference_genome=reference_annotation_file,
+        snippy_call(reference_genome=annotation_dir+"/"+sample_basename+"/"+sample_basename+".gbk",
                     contigs=mauve_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)
@@ -730,7 +732,8 @@ if __name__ == "__main__":
             # Dfast call
             annotation_dir = dfast_dir
             print(Banner(f"\nStep {step_counter} for reference sequence: Dfast\n"), flush=True)
-            dfast_call(contigs_file=reference_annotation_file,
+            dfast_call( locus_tag=reference_annotation_basename+"_L",
+                        contigs_file=reference_annotation_file,
                         output_dir=dfast_dir+"/"+reference_annotation_basename,
                         sample_basename=reference_annotation_basename,
                         organism=organism)
