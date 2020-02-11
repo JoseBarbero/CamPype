@@ -730,7 +730,7 @@ if __name__ == "__main__":
         os.mkdir(dna_database_blast)
         contig_files = [spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in next(os.walk(spades_dir))[1]]
         proteins_database_name = "VF_custom.txt"
-        blast_output_name = "BLASToutput_VS_custom.txt"
+        blast_output_name = "BLASToutput_VF_custom.txt"
         blast_call( proteins_file_ori=proteins_file, 
                     proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
                     contigs_files_paths=contig_files, 
@@ -766,3 +766,6 @@ if __name__ == "__main__":
                     output_dir=roary_plots_dir)
 
     print(Banner("\nDONE\n"), flush=True)
+
+    # Final report
+
