@@ -2,9 +2,11 @@ import pandas as pd
 import datetime
 import os
 import shutil
+import re
 import logging
 import sys
 import workflow_config as cfg
+import gffutils
 from terminal_banner import Banner
 from subprocess import call
 from Bio import SeqIO
@@ -393,6 +395,25 @@ def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
     return state
 
 
+def refactor_gff_from_dfast(gff_input, gff_output):
+    """
+    Dfast sets a generic ID in its gff file, so we replace it with one related to each sample.
+    
+    Arguments:
+        gff_input {string} -- Input gff file (from dfast)
+        gff_output {string} -- Output gff file.
+    """
+    with open(gff_input) as in_file, open(gff_output, 'w+') as out_file:
+        for line in in_file:
+            if "locus_tag=" in line:
+                locus_tag = line.split("locus_tag=")[1].split(";")[0]
+                line_id = line.split("\tID=")[1].split(";")[0]
+
+                line = line.replace(line_id, locus_tag, 1)
+            out_file.write(line)
+        
+
+
 def roary_call(input_files, output_dir):
     """
     Roary call.
@@ -522,7 +543,6 @@ def generate_report(samples):
                         "DepthCov (X)": depth_cov})
 
 
-
 if __name__ == "__main__":
 
     # Get config file parameters
@@ -553,6 +573,7 @@ if __name__ == "__main__":
     dfast_dir = output_folder+"/Dfast_annotation"
     roary_dir = output_folder+"/Roary_pangenome"
     roary_plots_dir = roary_dir+"/Roary_plots"
+    dfast_refactor_dir = roary_dir+"/input_gff_files_edited"   # This refactor has to do with Roary so it's in Roary's folder
     blast_proteins_dir = output_folder+"/BLAST_custom_virulence_genes"
     dna_database_blast = blast_proteins_dir+"/DNA_database"
 
@@ -574,17 +595,56 @@ if __name__ == "__main__":
     os.mkdir(mlst_dir)
     os.mkdir(abricate_vir_dir)
     os.mkdir(abricate_abr_dir)
+    os.mkdir(roary_dir)
 
     if annotator == "dfast":
         os.mkdir(dfast_dir)
+        os.mkdir(dfast_refactor_dir)
     else:
         os.mkdir(prokka_dir)
 
+    roary_input_files = []
+
+    # Annotate reference fasta file 
+    if reference_annotation_file:
+        reference_annotation_filename = reference_annotation_file.split("/")[-1]
+        reference_annotation_basename = reference_annotation_filename.split(".")[-2]
+        if annotator.lower() == "dfast":
+            # Dfast call
+            annotation_dir = dfast_dir
+            print(Banner(f"\nAnnotating reference sequence: Dfast\n"), flush=True)
+            dfast_call( locus_tag=reference_annotation_basename+"_L",
+                        contigs_file=reference_annotation_file,
+                        output_dir=dfast_dir+"/"+reference_annotation_basename,
+                        sample_basename=reference_annotation_basename,
+                        organism=cfg.config["annotation_reference"]["genus"]+" "+cfg.config["annotation_reference"]["species"])
+            refactor_gff_from_dfast(dfast_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff",
+                                    dfast_refactor_dir+"/"+reference_annotation_basename+".gff")
+            # Set roary input files (renaming to get reference file first)
+            os.rename(dfast_refactor_dir+"/"+reference_annotation_basename+".gff", dfast_refactor_dir+"/+"+reference_annotation_basename+".gff")
+            roary_input_files.append(dfast_refactor_dir+"/+"+reference_annotation_basename+".gff")
+        else:
+            # Prokka call
+            annotation_dir = prokka_dir
+            print(Banner(f"\nAnnotating reference sequence: Prokka\n"), flush=True)
+            prokka_call(locus_tag=reference_annotation_basename+"_L",
+                        output_dir=prokka_dir+"/"+reference_annotation_basename,
+                        prefix=reference_annotation_basename,
+                        input_file=reference_annotation_file,
+                        genus=cfg.config["annotation_reference"]["genus"],
+                        species=cfg.config["annotation_reference"]["species"],
+                        strain=cfg.config["annotation_reference"]["strain"]
+                        )
+            # Set roary input files (renaming to get reference file first)
+            os.rename(annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff",
+                      annotation_dir+"/"+reference_annotation_basename+"/+"+reference_annotation_basename+".gff")
+            roary_input_files.append(annotation_dir+"/"+reference_annotation_basename+"/+"+reference_annotation_basename+".gff")
+
+    
+    # Workflow Starts (for standard samples)
     sample_counter = 0
     samples_basenames = [] # Keeping track of them
     n_samples = len(read_input_files("input_files.csv"))
-
-    roary_input_files = []
 
     for sample_basename, data in read_input_files("input_files.csv"):
         sample_fw = data["FW"]
@@ -695,6 +755,11 @@ if __name__ == "__main__":
                        sample_basename=sample_basename,
                        organism=organism)
             step_counter += 1
+
+            refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", dfast_refactor_dir+"/"+sample_basename+".gff")
+            # Set roary input files
+            roary_input_files.append(dfast_refactor_dir+"/"+sample_basename+".gff")
+
         else:
             # Prokka call
             annotation_dir = prokka_dir
@@ -707,52 +772,23 @@ if __name__ == "__main__":
                         species=species,
                         strain=sample_basename)
             step_counter += 1
+            # Set roary input files
+            roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
         
 
-        # Set roary input files
-        roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
 
         # SNPs identification (SNIPPY)
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SNIPPY\n"), flush=True)
         step_counter += 1
-        snippy_call(reference_genome=annotation_dir+"/"+sample_basename+"/"+sample_basename+".gbk",
+        reference_annotation_filename = reference_annotation_file.split("/")[-1]
+        reference_annotation_basename = reference_annotation_filename.split(".")[-2]
+        snippy_call(reference_genome=annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gbk",
                     contigs=mauve_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)
 
     # Quast report unification
     quast_report_unification(spades_dir, samples_basenames, spades_dir)
-
-
-    # Annotate reference fasta file 
-    if reference_annotation_file:
-        reference_annotation_filename = reference_annotation_file.split("/")[-1]
-        reference_annotation_basename = reference_annotation_filename.split(".")[-2]
-        if annotator.lower() == "dfast":
-            # Dfast call
-            annotation_dir = dfast_dir
-            print(Banner(f"\nStep {step_counter} for reference sequence: Dfast\n"), flush=True)
-            dfast_call( locus_tag=reference_annotation_basename+"_L",
-                        contigs_file=reference_annotation_file,
-                        output_dir=dfast_dir+"/"+reference_annotation_basename,
-                        sample_basename=reference_annotation_basename,
-                        organism=organism)
-        else:
-            # Prokka call
-            annotation_dir = prokka_dir
-            print(Banner(f"\nStep {step_counter} for reference sequence: Prokka\n"), flush=True)
-            prokka_call(locus_tag=reference_annotation_basename+"_L",
-                        output_dir=prokka_dir+"/"+reference_annotation_basename,
-                        prefix=reference_annotation_basename,
-                        input_file=reference_annotation_file,
-                        genus=cfg.config["annotation_reference"]["genus"],
-                        species=cfg.config["annotation_reference"]["species"],
-                        strain=cfg.config["annotation_reference"]["strain"]
-                        )
-        step_counter += 1
-        # Set roary input files
-        roary_input_files.insert(0, annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff")
-
 
     # MLST call
     print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
@@ -803,18 +839,17 @@ if __name__ == "__main__":
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
     step_counter += 1
-    roary_call(input_files=roary_input_files, output_dir=roary_dir)
+    roary_call(input_files=roary_input_files, output_dir=roary_dir+"/Roary")
 
 
     # Roary plots call
     os.mkdir(roary_plots_dir)
     print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
     step_counter += 1
-    roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
-                    input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
+    roary_plots_call(input_newick=roary_dir+"/Roary/accessory_binary_genes.fa.newick",
+                    input_gene_presence_absence=roary_dir+"/Roary/gene_presence_absence.csv",
                     output_dir=roary_plots_dir)
 
     print(Banner("\nDONE\n"), flush=True)
-
     # Final report
 
