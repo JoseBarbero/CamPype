@@ -6,7 +6,6 @@ import re
 import logging
 import sys
 import workflow_config as cfg
-import gffutils
 from terminal_banner import Banner
 from subprocess import call
 from Bio import SeqIO
