@@ -497,50 +497,55 @@ def blast_postprocessing(blast_file, database_file, output_folder):
     blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)
 
 
-def generate_report(samples):
+def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir):
     
-    csv_report = pd.DataFrame(["Sample", "Reads", "AvgReadLen", "Contigs", "GenomeLen", "AvgContigLen", "N50", "GC", "DepthCov (X)"])
+    csv_report = pd.DataFrame(columns=["Sample", "Reads", "AvgReadLen", "Contigs", "GenomeLen", "AvgContigLen", "N50", "GC", "DepthCov (X)"])
+    assembly_report = pd.read_csv(spades_dir+"/"+"quality_assembly_report.tsv", sep="\t")
 
     for sample in samples:
-
         # Name of the sample
-        sample = ""
-
+        sample_name = str(sample)
         # Total number of reads after quality filtering
         n_reads = 0
-
         # Average read length (bp) after quality filtering
         avg_read_len = 0
+        with open(prinseq_dir+"/"+sample+"/"+sample+".log") as prinseqlog:
+            for line in prinseqlog:
+                if "Input sequences" in line:
+                    n_reads += float(line.split(" ")[-1].replace(",", "").replace("\n", ""))
+                elif "Input mean length" in line:
+                    avg_read_len += float(line.split(" ")[-1].replace(",", "").replace("\n", ""))
 
         # Number of contigs of the genome (>500bp)
-        n_contigs = 0
-
+        n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
         # Length (bp) of the genome
-        genome_len = 0
-
+        genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
         # Average contig length (bp) (>500bp)
-        avg_contig_len = 0
+        contig_len_summatory = 0
+        contig_counter = 0
+        for record in SeqIO.parse(mauve_dir+"/contigs/"+sample_name+".fasta", "fasta"):
+            contig_len_summatory += len(record.seq)
+            contig_counter += 1
+        avg_contig_len = contig_len_summatory/contig_counter
 
         # Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly
-        n50 = 0
-
+        n50 = int(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
         # GC content (%) of the draft genome.
-        gc = 0
-
+        gc = int(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
         # Number of times each nucleotide position in the draft genome has a read that align to that position.
-        depth_cov = 0
+        depth_cov = avg_read_len * n_reads / genome_len
 
+        csv_report = csv_report.append({ "Sample": sample, 
+                            "Reads": round(n_reads, 0), 
+                            "AvgReadLen": round(avg_read_len, 2), 
+                            "Contigs": n_contigs, 
+                            "GenomeLen": genome_len, 
+                            "AvgContigLen": round(avg_contig_len, 2), 
+                            "N50": n50, 
+                            "GC": gc, 
+                            "DepthCov (X)": round(depth_cov, 2)}, ignore_index=True)
 
-    csv_report.append({ "Sample": sample, 
-                        "Reads": n_reads, 
-                        "AvgReadLen": avg_read_len, 
-                        "Contigs": n_contigs, 
-                        "GenomeLen": genome_len, 
-                        "AvgContigLen": avg_contig_len, 
-                        "N50": n50, 
-                        "GC": gc, 
-                        "DepthCov (X)": depth_cov})
-
+    csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)    
 
 if __name__ == "__main__":
 
@@ -850,5 +855,10 @@ if __name__ == "__main__":
                     output_dir=roary_plots_dir)
 
     print(Banner("\nDONE\n"), flush=True)
+    
     # Final report
-
+    generate_report(samples_basenames, 
+                    prinseq_dir, 
+                    spades_dir, 
+                    mauve_dir, 
+                    output_folder)
