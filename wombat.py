@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import datetime
 import os
 import shutil
@@ -508,13 +509,14 @@ def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir):
         # Total number of reads after quality filtering
         n_reads = 0
         # Average read length (bp) after quality filtering
-        avg_read_len = 0
+        read_lengths = []
         with open(prinseq_dir+"/"+sample+"/"+sample+".log") as prinseqlog:
             for line in prinseqlog:
                 if "Input sequences" in line:
                     n_reads += float(line.split(" ")[-1].replace(",", "").replace("\n", ""))
                 elif "Input mean length" in line:
-                    avg_read_len += float(line.split(" ")[-1].replace(",", "").replace("\n", ""))
+                    read_lengths.append(float(line.split(" ")[-1].replace(",", "").replace("\n", "")))
+        avg_read_len = np.mean(read_lengths)
 
         # Number of contigs of the genome (>500bp)
         n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
@@ -529,9 +531,9 @@ def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir):
         avg_contig_len = contig_len_summatory/contig_counter
 
         # Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly
-        n50 = int(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
+        n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
         # GC content (%) of the draft genome.
-        gc = int(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
+        gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
         # Number of times each nucleotide position in the draft genome has a read that align to that position.
         depth_cov = avg_read_len * n_reads / genome_len
 
@@ -541,8 +543,8 @@ def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir):
                             "Contigs": n_contigs, 
                             "GenomeLen": genome_len, 
                             "AvgContigLen": round(avg_contig_len, 2), 
-                            "N50": n50, 
-                            "GC": gc, 
+                            "N50": round(n50, 0),
+                            "GC": round(gc, 2),
                             "DepthCov (X)": round(depth_cov, 2)}, ignore_index=True)
 
     csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)    
