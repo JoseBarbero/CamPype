@@ -295,7 +295,7 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
     Arguments:
         proteins_file_ori {string} -- Reference proteins file path (origin).
         proteins_file_dest {string} -- Reference proteins file path (destination).
-        contigs_files_paths {list} -- List of contig files from SPAdes.
+        contigs_files_paths {list} -- List of contig files.
         blast_database_output {string} -- Destination folder to blast database.
         blast_output_folder {string} -- Destination folder to blast output.
         blast_output_name {string} -- Output file name.
@@ -316,6 +316,7 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
                 
     # Create blast database
     blast_db_path = os.path.dirname(os.path.abspath(blast_database_output))+"/DNA_database"
+    print(blast_db_path)
     call(["makeblastdb", "-in", blast_database_output, "-dbtype", cfg.config["blast"]["dbtype"], 
           "-out", blast_db_path, "-title", "DNA_Database"])
 
@@ -335,6 +336,45 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
 
     return tblastn_state
 
+
+def blast_postprocessing(blast_file, database_file, output_folder):
+    """
+    Blast post processing.
+    
+    Arguments:
+        blast_file {string} -- Blast output file.
+        database_file {string} -- Proteins database file.
+        output_folder {string} -- Output folder.
+    """
+    
+    # Read blast file as dataframe
+    blast_output = pd.read_csv(blast_file, sep="\t")
+
+    # Remove low identity rows 
+    blast_output = blast_output[blast_output["% identity"] > 50]
+
+    # Add query length and protein cover % columns
+    blast_output.insert(2, "query length", "")
+    blast_output.insert(3, "protein cover %", "")
+    
+    # Parse fasta database into dict
+    proteins_database = {}
+    for record in SeqIO.parse(database_file, "fasta"):
+        proteins_database[record.id] = (record.description, record.seq)
+    
+    # Fill query length and protein cover % columns
+    for index, row in blast_output.iterrows():
+        query_id = row["query id"]
+        query_length = len(proteins_database[query_id][1])
+        blast_output.at[index, "query length"] = query_length
+
+        # (query end - query start + 1) / query length * 100
+        query_end = row["query end"]
+        query_start = row["query start"]
+        protein_cover = (query_end - query_start + 1) / query_length * 100
+        blast_output.at[index, "protein cover %"] = protein_cover
+
+    blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)
 
 def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain):
     """
@@ -413,7 +453,6 @@ def refactor_gff_from_dfast(gff_input, gff_output):
             out_file.write(line)
         
 
-
 def roary_call(input_files, output_dir):
     """
     Roary call.
@@ -456,46 +495,6 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
             if filename.startswith("pangenome_"):
                 shutil.move(root+"/"+filename, output_dir+"/"+filename)
     return ex_state
-
-
-def blast_postprocessing(blast_file, database_file, output_folder):
-    """
-    Blast post processing.
-    
-    Arguments:
-        blast_file {string} -- Blast output file.
-        database_file {string} -- Proteins database file.
-        output_folder {string} -- Output folder.
-    """
-    
-    # Read blast file as dataframe
-    blast_output = pd.read_csv(blast_file, sep="\t")
-
-    # Remove low identity rows 
-    blast_output = blast_output[blast_output["% identity"] > 50]
-
-    # Add query length and protein cover % columns
-    blast_output.insert(2, "query length", "")
-    blast_output.insert(3, "protein cover %", "")
-    
-    # Parse fasta database into dict
-    proteins_database = {}
-    for record in SeqIO.parse(database_file, "fasta"):
-        proteins_database[record.id] = (record.description, record.seq)
-    
-    # Fill query length and protein cover % columns
-    for index, row in blast_output.iterrows():
-        query_id = row["query id"]
-        query_length = len(proteins_database[query_id][1])
-        blast_output.at[index, "query length"] = query_length
-
-        # (query end - query start + 1) / query length * 100
-        query_end = row["query end"]
-        query_start = row["query start"]
-        protein_cover = (query_end - query_start + 1) / query_length * 100
-        blast_output.at[index, "protein cover %"] = protein_cover
-
-    blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)
 
 
 def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir):
@@ -817,11 +816,18 @@ if __name__ == "__main__":
     if cfg.config["run_blast"]:
         print(Banner(f"\nStep {step_counter}: BLAST (virulence genes against custom database)\n"), flush=True)
         step_counter += 1
-        os.mkdir(blast_proteins_dir)
-        os.mkdir(dna_database_blast)
-        contig_files = [spades_dir+"/"+strainfolder+"/contigs.fasta" for strainfolder in next(os.walk(spades_dir))[1]]
-        proteins_database_name = "VF_custom.txt"
+        contigs_dir = mauve_contigs_dir
+        contig_files = ([os.path.join(contigs_dir, f) for f in os.listdir(contigs_dir)])
+
         blast_output_name = "BLASToutput_VF_custom.txt"
+        proteins_file = cfg.config["proteins_reference_file"]
+        dna_database_blast = blast_proteins_dir+"/DNA_database"
+        proteins_database_name = "VF_custom.txt"    # This is an output file name
+        if not os.path.exists(blast_proteins_dir):
+            os.mkdir(blast_proteins_dir)
+        if not os.path.exists(dna_database_blast):
+            os.mkdir(dna_database_blast)
+
         blast_call( proteins_file_ori=proteins_file, 
                     proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
                     contigs_files_paths=contig_files, 
