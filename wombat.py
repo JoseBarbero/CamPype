@@ -306,11 +306,11 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
     # Move VF_custom.txt to ABRicateVirulenceGenes/BLAST_custom_proteins
     shutil.copy(proteins_file_ori, proteins_file_dest)
 
-    # Concat every contig from SPAdes on DNA_database.fna (replacing sequences names)
+    # Concat every contig from Mauve on DNA_database.fna (replacing sequences names)
     with open(blast_database_output, "w") as output_file:
         for contig_file_path in contigs_files_paths:
             for record in SeqIO.parse(contig_file_path, "fasta"):
-                strain = contig_file_path.split("/")[-2]
+                strain = os.path.basename(contig_file_path).split(".")[0]
                 record.id = record.name = record.description = strain+"_N_"+"_".join(record.id.split("_")[1:])
                 SeqIO.write(record, output_file, "fasta")
                 
