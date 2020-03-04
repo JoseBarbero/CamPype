@@ -12,6 +12,19 @@ from terminal_banner import Banner
 from subprocess import call
 from Bio import SeqIO
 
+def welcome(wombat_img):
+    img_file = open(wombat_img)
+    welcome_banner =    " _       __     __                             __       \n"\
+                        "| |     / /__  / /________  ____ ___  ___     / /_____  \n"\
+                        "| | /| / / _ \/ / ___/ __ \/ __ `__ \/ _ \   / __/ __ \ \n"\
+                        "| |/ |/ /  __/ / /__/ /_/ / / / / / /  __/  / /_/ /_/ / \n"\
+                        "|__/|__/\___/_/\___/\____/_/ /_/ /_/\___/   \__/\____/  \n"\
+                        "    _       __                __          __    __\n"\
+                        "   | |     / /___  ____ ___  / /_  ____ _/ /_  / /\n"\
+                        "   | | /| / / __ \/ __ `__ \/ __ \/ __ `/ __/ / / \n"\
+                        "   | |/ |/ / /_/ / / / / / / /_/ / /_/ / /_  /_/  \n"\
+                        "   |__/|__/\____/_/ /_/ /_/_.___/\__,_/\__/ (_)   \n"    
+    print(Banner(str("".join(img_file.readlines())+"\n"+welcome_banner)))
 
 def read_input_files(indexfile):
     """
@@ -567,6 +580,9 @@ def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir):
     csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)    
 
 if __name__ == "__main__":
+
+    # Welcome
+    welcome("resources/wombat_ascii.txt")
 
     # Get config file parameters
     annotator = cfg.config["annotator"]
