@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import os
+import csv
 import shutil
 import re
 import logging
@@ -260,6 +261,23 @@ def mlst_call(input_dir, output_dir, output_filename):
 
     arguments = ["mlst", *input_filenames]
     return call(arguments, stdout=output_file)
+
+
+def mlst_postprocessing(mlst_file, output_file):
+    col_names = ["Sample", "Genus", "MLST"]
+    output_data = pd.DataFrame()
+    mlst_df = pd.read_csv(mlst_file, delimiter="\t",header=None)
+    for _, row in mlst_df.iterrows():
+        new_row = []
+        new_row.append(os.path.basename(row[0]).split(".")[0])
+        new_row.append(row[1])
+        new_row.append(row[2])
+        for column in mlst_df.columns[3:]:
+            if not row[column].split("(")[0] in col_names:
+                col_names.append(row[column].split("(")[0])
+            new_row.append(int("".join(filter(str.isdigit, row[column]))))
+        output_data = output_data.append(pd.DataFrame([new_row], columns=col_names), ignore_index=True)
+    output_data.to_csv(output_file, index=False, sep="\t")
 
 
 def abricate_call(input_dir, output_dir, output_filename, database):
@@ -796,12 +814,15 @@ if __name__ == "__main__":
     quast_report_unification(spades_dir, samples_basenames, spades_dir)
 
     # MLST call
+    mlst_out_file = "MLST.txt"
     print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
     step_counter += 1
     mlst_call(input_dir=mauve_contigs_dir,
             output_dir=mlst_dir,
-            output_filename="MLST.txt")
-
+            output_filename=mlst_out_file)
+    
+    # MLST postprocessing
+    mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_edited.txt")
 
     # ABRicate call (virulence genes)
     print(Banner(f"\nStep {step_counter}: ABRicate (virulence genes)\n"), flush=True)
