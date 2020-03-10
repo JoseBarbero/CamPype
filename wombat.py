@@ -495,7 +495,7 @@ def roary_call(input_files, output_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["roary", "-f", output_dir, *input_files]
+    arguments = ["roary", "-f", output_dir, "-s", "-v", *input_files]
     ex_state = call(arguments)
     # Set Roary output directory name
     for _root, dirs, _files in os.walk("."):
