@@ -528,56 +528,249 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
     return ex_state
 
 
-def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir):
+def get_reads_table(input1, input2, sample_name, output, after_qc=False):
+    """
+    Gets reads info provided by prinseq-lite.
     
-    csv_report = pd.DataFrame(columns=["Sample", "Reads", "AvgReadLen", "Contigs", "GenomeLen", "AvgContigLen", "N50", "GC", "DepthCov (X)"])
+    Arguments:
+        input1 {string} -- Forward fastq file.
+        input2 {string} -- Reverse fastq file.
+        sample_name {string} -- Sample name.
+        output {string} -- Output file.
+    
+    Keyword Arguments:
+        after_qc {bool} -- Describes if get_reads_table should run as if FastQC was already executed or not (default: {False})
+    
+    Returns:
+        {dict} -- Dictionary with reads information.
+    """
+    arguments = ["prinseq-lite.pl", 
+                "-fastq", input1, 
+                "-fastq2", input2, 
+                "-stats_info", 
+                "-stats_len"]
+    
+    # Write in a bypass file prinseq-lite result
+    bypass = "bypass.tsv"
+    with open(bypass, "w") as f:
+        state = call(arguments, stdout=f)
+    call(["cat", bypass])
+
+    # Create a new dataset with prinseq stats for every sample
+    with open(bypass, "r") as bypass_file:
+        data = csv.reader(bypass_file, delimiter="\t")
+
+        has_header = False
+        
+
+        if not os.path.isfile(output):
+            with open(output, "w") as out_file:
+                outputwriter = csv.writer(out_file, delimiter="\t")
+                if after_qc:
+                    outputwriter.writerow(["Sample", "R1ReadsQC", "R1LenMeanQC", "R1LenSdQC", "R2ReadsQC", "R2LenMeanQC", "R2LenSdQC"])
+                else:
+                    outputwriter.writerow(["Sample", "R1Reads", "R1LenMean", "R1LenSd", "R2Reads", "R2LenMean", "R2LenSd"])
+                
+        
+        with open(output, "a") as out_file:
+            outputwriter = csv.writer(out_file, delimiter="\t")
+            data_dict = {}
+            
+            # Uglier that indexing but more restrictive, just in case
+            data_dict["Sample"] = sample_name
+            for row in data:
+                if row[0] == "stats_info" and row[1] == "reads":
+                    data_dict["R1Reads"] = int(row[2])
+                elif row[0] == "stats_info2" and row[1] == "reads":
+                    data_dict["R2Reads"] = int(row[2])
+                elif row[0] == "stats_len":
+                    if row[1] == "stddev":
+                        data_dict["R1LenSd"] = round(float(row[2]),2)
+                    elif row[1] == "mean":
+                        data_dict["R1LenMean"] = round(float(row[2]),2)
+                elif row[0] == "stats_len2":
+                    if row[1] == "stddev":
+                        data_dict["R2LenSd"] = round(float(row[2]),2)
+                    elif row[1] == "mean":
+                        data_dict["R2LenMean"] = round(float(row[2]),2)
+                        
+            outputwriter.writerow([data_dict["Sample"], data_dict["R1Reads"], data_dict["R1LenMean"], data_dict["R1LenSd"], data_dict["R2Reads"], data_dict["R2LenMean"], data_dict["R2LenSd"]])
+            
+
+    call(["rm", bypass])
+    return data_dict
+
+def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, output, previous_data):
+    """
+    Gets reads info provided by prinseq-lite (after flash).
+    
+    Arguments:
+        extended {string} -- Extended fastq file.
+        notcombined1 {string} -- Not combined fastq forward file.
+        notcombined2 {string} -- Not combined fastq reverse file.
+        sample_name {string} -- Sample name.
+        output {string} -- Output file.
+        previous_data {dict} -- Dictionary containing reads information.
+    
+    Returns:
+        {dict} -- Dictionary with reads information.
+    """
+        
+    # Write in a bypass file prinseq-lite result
+    bypass1 = "bypass1.tsv"
+    with open(bypass1, "w") as f:
+        arguments = ["prinseq-lite.pl", 
+                "-fastq", extended, 
+                "-stats_info", 
+                "-stats_len"]
+        state = call(arguments, stdout=f)
+    call(["cat", bypass1])
+
+    bypass2 = "bypass2.tsv"
+    with open(bypass2, "w") as f:
+        arguments = ["prinseq-lite.pl", 
+                "-fastq", notcombined1, 
+                "-fastq2", notcombined2, 
+                "-stats_info", 
+                "-stats_len"]
+        state2 = call(arguments, stdout=f)
+    call(["cat", bypass2])
+
+    # Create a new dataset with prinseq stats for every sample
+    with open(bypass1, "r") as bypass_file1:
+        with open(bypass2, "r") as bypass_file2:
+            data1 = csv.reader(bypass_file1, delimiter="\t")
+            data2 = csv.reader(bypass_file2, delimiter="\t")
+
+            has_header = False
+            if not os.path.isfile(output):
+                with open(output, "w") as out_file:
+                    outputwriter = csv.writer(out_file, delimiter="\t")
+                    outputwriter.writerow(["Sample", "JoinPercentage", "JoinReads", "JoinLenMeanReads", "JoinLenSdReads", "UnjoinR1Reads", "UnjoinR1LenMeanReads", "UnjoinR1LenSdReads", "UnjoinR2Reads", "UnjoinR2LenMeanReads", "UnjoinR2LenSdReads"])
+                    
+            
+            with open(output, "a") as out_file:
+                outputwriter = csv.writer(out_file, delimiter="\t")
+                data_dict = {}
+                
+                data_dict["Sample"] = sample_name
+
+                # Uglier that indexing but more restrictive, just in case
+                for row in data1:
+                    if row[0] == "stats_info" and row[1] == "reads":
+                        data_dict["JoinReads"] = int(row[2]) * 2
+                    elif row[0] == "stats_len":
+                        if row[1] == "stddev":
+                            data_dict["JoinLenSdReads"] = round(float(row[2]),2)
+                        elif row[1] == "mean":
+                            data_dict["JoinLenMeanReads"] = round(float(row[2]),2)
+
+                data_dict["JoinPercentage"] = str(round(data_dict["JoinReads"] / (previous_data["R1Reads"] * 2) * 100, 2))+"%"
+
+                for row in data2:
+                    if row[0] == "stats_info" and row[1] == "reads":
+                        data_dict["UnjoinR1Reads"] = int(row[2])
+                    elif row[0] == "stats_info2" and row[1] == "reads":
+                        data_dict["UnjoinR2Reads"] = int(row[2])
+                    elif row[0] == "stats_len":
+                        if row[1] == "stddev":
+                            data_dict["UnjoinR1LenSdReads"] = round(float(row[2]),2)
+                        elif row[1] == "mean":
+                            data_dict["UnjoinR1LenMeanReads"] = round(float(row[2]),2)
+                    elif row[0] == "stats_len2":
+                        if row[1] == "stddev":
+                            data_dict["UnjoinR2LenSdReads"] = round(float(row[2]),2)
+                        elif row[1] == "mean":
+                            data_dict["UnjoinR2LenMeanReads"] = round(float(row[2]),2)
+                            
+                outputwriter.writerow([ data_dict["Sample"], data_dict["JoinPercentage"], data_dict["JoinReads"], data_dict["JoinLenMeanReads"], 
+                                        data_dict["JoinLenSdReads"], data_dict["UnjoinR1Reads"], data_dict["UnjoinR1LenMeanReads"], data_dict["UnjoinR1LenSdReads"], 
+                                        data_dict["UnjoinR2Reads"], data_dict["UnjoinR2LenMeanReads"], data_dict["UnjoinR2LenSdReads"]])
+                
+    call(["rm", bypass1])
+    call(["rm", bypass2])
+    return data_dict
+
+
+def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash):
+    """
+    Creates the final report.
+    
+    Arguments:
+        samples {list} -- Samples list.
+        prinseq_dir {string} -- Prinseq results directory.
+        spades_dir {string} -- SPAdes results directory.
+        mauve_dir {string} --  Mauves results directory.
+        out_dir {string} -- Output directory.
+        infro_pre_QC {dict} -- Prinseq information before running QC.
+        info_post_QC {dict} -- Prinseq information after running QC.
+        info_post_flash {dict} -- Prinseq information after running flash.
+    """
+    
+    csv_report = pd.DataFrame(columns=["Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)"])
     assembly_report = pd.read_csv(spades_dir+"/"+"quality_assembly_report.tsv", sep="\t")
 
     for sample in samples:
-        # Name of the sample
-        sample_name = str(sample)
-        # Total number of reads after quality filtering
-        n_reads = 0
-        # Average read length (bp) after quality filtering
-        read_lengths = []
-        with open(prinseq_dir+"/"+sample+"/"+sample+".log") as prinseqlog:
-            for line in prinseqlog:
-                if "Input sequences" in line:
-                    n_reads += float(line.split(" ")[-1].replace(",", "").replace("\n", ""))
-                elif "Input mean length" in line:
-                    read_lengths.append(float(line.split(" ")[-1].replace(",", "").replace("\n", "")))
-        avg_read_len = np.mean(read_lengths)
+        
+        # "Reads": Total number of reads after quality filtering
+        reads = info_pre_QC[sample]["R1Reads"] + info_pre_QC[sample]["R2Reads"]
+        
+        # "ReadLen": Average read length (bp) before quality control.
+        readlen = np.mean([info_pre_QC[sample]["R1LenMean"], info_pre_QC[sample]["R2LenMean"]])
 
-        # Number of contigs of the genome (>500bp)
+        # "ReadsQC": Total number of reads after quality control.
+        readsqc = info_post_QC[sample]["R1Reads"] + info_post_QC[sample]["R2Reads"]
+
+        # "ReadsQCLen": Average read length (bp) after quality control.
+        readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
+
+        # "JoinReads": Total combined reads.
+        joinreads = info_post_flash[sample]["JoinReads"]
+
+        # "JoinReadsLen: Mean length of combined reads.
+        joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
+
+        # "Contigs": Number of contigs of the genome (> 500bp).
         n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
-        # Length (bp) of the genome
+        
+        # "GenomeLen": Length (bp) of the genome.
         genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
-        # Average contig length (bp) (>500bp)
+        
+        # "ContigLen": Average contig length (bp) (> 500bp).
         contig_len_summatory = 0
         contig_counter = 0
-        for record in SeqIO.parse(mauve_dir+"/contigs/"+sample_name+".fasta", "fasta"):
+        for record in SeqIO.parse(mauve_dir+"/contigs/"+sample+".fasta", "fasta"):
             contig_len_summatory += len(record.seq)
             contig_counter += 1
         avg_contig_len = contig_len_summatory/contig_counter
 
-        # Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly
+        # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
         n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
-        # GC content (%) of the draft genome.
+        
+        # "GC": GC content (%) of the draft genome
         gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
-        # Number of times each nucleotide position in the draft genome has a read that align to that position.
-        depth_cov = avg_read_len * n_reads / genome_len
+        
+        # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
+        depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
 
         csv_report = csv_report.append({ "Sample": sample, 
-                            "Reads": round(n_reads, 0), 
-                            "AvgReadLen": round(avg_read_len, 2), 
+                            "Reads": round(reads, 0), 
+                            "ReadLen": readlen,
+                            "ReadsQC": readsqc,
+                            "ReadsQCLen": readsqclen, 
+                            "JoinReads": joinreads, 
+                            "JoinReadsLen": joinreadslen, 
                             "Contigs": n_contigs, 
                             "GenomeLen": genome_len, 
-                            "AvgContigLen": round(avg_contig_len, 2), 
+                            "ContigLen": round(avg_contig_len, 2), 
                             "N50": round(n50, 0),
                             "GC": round(gc, 2),
-                            "DepthCov (X)": round(depth_cov, 2)}, ignore_index=True)
+                            "DepthCov (X)": round(depthcov, 2)}, ignore_index=True)
 
-    csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)    
+    csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)
+
+
+
 
 if __name__ == "__main__":
 
@@ -643,6 +836,9 @@ if __name__ == "__main__":
         os.mkdir(prokka_dir)
 
     roary_input_files = []
+    summary_pre_qc = {}
+    summary_post_qc = {}
+    summary_post_flash = {}
 
     # Annotate reference fasta file 
     if reference_annotation_file:
@@ -738,6 +934,19 @@ if __name__ == "__main__":
                    output_filename=sample_basename,
                    output_dir=flash_dir+"/"+sample_basename)
 
+        # Quality reports
+        report_pre_qc = get_reads_table(sample_fw, sample_rv, sample_basename, prinseq_dir+"/reads_statistics_beforeQC.tsv", False)
+
+        report_post_qc = get_reads_table(prinseq_files["R1"], prinseq_files["R2"], sample_basename, prinseq_dir+"/reads_statistics_afterQC.tsv", True)
+
+        report_post_flash = get_flash_reads_table(flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq", 
+                                flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
+                                flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
+                                sample_basename, flash_dir+"/reads_statistics_FLASH.tsv", report_post_qc)
+
+        summary_pre_qc[sample_basename] = report_pre_qc
+        summary_post_qc[sample_basename] = report_post_qc
+        summary_post_flash[sample_basename] = report_post_flash
 
         # Create SPAdes output directories
         os.mkdir(spades_dir+"/"+sample_basename)
@@ -906,4 +1115,5 @@ if __name__ == "__main__":
                     prinseq_dir, 
                     spades_dir, 
                     mauve_dir, 
-                    output_folder)
+                    output_folder, 
+                    summary_pre_qc, summary_post_qc, summary_post_flash)
