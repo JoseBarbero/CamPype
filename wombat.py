@@ -1129,6 +1129,7 @@ if __name__ == "__main__":
 
     print(Banner("\nDONE\n"), flush=True)
     
+    
     # Final report
     generate_report(samples_basenames, 
                     prinseq_dir, 
