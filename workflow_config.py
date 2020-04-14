@@ -1,11 +1,11 @@
 config = {
     "output_directory": ".",    # "." is Wombat's directory. (You need to have writing permissions to save Wombat's output in certain directories.)
-    "adapters_reference_file": "reference_files/adapters_and_sequences.fa", # TODO make this generic for other users
+    "adapters_reference_file": "reference_files/adapters_and_sequences.fa", 
     "reference_genome": {   # OPTIONAL (if you don't want to use it, just leave every parameter empty)
-        "file": "reference_files/NCTC11168.fasta", # TODO make this generic for other users
-        "genus": "Campylobacter",   # TODO make this generic for other users
-        "species": "jejuni",    # TODO make this generic for other users
-        "strain": "NCTC11168" # TODO make this generic for other users
+        "file": "reference_files/NCTC11168.fasta", 
+        "genus": "Campylobacter",   
+        "species": "jejuni",    
+        "strain": "NCTC11168" 
     },
     "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True)
     "run_trimmomatic": False, # Set to true or false,
