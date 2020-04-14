@@ -106,8 +106,6 @@ venv.bak/
 # aux files
 input_files.csv
 Workflow_OUTPUT*
-reference_files
-reference_files.csv
 
 # VSCode configuration
 .vscode
