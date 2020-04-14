@@ -58,6 +58,8 @@
 
 1. Set your own running parameters in "workflow_config.py" file.
 
+1. Default settings are configured for Campylobacter jejuni, if you want to use a different organism, change reference files and configuration file.
+
 ## Running the workflow
 
 1. Activate the environment
