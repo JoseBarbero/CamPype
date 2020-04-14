@@ -315,6 +315,9 @@ def abricate_call(input_dir, output_dir, output_filename, database):
             if filename.endswith(".fasta"):
                 input_filenames.append(input_dir+"/"+filename)
 
+    # Reference file
+    input_filenames.append(cfg.config["reference_genome"]["file"])
+
     arguments = ["abricate", *input_filenames, "--db", database]
     return call(arguments, stdout=output_file)
 
@@ -785,7 +788,7 @@ if __name__ == "__main__":
 
     # Get reference files from workflow_config.py
     adapters_file =  cfg.config["adapters_reference_file"]
-    reference_annotation_file = cfg.config["reference_genome"]["file"]
+    reference_genome_file = cfg.config["reference_genome"]["file"]
     proteins_file = cfg.config["proteins_reference_file"]
     
     output_folder = sys.argv[1]
@@ -841,39 +844,39 @@ if __name__ == "__main__":
     summary_post_flash = {}
 
     # Annotate reference fasta file 
-    if reference_annotation_file:
-        reference_annotation_filename = reference_annotation_file.split("/")[-1]
-        reference_annotation_basename = reference_annotation_filename.split(".")[-2]
+    if reference_genome_file:
+        reference_genome_filename = reference_genome_file.split("/")[-1]
+        reference_genome_basename = reference_genome_filename.split(".")[-2]
         if annotator.lower() == "dfast":
             # Dfast call
             annotation_dir = dfast_dir
             print(Banner(f"\nAnnotating reference sequence: Dfast\n"), flush=True)
-            dfast_call( locus_tag=reference_annotation_basename+"_L",
-                        contigs_file=reference_annotation_file,
-                        output_dir=dfast_dir+"/"+reference_annotation_basename,
-                        sample_basename=reference_annotation_basename,
+            dfast_call( locus_tag=reference_genome_file+"_L",
+                        contigs_file=reference_genome_file,
+                        output_dir=dfast_dir+"/"+reference_genome_basename,
+                        sample_basename=reference_genome_basename,
                         organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
-            refactor_gff_from_dfast(dfast_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff",
-                                    dfast_refactor_dir+"/"+reference_annotation_basename+".gff")
+            refactor_gff_from_dfast(dfast_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
+                                    dfast_refactor_dir+"/"+reference_genome_basename+".gff")
             # Set roary input files (renaming to get reference file first)
-            os.rename(dfast_refactor_dir+"/"+reference_annotation_basename+".gff", dfast_refactor_dir+"/+"+reference_annotation_basename+".gff")
-            roary_input_files.append(dfast_refactor_dir+"/+"+reference_annotation_basename+".gff")
+            os.rename(dfast_refactor_dir+"/"+reference_genome_basename+".gff", dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
+            roary_input_files.append(dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
         else:
             # Prokka call
             annotation_dir = prokka_dir
             print(Banner(f"\nAnnotating reference sequence: Prokka\n"), flush=True)
-            prokka_call(locus_tag=reference_annotation_basename+"_L",
-                        output_dir=prokka_dir+"/"+reference_annotation_basename,
-                        prefix=reference_annotation_basename,
-                        input_file=reference_annotation_file,
+            prokka_call(locus_tag=reference_genome_basename+"_L",
+                        output_dir=prokka_dir+"/"+reference_genome_basename,
+                        prefix=reference_genome_basename,
+                        input_file=reference_genome_file,
                         genus=cfg.config["reference_genome"]["genus"],
                         species=cfg.config["reference_genome"]["species"],
                         strain=cfg.config["reference_genome"]["strain"]
                         )
             # Set roary input files (renaming to get reference file first)
-            os.rename(annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff",
-                      annotation_dir+"/"+reference_annotation_basename+"/+"+reference_annotation_basename+".gff")
-            roary_input_files.append(annotation_dir+"/"+reference_annotation_basename+"/+"+reference_annotation_basename+".gff")
+            os.rename(annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
+                      annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
+            roary_input_files.append(annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
 
     
     # Workflow Starts (for standard samples)
@@ -975,7 +978,7 @@ if __name__ == "__main__":
         
         # Reordering contigs by a reference genome with MauveCM
         mauve_contigs = mauve_call(output_folder=mauve_dir+"/"+sample_basename,
-                                    reference_sequence=reference_annotation_file,
+                                    reference_sequence=reference_genome_file,
                                     input_contigs=contigs_dir+"/"+sample_basename+".fasta",
                                     sample_basename=sample_basename)
 
@@ -1028,9 +1031,9 @@ if __name__ == "__main__":
         # SNPs identification (SNIPPY)
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SNIPPY\n"), flush=True)
         step_counter += 1
-        reference_annotation_filename = reference_annotation_file.split("/")[-1]
-        reference_annotation_basename = reference_annotation_filename.split(".")[-2]
-        snippy_call(reference_genome=annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gbk",
+        reference_genome_filename = reference_genome_file.split("/")[-1]
+        reference_genome_basename = reference_genome_filename.split(".")[-2]
+        snippy_call(reference_genome=annotation_dir+"/"+reference_genome_file+"/"+reference_genome_file+".gbk",
                     contigs=mauve_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)

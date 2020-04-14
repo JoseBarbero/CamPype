@@ -105,7 +105,7 @@ venv.bak/
 
 # aux files
 input_files.csv
-Workflow_OUTPUT*
+Wombat_OUTPUT*
 
 # VSCode configuration
 .vscode
