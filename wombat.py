@@ -785,7 +785,7 @@ if __name__ == "__main__":
 
     # Get reference files from workflow_config.py
     adapters_file =  cfg.config["adapters_reference_file"]
-    reference_annotation_file = cfg.config["annotation_reference"]["file"]
+    reference_annotation_file = cfg.config["reference_genome"]["file"]
     proteins_file = cfg.config["proteins_reference_file"]
     
     output_folder = sys.argv[1]
@@ -852,7 +852,7 @@ if __name__ == "__main__":
                         contigs_file=reference_annotation_file,
                         output_dir=dfast_dir+"/"+reference_annotation_basename,
                         sample_basename=reference_annotation_basename,
-                        organism=cfg.config["annotation_reference"]["genus"]+" "+cfg.config["annotation_reference"]["species"])
+                        organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
             refactor_gff_from_dfast(dfast_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff",
                                     dfast_refactor_dir+"/"+reference_annotation_basename+".gff")
             # Set roary input files (renaming to get reference file first)
@@ -866,9 +866,9 @@ if __name__ == "__main__":
                         output_dir=prokka_dir+"/"+reference_annotation_basename,
                         prefix=reference_annotation_basename,
                         input_file=reference_annotation_file,
-                        genus=cfg.config["annotation_reference"]["genus"],
-                        species=cfg.config["annotation_reference"]["species"],
-                        strain=cfg.config["annotation_reference"]["strain"]
+                        genus=cfg.config["reference_genome"]["genus"],
+                        species=cfg.config["reference_genome"]["species"],
+                        strain=cfg.config["reference_genome"]["strain"]
                         )
             # Set roary input files (renaming to get reference file first)
             os.rename(annotation_dir+"/"+reference_annotation_basename+"/"+reference_annotation_basename+".gff",
