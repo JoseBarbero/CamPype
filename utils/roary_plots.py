@@ -60,7 +60,7 @@ def get_options():
 
 if __name__ == "__main__":
     options = get_options()
-
+    
     import matplotlib
     matplotlib.use('Agg')
 
@@ -114,7 +114,29 @@ if __name__ == "__main__":
 
     # Sort the matrix according to tip labels in the tree
     roary_sorted = roary_sorted[[x.name for x in t.get_terminals()]]
+    
+    #<JBA>
+    import os
+    from io import StringIO
+    mlst_file = options.spreadsheet.split("/")[0]+"/MLST/MLST_edited.txt"
+    mlst_data = pd.read_csv(mlst_file, sep="\t", dtype=str)
 
+    tmptree1 = "tmp_tree.xml" 
+    tmptree2 = "tmp_tree2.xml" 
+    Phylo.write([t], tmptree1, 'newick')
+    
+    with open("tmp_tree.xml") as infile, open(tmptree2, 'w') as outfile:
+        for line in infile:
+            for sample in mlst_data["Sample"]:
+                line = line.replace(sample, sample+"{"+mlst_data.loc[mlst_data["Sample"] == sample]["clonal_complex"].values[0]+"}").replace(" ", "_")
+            outfile.write(line)
+
+    t = Phylo.read(tmptree2, 'newick')
+    
+    os.remove(tmptree1)
+    os.remove(tmptree2)
+    #</JBA>
+    
     # Plot presence/absence matrix against the tree
     with sns.axes_style('whitegrid'):
         fig = plt.figure(figsize=(17, 10))
