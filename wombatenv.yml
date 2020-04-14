@@ -24,6 +24,7 @@ dependencies:
   - samtools=1.9
   - bcftools=1.9
   - tbl2asn-forever=25.7.1f
+  - request=2.23.0
   - pip
   - pip:
     - terminal-banner

@@ -8,9 +8,11 @@ import re
 import logging
 import sys
 import workflow_config as cfg
+import requests
 from terminal_banner import Banner
 from subprocess import call
 from Bio import SeqIO
+from io import StringIO
 
 def welcome(wombat_img):
     img_file = open(wombat_img)
@@ -250,7 +252,7 @@ def quast_report_unification(input_dir, samples, output_dir):
     final_df = pd.concat([first_col_df, combined_df], axis=1)
     final_df.to_csv(output_dir+"/quality_assembly_report.tsv", sep="\t")
 
- 
+
 def mlst_call(input_dir, output_dir, output_filename):
     """
     MLST call for every fasta file in input_dir.
@@ -263,6 +265,7 @@ def mlst_call(input_dir, output_dir, output_filename):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
+    
     output_file = open(output_dir+"/"+output_filename, "w")
     
     input_filenames = []
@@ -277,19 +280,32 @@ def mlst_call(input_dir, output_dir, output_filename):
 
 
 def mlst_postprocessing(mlst_file, output_file):
-    col_names = ["Sample", "Genus", "MLST"]
+    col_names = ["Sample", "Genus", "ST"]
     output_data = pd.DataFrame()
     mlst_df = pd.read_csv(mlst_file, delimiter="\t",header=None)
     for _, row in mlst_df.iterrows():
         new_row = []
-        new_row.append(os.path.basename(row[0]).split(".")[0])
-        new_row.append(row[1])
-        new_row.append(row[2])
+        new_row.append(os.path.basename(row[0]).split(".")[0])  # Basename
+        new_row.append(row[1])                                  # Genus
+        new_row.append(row[2])                                  # ST
         for column in mlst_df.columns[3:]:
             if not row[column].split("(")[0] in col_names:
                 col_names.append(row[column].split("(")[0])
             new_row.append(int("".join(filter(str.isdigit, row[column]))))
+        
+        # Get clonal complex because MLST doesn't return it (https://github.com/tseemann/mlst/issues/60)
+        if not "clonal_complex" in col_names:
+            col_names.append("clonal_complex")
+        
+        url = "http://rest.pubmlst.org/db/pubmlst_campylobacter_seqdef/schemes/1/profiles_csv"
+        urlData = requests.get(url).content
+        database = pd.read_csv(StringIO(urlData.decode('utf-8')), sep="\t")
+
+        new_row.append(database.loc[database["ST"] == row[2]]["clonal_complex"].values[0])
+
+
         output_data = output_data.append(pd.DataFrame([new_row], columns=col_names), ignore_index=True)
+
     output_data.to_csv(output_file, index=False, sep="\t")
 
 
