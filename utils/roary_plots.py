@@ -118,7 +118,7 @@ if __name__ == "__main__":
     #<JBA>
     import os
     from io import StringIO
-    mlst_file = options.spreadsheet.split("/")[0]+"/MLST/MLST_edited.txt"
+    mlst_file = options.spreadsheet.split("/")[1]+"/MLST/MLST_edited.txt"
     mlst_data = pd.read_csv(mlst_file, sep="\t", dtype=str)
 
     tmptree1 = "tmp_tree.xml" 

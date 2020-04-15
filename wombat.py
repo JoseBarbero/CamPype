@@ -1083,6 +1083,7 @@ if __name__ == "__main__":
         step_counter += 1
         contigs_dir = mauve_contigs_dir
         contig_files = ([os.path.join(contigs_dir, f) for f in os.listdir(contigs_dir)])
+        contig_files.append(cfg.config["reference_genome"]["file"])
 
         blast_output_name = "BLASToutput_VF_custom.txt"
         proteins_file = cfg.config["proteins_reference_file"]
