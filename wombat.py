@@ -147,7 +147,10 @@ def spades_call(merged_sample, forward_sample, reverse_sample, sample, out_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"], "--cov-cutoff", cfg.config["spades"]["cov_cutoff"], "-o", out_dir+"/"+sample]    
+    arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"], "--cov-cutoff", cfg.config["spades"]["cov_cutoff"]]
+    if cfg.config["spades"]["k"]:
+        arguments.extend(["-k", str(cfg.config["spades"]["k"])])
+    arguments.extend(["-o", out_dir+"/"+sample])
     return call(arguments)
 
 
@@ -426,7 +429,7 @@ def blast_postprocessing(blast_file, database_file, output_folder):
 
     blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)
 
-def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain):
+def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", metagenome=False, rawproduct=False):
     """
     Prokka call.
     
@@ -435,11 +438,18 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
         output_dir {string} -- Output directory.
         prefix {string} -- Filename output prefix.
         input_file {string} -- Input filename (and route).
+        genus {string} -- TODO
+        species {string} -- TODO
+        strain {string} -- TODO
+        proteins {string} -- TODO
+        metagenome {string} -- TODO
+        rawproduct {string} -- TODO
     
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["prokka", 
+                input_file,
                 "--locustag", locus_tag, 
                 "--outdir", output_dir, 
                 "--prefix", prefix, 
@@ -447,8 +457,13 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
                 "--genus", genus,
                 "--species", species,
                 "--strain", strain,
-                "--gcode", str(cfg.config["prokka"]["gcode"]), 
-                input_file]
+                "--gcode", str(cfg.config["prokka"]["gcode"])]
+    if proteins:
+        arguments.extend(["--proteins", proteins])
+    if metagenome:
+        arguments.append("--metagenome")
+    if rawproduct:
+        arguments.append("--rawproduct")
     return call(arguments)
 
 
@@ -887,7 +902,10 @@ if __name__ == "__main__":
                         input_file=reference_genome_file,
                         genus=cfg.config["reference_genome"]["genus"],
                         species=cfg.config["reference_genome"]["species"],
-                        strain=cfg.config["reference_genome"]["strain"]
+                        strain=cfg.config["reference_genome"]["strain"],
+                        proteins=cfg.config["prokka"]["proteins"],
+                        metagenome=False, # False in reference file
+                        rawproduct=cfg.config["prokka"]["rawproduct"]
                         )
             # Set roary input files (renaming to get reference file first)
             os.rename(annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
@@ -1037,7 +1055,10 @@ if __name__ == "__main__":
                         input_file=mauve_contigs,
                         genus=genus,
                         species=species,
-                        strain=sample_basename)
+                        strain=sample_basename,
+                        proteins=cfg.config["prokka"]["proteins"],
+                        metagenome=cfg.config["prokka"]["metagenome"],
+                        rawproduct=cfg.config["prokka"]["rawproduct"])
             step_counter += 1
             # Set roary input files
             roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")

@@ -21,7 +21,8 @@ config = {
         },  
     "spades": {
         "mode": "--careful",    # Minimize number ofmismatches in the final contigs.
-        "cov_cutoff": "auto"    # Read coverage cutoff value. Must be a positive float value, or 'auto', or 'off'. Default value is 'auto', when SPAdes automatically computes coverage threshold using conservative strategy. 
+        "cov_cutoff": "auto",    # Read coverage cutoff value. Must be a positive float value, or 'auto', or 'off'. Default value is 'auto', when SPAdes automatically computes coverage threshold using conservative strategy. 
+        "k": False     # Set this to a number if you want to define it manually, otherwise set it to False
     },
     "quast": {
         "icarus": "--no-icarus",    # Do not build Icarusviewers.
@@ -30,7 +31,10 @@ config = {
     "annotator": "prokka",  # Set this to "prokka" or "dfast"
     "prokka": {
         "kingdom": "Bacteria",  # Annotation mode: Archaea|Bacteria|Mitochondria|Viruses (default 'Bacteria')
-        "gcode": 11 # Genetic code / Translation table (set if --kingdom is set) (default '11')
+        "gcode": 11,  # Genetic code / Translation table (set if --kingdom is set) (default '11')
+        "proteins": "reference_files/NCTC11168_NCBI.gb", # TODO optional
+        "metagenome": True, # Set to True or False TODO 
+        "rawproduct": True # Set to True or False TODO 
     },
     "dfast": {
         "min_length": 1,    # Minimum sequence length (default '1').
