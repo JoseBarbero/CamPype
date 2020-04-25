@@ -133,8 +133,8 @@ if __name__ == "__main__":
 
     t = Phylo.read(tmptree2, 'newick')
     
-    #os.remove(tmptree1)
-    #os.remove(tmptree2)
+    os.remove(tmptree1)
+    os.remove(tmptree2)
     #</JBA>
     
     # Plot presence/absence matrix against the tree

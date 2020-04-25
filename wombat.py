@@ -256,12 +256,13 @@ def quast_report_unification(input_dir, samples, output_dir):
     final_df.to_csv(output_dir+"/quality_assembly_report.tsv", sep="\t")
 
 
-def mlst_call(input_dir, output_dir, output_filename):
+def mlst_call(input_dir, reference_file, output_dir, output_filename):
     """
     MLST call for every fasta file in input_dir.
     
     Arguments:
         input_dir {string} -- Input directory containing contig files.
+        reference_file {string} -- Reference file directory.
         output_dir {string} -- Output directory.
         output_filename {string} -- Output file name (and route).
     
@@ -277,7 +278,7 @@ def mlst_call(input_dir, output_dir, output_filename):
         for filename in files:
             if filename.endswith(".fasta"):
                 input_filenames.append(input_dir+"/"+filename)
-
+    input_filenames.append(reference_file)
     arguments = ["mlst", *input_filenames]
     return call(arguments, stdout=output_file)
 
@@ -1088,6 +1089,7 @@ if __name__ == "__main__":
     print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
     step_counter += 1
     mlst_call(input_dir=mauve_contigs_dir,
+            reference_file=reference_genome_file,
             output_dir=mlst_dir,
             output_filename=mlst_out_file)
     
