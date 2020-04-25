@@ -83,7 +83,7 @@ def prinseq_call(input_file1, input_file2, output_folder, sample, log_name=None)
     Returns:
         int -- Execution state (0 if everything is all right)
     """
-    arguments = ["prinseq-lite.pl", "-verbose", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["prinseq"]["min_len"]), \
+    arguments = ["prinseq-lite.pl", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["prinseq"]["min_len"]), \
                 "-min_qual_mean", str(cfg.config["prinseq"]["min_qual_mean"]), "-trim_qual_right", str(cfg.config["prinseq"]["trim_qual_right"]), "-trim_qual_window", \
                 str(cfg.config["prinseq"]["trim_qual_window"]), "-trim_qual_type", cfg.config["prinseq"]["trim_qual_type"], "-out_format", str(cfg.config["prinseq"]["out_format"]), "-out_good", output_folder+"/"+sample, "-out_bad", cfg.config["prinseq"]["out_bad"], "-log", log_name]
     return call(arguments)
