@@ -966,12 +966,16 @@ if __name__ == "__main__":
         
 
         # Flash call
+        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Flash\n"), flush=True)
         flash_call(input_file_1=prinseq_files["R1"],
                    input_file_2=prinseq_files["R2"],
                    output_filename=sample_basename,
                    output_dir=flash_dir+"/"+sample_basename)
+        step_counter += 1
 
         # Quality reports
+        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Read statistics\n"), flush=True)
+        step_counter += 1
         report_pre_qc = get_reads_table(sample_fw, sample_rv, sample_basename, prinseq_dir+"/reads_statistics_beforeQC.tsv", False)
 
         report_post_qc = get_reads_table(prinseq_files["R1"], prinseq_files["R2"], sample_basename, prinseq_dir+"/reads_statistics_afterQC.tsv", True)
@@ -1011,11 +1015,12 @@ if __name__ == "__main__":
 
         
         # Reordering contigs by a reference genome with MauveCM
+        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): reordering {sample_basename} genome against reference genome\n"), flush=True)
         mauve_contigs = mauve_call(output_folder=mauve_dir+"/"+sample_basename,
                                     reference_sequence=reference_genome_file,
                                     input_contigs=contigs_dir+"/"+sample_basename+".fasta",
                                     sample_basename=sample_basename)
-
+        step_counter += 1
 
         # Create Quast output directories
         quast_dir = sample_basename+"_assembly_statistics"
