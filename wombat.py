@@ -932,7 +932,7 @@ if __name__ == "__main__":
         # Run trimmomatic or not
         if cfg.config["run_trimmomatic"]:
             
-            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples}({sample_basename}): Trimmomatic\n"), flush=True)
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Trimmomatic\n"), flush=True)
             trimmomatic_call(input_file1=sample_fw,
                             input_file2=sample_rv,
                             phred="-phred33",

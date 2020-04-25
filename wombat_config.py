@@ -8,7 +8,7 @@ config = {
         "strain": "NCTC11168" 
     },
     "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True)
-    "run_trimmomatic": False, # Set to true or false,
+    "run_trimmomatic": True, # Set to true or false,
     "min_contig_len": 500,
     "prinseq": {
         "min_len": 50, # Minimum read length. (default: {50})
@@ -20,7 +20,7 @@ config = {
         "out_bad": "null"   # Data not passing anyfilter will be ignored.
         },  
     "spades": {
-        "mode": "--careful",    # Minimize number ofmismatches in the final contigs.
+        "mode": "--isolate",    #Modes: --isolate, --careful or --sc {default: --isolate}
         "cov_cutoff": "auto",    # Read coverage cutoff value. Must be a positive float value, or 'auto', or 'off'. Default value is 'auto', when SPAdes automatically computes coverage threshold using conservative strategy. 
         "k": False     # Set this to a number if you want to define it manually, otherwise set it to False
     },
