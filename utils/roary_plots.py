@@ -118,7 +118,7 @@ if __name__ == "__main__":
     #<JBA>
     import os
     from io import StringIO
-    mlst_file = options.spreadsheet.split("/")[1]+"/MLST/MLST_edited.txt"
+    mlst_file = "/".join(options.spreadsheet.split("/")[:-3])+"/MLST/MLST_edited.txt"
     mlst_data = pd.read_csv(mlst_file, sep="\t", dtype=str)
 
     tmptree1 = "tmp_tree.xml" 
@@ -128,13 +128,13 @@ if __name__ == "__main__":
     with open("tmp_tree.xml") as infile, open(tmptree2, 'w') as outfile:
         for line in infile:
             for sample in mlst_data["Sample"]:
-                line = line.replace(sample, sample+"{"+mlst_data.loc[mlst_data["Sample"] == sample]["clonal_complex"].values[0]+"}").replace(" ", "_")
+                line = line.replace(sample+":", sample+"{"+mlst_data.loc[mlst_data["Sample"] == sample]["clonal_complex"].values[0]+"}:").replace(" ", "_")
             outfile.write(line)
 
     t = Phylo.read(tmptree2, 'newick')
     
-    os.remove(tmptree1)
-    os.remove(tmptree2)
+    #os.remove(tmptree1)
+    #os.remove(tmptree2)
     #</JBA>
     
     # Plot presence/absence matrix against the tree
