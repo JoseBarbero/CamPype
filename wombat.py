@@ -1075,7 +1075,7 @@ if __name__ == "__main__":
         step_counter += 1
         reference_genome_filename = reference_genome_file.split("/")[-1]
         reference_genome_basename = reference_genome_filename.split(".")[-2]
-        snippy_call(reference_genome=annotation_dir+"/"+reference_genome_file+"/"+reference_genome_file+".gbk",
+        snippy_call(reference_genome=annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gbk",
                     contigs=mauve_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)
