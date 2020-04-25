@@ -7,7 +7,7 @@ import shutil
 import re
 import logging
 import sys
-import workflow_config as cfg
+import wombat_config as cfg
 import requests
 from terminal_banner import Banner
 from subprocess import call
@@ -817,7 +817,7 @@ if __name__ == "__main__":
     # Create output directories
     now = datetime.datetime.now()
 
-    # Get reference files from workflow_config.py
+    # Get reference files from wombat_config.py
     adapters_file =  cfg.config["adapters_reference_file"]
     reference_genome_file = cfg.config["reference_genome"]["file"]
     proteins_file = cfg.config["proteins_reference_file"]
