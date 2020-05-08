@@ -904,7 +904,7 @@ if __name__ == "__main__":
                         genus=cfg.config["reference_genome"]["genus"],
                         species=cfg.config["reference_genome"]["species"],
                         strain=cfg.config["reference_genome"]["strain"],
-                        proteins=cfg.config["prokka"]["proteins"],
+                        proteins=cfg.config["reference_genome"]["proteins"],
                         metagenome=False, # False in reference file
                         rawproduct=cfg.config["prokka"]["rawproduct"]
                         )
@@ -1062,7 +1062,7 @@ if __name__ == "__main__":
                         genus=genus,
                         species=species,
                         strain=sample_basename,
-                        proteins=cfg.config["prokka"]["proteins"],
+                        proteins=cfg.config["reference_genome"]["proteins"],
                         metagenome=cfg.config["prokka"]["metagenome"],
                         rawproduct=cfg.config["prokka"]["rawproduct"])
             step_counter += 1
@@ -1076,7 +1076,7 @@ if __name__ == "__main__":
         step_counter += 1
         reference_genome_filename = reference_genome_file.split("/")[-1]
         reference_genome_basename = reference_genome_filename.split(".")[-2]
-        snippy_call(reference_genome=annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gbk",
+        snippy_call(reference_genome=cfg.config["reference_genome"]["proteins"],
                     contigs=mauve_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)

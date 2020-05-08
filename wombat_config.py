@@ -5,7 +5,8 @@ config = {
         "file": "reference_files/NCTC11168.fasta", 
         "genus": "Campylobacter",   
         "species": "jejuni",    
-        "strain": "NCTC11168" 
+        "strain": "NCTC11168",
+        "proteins": "reference_files/NCTC11168_NCBI.gb", # TODO optional
     },
     "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True)
     "run_trimmomatic": True, # Set to true or false,
@@ -32,7 +33,6 @@ config = {
     "prokka": {
         "kingdom": "Bacteria",  # Annotation mode: Archaea|Bacteria|Mitochondria|Viruses (default 'Bacteria')
         "gcode": 11,  # Genetic code / Translation table (set if --kingdom is set) (default '11')
-        "proteins": "reference_files/NCTC11168_NCBI.gb", # TODO optional
         "metagenome": True, # Set to True or False TODO 
         "rawproduct": True # Set to True or False TODO 
     },
