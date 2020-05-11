@@ -499,6 +499,18 @@ def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
             if filename.__contains__("genome"):
                 new_filename = filename.replace("genome", sample_basename)
                 shutil.move(os.path.join(root, filename), os.path.join(root, new_filename))
+            elif filename.__contains__("cds"):
+                new_filename = filename.replace("cds", sample_basename+"_cds")
+                shutil.move(os.path.join(root, filename), os.path.join(root, new_filename))
+            elif filename.__contains__("protein"):
+                new_filename = filename.replace("protein", sample_basename)
+                shutil.move(os.path.join(root, filename), os.path.join(root, new_filename))
+            elif filename.__contains__("rna"):
+                new_filename = filename.replace("rna", sample_basename+"_rna")
+                shutil.move(os.path.join(root, filename), os.path.join(root, new_filename))
+            elif filename.__contains__("statistics"):
+                new_filename = filename.replace("statistics", sample_basename+"_statistics")
+                shutil.move(os.path.join(root, filename), os.path.join(root, new_filename))
     return state
 
 
