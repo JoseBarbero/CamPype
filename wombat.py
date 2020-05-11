@@ -168,11 +168,12 @@ def mauve_call(output_folder, reference_sequence, input_contigs, sample_basename
     Returns:
         {string} -- Mauve reordered contigs file path
     """
-    arguments = ["MauveCM", "-output", output_folder, "-ref", reference_sequence, "-draft", input_contigs]    
+    arguments = ["MauveCM", "-output", output_folder+"/"+sample_basename, "-ref", reference_sequence, "-draft", input_contigs]    
     call(arguments)
     # Here we take the fasta file from the last iteration folder.
-    shutil.copyfile(output_folder+"/"+max(next(os.walk(output_folder))[1])+"/"+sample_basename+".fasta", output_folder+"/../contigs/"+sample_basename+".fasta")
-    return output_folder+"/../contigs/"+sample_basename+".fasta"
+    shutil.copyfile(output_folder+"/"+sample_basename+"/"+max(next(os.walk(output_folder+"/"+sample_basename))[1])+"/"+sample_basename+".fasta", output_folder+"/"+sample_basename+".fasta")
+    shutil.rmtree(output_folder+"/"+sample_basename)
+    return output_folder+"/"+sample_basename+".fasta"
 
 
 def snippy_call(reference_genome, contigs, output_dir, prefix):
@@ -774,7 +775,7 @@ def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir, info_p
         # "ContigLen": Average contig length (bp) (> 500bp).
         contig_len_summatory = 0
         contig_counter = 0
-        for record in SeqIO.parse(mauve_dir+"/contigs/"+sample+".fasta", "fasta"):
+        for record in SeqIO.parse(mauve_dir+"/"+sample+".fasta", "fasta"):
             contig_len_summatory += len(record.seq)
             contig_counter += 1
         avg_contig_len = contig_len_summatory/contig_counter
@@ -831,7 +832,6 @@ if __name__ == "__main__":
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Contigs_renamed_shorten"
     mauve_dir = output_folder+"/Mauve_reordered_contigs"
-    mauve_contigs_dir = mauve_dir+"/contigs"
     snps_dir = output_folder+"/SNP_SNIPPY"
     mlst_dir = output_folder+"/MLST"
     abricate_vir_dir = output_folder+"/ABRicate_virulence_genes"
@@ -857,7 +857,6 @@ if __name__ == "__main__":
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
     os.mkdir(mauve_dir)
-    os.mkdir(mauve_contigs_dir)
     os.mkdir(snps_dir)
     os.mkdir(mlst_dir)
     os.mkdir(abricate_vir_dir)
@@ -1017,7 +1016,7 @@ if __name__ == "__main__":
         
         # Reordering contigs by a reference genome with MauveCM
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): reordering {sample_basename} genome against reference genome\n"), flush=True)
-        mauve_contigs = mauve_call(output_folder=mauve_dir+"/"+sample_basename,
+        mauve_contigs = mauve_call(output_folder=mauve_dir,
                                     reference_sequence=reference_genome_file,
                                     input_contigs=contigs_dir+"/"+sample_basename+".fasta",
                                     sample_basename=sample_basename)
@@ -1088,7 +1087,7 @@ if __name__ == "__main__":
     mlst_out_file = "MLST.txt"
     print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
     step_counter += 1
-    mlst_call(input_dir=mauve_contigs_dir,
+    mlst_call(input_dir=mauve_dir,
             reference_file=reference_genome_file,
             output_dir=mlst_dir,
             output_filename=mlst_out_file)
@@ -1099,7 +1098,7 @@ if __name__ == "__main__":
     # ABRicate call (virulence genes)
     print(Banner(f"\nStep {step_counter}: ABRicate (virulence genes)\n"), flush=True)
     step_counter += 1
-    abricate_call(input_dir=mauve_contigs_dir,
+    abricate_call(input_dir=mauve_dir,
                 output_dir=abricate_vir_dir,
                 output_filename="VirulenceGenes.tab",
                 database = cfg.config["abricate"]["virus_database"])
@@ -1109,7 +1108,7 @@ if __name__ == "__main__":
     if cfg.config["run_blast"]:
         print(Banner(f"\nStep {step_counter}: BLAST (virulence genes against custom database)\n"), flush=True)
         step_counter += 1
-        contigs_dir = mauve_contigs_dir
+        contigs_dir = mauve_dir
         contig_files = ([os.path.join(contigs_dir, f) for f in os.listdir(contigs_dir)])
         contig_files.append(cfg.config["reference_genome"]["file"])
 
@@ -1136,7 +1135,7 @@ if __name__ == "__main__":
     # ABRicate call (antibiotic resistance genes)
     print(Banner(f"\nStep {step_counter}: ABRicate (antibiotic resistance genes)\n"), flush=True)
     step_counter += 1
-    abricate_call(input_dir=mauve_contigs_dir,
+    abricate_call(input_dir=mauve_dir,
                 output_dir=abricate_abr_dir,
                 output_filename="AntibioticResistanceGenes.tab",
                 database = cfg.config["abricate"]["bacteria_database"])
