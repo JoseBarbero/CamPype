@@ -53,5 +53,10 @@ config = {
         "evalue": 10e-4,    # TODO
         "outfmt": "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq", # Output format
         "soft_masking": True    # Apply filtering locations as soft masks (i.e., only for finding initial matches)
+    },
+    "roary":{
+        "split_paralogs": True, # Dont split paralogs (cuando se active).
+        "min_identity": 95  # Minimum percentage identity for blastp (1-100).
     }
+
 }

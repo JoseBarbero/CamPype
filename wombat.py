@@ -561,7 +561,12 @@ def roary_call(input_files, output_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["roary", "-f", output_dir, "-s", "-v", *input_files]
+    arguments = ["roary", "-f", output_dir, "-s", "-v"]
+    if cfg.config["roary"]["split_paralogs"]:
+        arguments.append("-s")
+    if cfg.config["roary"]["min_identity"]:
+        arguments.extend(["-i", str(cfg.config["roary"]["min_identity"])])
+    arguments.extend(input_files)
     ex_state = call(arguments)
     # Set Roary output directory name
     for root, dirs, _files in os.walk("."):
