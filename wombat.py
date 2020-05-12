@@ -393,8 +393,9 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
           "-out", blast_db_path, "-title", "DNA_Database"])
 
     # Call tblastn
-    tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest, "-evalue", str(cfg.config["blast"]["evalue"]), "-outfmt", 
-                        cfg.config["blast"]["outfmt"],
+    tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest, "-evalue", str(cfg.config["blast"]["evalue"]), 
+                        "-soft_masking", str(cfg.config["blast"]["soft_masking"]).lower(),
+                        "-outfmt", cfg.config["blast"]["outfmt"],
                         "-out", blast_output_folder+"/"+blast_output_name])
 
     # Add header to tblastn output

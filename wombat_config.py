@@ -51,6 +51,7 @@ config = {
     "blast": {
         "dbtype": "nucl",   # TODO
         "evalue": 10e-4,    # TODO
-        "outfmt": "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq" # Output format
+        "outfmt": "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq", # Output format
+        "soft_masking": True    # Apply filtering locations as soft masks (i.e., only for finding initial matches)
     }
 }
