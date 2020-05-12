@@ -327,7 +327,8 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    output_file = open(output_dir+"/"+output_filename, "w")
+    tmp_file = output_dir+"/tmp_"+output_filename
+    output_file = output_dir+"/"+output_filename
     
     input_filenames = []
 
@@ -340,7 +341,23 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     input_filenames.append(cfg.config["reference_genome"]["file"])
 
     arguments = ["abricate", *input_filenames, "--db", database]
-    return call(arguments, stdout=output_file)
+    
+    with open(tmp_file, "w") as initial_file:
+        state = call(arguments, stdout=initial_file)
+
+    with open(tmp_file, "r") as initial_file:
+        with open(output_file, "w") as final_file:
+            for line in initial_file:
+                if line.startswith("#FILE"):
+                    line = line.replace("#FILE", "SAMPLE")
+                else:
+                    path = line.split("\t")[0]
+                    sample = os.path.basename(path).split(".")[0]
+                    line = line.replace(path, sample)
+                final_file.write(line)
+    os.remove(tmp_file)
+
+    return state
 
 
 def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name):
@@ -546,10 +563,13 @@ def roary_call(input_files, output_dir):
     arguments = ["roary", "-f", output_dir, "-s", "-v", *input_files]
     ex_state = call(arguments)
     # Set Roary output directory name
-    for _root, dirs, _files in os.walk("."):
+    for root, dirs, _files in os.walk("."):
         for dirname in dirs:
             if dirname.startswith("Roary_pangenome_"):
-                os.rename(dirname, "Roary_pangenome")
+                files = os.listdir(root+"/"+dirname)
+                for f in files:
+                    shutil.move(root+"/"+dirname+"/"+f, output_dir)
+                os.rmdir(root+"/"+dirname)
     return ex_state
 
 
@@ -846,14 +866,14 @@ if __name__ == "__main__":
     mauve_dir = output_folder+"/Mauve_reordered_contigs"
     snps_dir = output_folder+"/SNP_SNIPPY"
     mlst_dir = output_folder+"/MLST"
-    abricate_vir_dir = output_folder+"/ABRicate_virulence_genes"
+    vir_dir = output_folder+"/Virulence_genes"
     abricate_abr_dir = output_folder+"/ABRicate_antibiotic_resistanceGenes"
     prokka_dir = output_folder+"/Prokka_annotation"
     dfast_dir = output_folder+"/Dfast_annotation"
     roary_dir = output_folder+"/Roary_pangenome"
     roary_plots_dir = roary_dir+"/Roary_plots"
     dfast_refactor_dir = roary_dir+"/input_gff_files_edited"   # This refactor has to do with Roary so it's in Roary's folder
-    blast_proteins_dir = output_folder+"/BLAST_custom_virulence_genes"
+    blast_proteins_dir = vir_dir+"/BLAST_custom_virulence_genes"
     dna_database_blast = blast_proteins_dir+"/DNA_database"
 
     # Create directories
@@ -871,7 +891,7 @@ if __name__ == "__main__":
     os.mkdir(mauve_dir)
     os.mkdir(snps_dir)
     os.mkdir(mlst_dir)
-    os.mkdir(abricate_vir_dir)
+    os.mkdir(vir_dir)
     os.mkdir(abricate_abr_dir)
     os.mkdir(roary_dir)
 
@@ -1111,7 +1131,7 @@ if __name__ == "__main__":
     print(Banner(f"\nStep {step_counter}: ABRicate (virulence genes)\n"), flush=True)
     step_counter += 1
     abricate_call(input_dir=mauve_dir,
-                output_dir=abricate_vir_dir,
+                output_dir=vir_dir,
                 output_filename="VirulenceGenes.tab",
                 database = cfg.config["abricate"]["virus_database"])
 
@@ -1156,15 +1176,15 @@ if __name__ == "__main__":
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
     step_counter += 1
-    roary_call(input_files=roary_input_files, output_dir=roary_dir+"/Roary")
+    roary_call(input_files=roary_input_files, output_dir=roary_dir)
 
 
     # Roary plots call
     os.mkdir(roary_plots_dir)
     print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
     step_counter += 1
-    roary_plots_call(input_newick=roary_dir+"/Roary/accessory_binary_genes.fa.newick",
-                    input_gene_presence_absence=roary_dir+"/Roary/gene_presence_absence.csv",
+    roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
+                    input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
                     output_dir=roary_plots_dir)
 
     print(Banner("\nDONE\n"), flush=True)
