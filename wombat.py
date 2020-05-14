@@ -501,7 +501,7 @@ def blast_postprocessing(blast_file, database_file, output_folder, samples):
     blast_output = blast_output.sort_values(by=["Protein type", "Protein", "Sample"])
 
     # Export to tsv
-    blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)    
+    blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.tsv", sep="\t",index=False)    
 
     # Create presence/absence matrix
     get_presence_absence_matrix(samples, proteins_dict, blast_output, output_folder+"/VF_matrix.tsv")
