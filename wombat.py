@@ -410,7 +410,7 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
     return tblastn_state
 
 
-def blast_postprocessing(blast_file, database_file, output_folder):
+def blast_postprocessing(blast_file, database_file, output_folder, samples):
     """
     Blast post processing.
     
@@ -418,6 +418,7 @@ def blast_postprocessing(blast_file, database_file, output_folder):
         blast_file {string} -- Blast output file.
         database_file {string} -- Proteins database file.
         output_folder {string} -- Output folder.
+        samples {[string]} -- List of samples names.
     """
     
     # Read blast file as dataframe
@@ -447,7 +448,118 @@ def blast_postprocessing(blast_file, database_file, output_folder):
         protein_cover = (query_end - query_start + 1) / query_length * 100
         blast_output.at[index, "protein cover %"] = protein_cover
 
-    blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)
+    # Split subject_id column
+    blast_output[["Sample", "Contig sample"]] = blast_output["subject id"].str.split("_", 1, expand=True)
+    blast_output = blast_output.drop("subject id", axis=1)
+    
+    # Rename columns
+    blast_output.rename(columns={"query id": "Protein",
+                                "query length": "Protein length",
+                                "protein cover %": "% protein cover", 
+                                "% identity": "% protein identity",
+                                "alignment length": "Alignment length",
+                                "mismatches": "Mismatches",
+                                "gap opens": "Gap opens",
+                                "query start": "Protein start",
+                                "query end": "Protein end",
+                                "subject start": "Sample start",
+                                "subject end": "Sample end",
+                                "evalue": "Evalue",
+                                "score": "Score",
+                                "aligned part of subject sequence": "Aligned part of subject sequence"}, 
+                                inplace=True)
+
+    # Add protein type column
+    protein_type = []
+    proteins_dict = {}
+    for record in SeqIO.parse(database_file, "fasta"):
+        proteins_dict[record.id] = record.description.split()[1]
+    blast_output["Protein type"] = blast_output.apply (lambda row: proteins_dict[row["Protein"]].lower(), axis=1)
+
+    # Sort columns
+    new_columns = [ "Protein",
+                    "Protein type",
+                    "Sample",
+                    "Contig sample",
+                    "Protein length",
+                    "% protein cover",
+                    "% protein identity",
+                    "Alignment length",
+                    "Mismatches",
+                    "Gap opens",
+                    "Protein start",
+                    "Protein end",
+                    "Sample start",
+                    "Sample end",
+                    "Evalue",
+                    "Score",
+                    "Aligned part of subject sequence"]
+    
+    blast_output = blast_output[new_columns]
+
+    # Sort rows
+    blast_output = blast_output.sort_values(by=["Protein type", "Protein", "Sample"])
+
+    # Export to tsv
+    blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.txt", sep="\t",index=False)    
+
+    # Create presence/absence matrix
+    get_presence_absence_matrix(samples, proteins_dict, blast_output, output_folder+"/VF_matrix.tsv")
+
+
+def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
+    """
+    Creates the presence/absence matrix for the input genes file.
+
+    Arguments:
+        samples {[strings]} -- Samples names list.
+        genes_type {dict} -- Genes and its type dict.
+        blast_df {pandas dataframe} -- Sample/genes information from blast.
+        p_a_matrix_file {string} -- Gene presence/absence matrix.
+    """
+
+    gene_presence_absence = pd.DataFrame(columns=["Protein", *samples, "Type"])
+
+    for gene in genes_type.keys():
+        gene_content = blast_df[blast_df["Protein"] == gene]
+        new_row = {"Protein": gene}
+        new_row["Type"] = genes_type[gene].lower()
+        for sample in samples:
+            sample_content = gene_content[gene_content["Sample"] == sample]
+            if len(sample_content) == 1:
+                if sample_content.iloc[0]["% protein cover"] > cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content.iloc[0]["% protein identity"] > cfg.config["presence_absence_matrix"]["protein_cover"]:
+                    new_row[sample] = 1
+                else:
+                    new_row[sample] = 0
+            else:
+                new_row[sample] = 0
+        gene_presence_absence = gene_presence_absence.append(new_row, ignore_index=True)
+
+    # capA special distinction (the protein is split in two fragments)
+    capA_row = {"Protein": "capA", "Type": genes_type["capA_ORF1"].lower()}
+    orf1_df = gene_presence_absence[gene_presence_absence["Protein"] == "capA_ORF1"]
+    orf2_df = gene_presence_absence[gene_presence_absence["Protein"] == "capA_ORF2"]
+    for sample in samples:
+        if orf1_df.iloc[0][sample] == 1 and orf2_df.iloc[0][sample] == 1:
+            capA_row[sample] = 1
+        else:
+            capA_row[sample] = 0
+
+    gene_presence_absence = gene_presence_absence.append(capA_row, ignore_index=True)
+    gene_presence_absence = gene_presence_absence[gene_presence_absence["Protein"] != "capA_ORF1"]
+    gene_presence_absence = gene_presence_absence[gene_presence_absence["Protein"] != "capA_ORF2"]
+
+    # Sort rows
+    gene_presence_absence = gene_presence_absence.sort_values(by=["Type", "Protein"])
+    
+    # Export to tsv
+    gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
+    with open(p_a_matrix_file, "a") as matrix_file:
+        matrix_file.write("Coverage > (" + 
+                            str(cfg.config["presence_absence_matrix"]["protein_cover"]) +
+                            ") % and identity > (" +
+                            str(cfg.config["presence_absence_matrix"]["protein_cover"]) + 
+                            ") %) on each sample for considering a virulence gene as present.")
 
 def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", metagenome=False, rawproduct=False):
     """
@@ -1167,7 +1279,8 @@ if __name__ == "__main__":
                     blast_output_name=blast_output_name)
         blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
                             database_file=blast_proteins_dir+"/"+proteins_database_name,
-                            output_folder=blast_proteins_dir)
+                            output_folder=blast_proteins_dir,
+                            samples=samples_basenames)
 
 
     # ABRicate call (antibiotic resistance genes)

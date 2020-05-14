@@ -54,6 +54,10 @@ config = {
         "outfmt": "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq", # Output format
         "soft_masking": True    # Apply filtering locations as soft masks (i.e., only for finding initial matches)
     },
+    "presence_absence_matrix": {
+        "protein_cover": 90,    #Minimum % protein cover for considering a virulence gene as present. Default: 90.
+        "protein_identity": 90  #Minimum % protein identity for considering a virulence gene as present. Default: 90.
+    },
     "roary":{
         "split_paralogs": True, # Dont split paralogs (cuando se active).
         "min_identity": 95  # Minimum percentage identity for blastp (1-100).
