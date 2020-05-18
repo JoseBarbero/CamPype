@@ -662,7 +662,7 @@ def refactor_gff_from_dfast(gff_input, gff_output):
             out_file.write(line)
         
 
-def roary_call(input_files, output_dir):
+def roary_call(input_files, output_dir, wombat_output_folder):
     """
     Roary call.
     
@@ -681,7 +681,7 @@ def roary_call(input_files, output_dir):
     arguments.extend(input_files)
     ex_state = call(arguments)
     # Set Roary output directory name
-    for root, dirs, _files in os.walk("."):
+    for root, dirs, _files in os.walk(wombat_output_folder):
         for dirname in dirs:
             if dirname.startswith("Roary_pangenome_"):
                 files = os.listdir(root+"/"+dirname)
@@ -976,8 +976,11 @@ if __name__ == "__main__":
     
     output_folder = sys.argv[1]
 
-    trimmomatic_dir = output_folder+"/Trimmomatic_filtering"
-    prinseq_dir = output_folder+"/Prinseq_filtering"
+    trimmomatic_dir = output_folder+"/tmp_Trimmomatic_filtering"
+    if cfg.config["run_trimmomatic"]:
+        prinseq_dir = output_folder+"/Trimmomatic_and_Prinseq_filtering"
+    else:
+        prinseq_dir = output_folder+"/Prinseq_filtering"
     flash_dir = output_folder+"/Flash_read_extension"
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Contigs_renamed_shorten"
@@ -1295,7 +1298,7 @@ if __name__ == "__main__":
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
     step_counter += 1
-    roary_call(input_files=roary_input_files, output_dir=roary_dir)
+    roary_call(input_files=roary_input_files, output_dir=roary_dir, wombat_output_folder=output_folder)
 
 
     # Roary plots call
@@ -1308,7 +1311,7 @@ if __name__ == "__main__":
 
     print(Banner("\nDONE\n"), flush=True)
     
-    
+
     # Final report
     generate_report(samples_basenames, 
                     prinseq_dir, 
@@ -1316,3 +1319,8 @@ if __name__ == "__main__":
                     mauve_dir, 
                     output_folder, 
                     summary_pre_qc, summary_post_qc, summary_post_flash)
+
+    
+    # Remove temporal folders
+    if cfg.config["run_trimmomatic"]:
+        shutil.rmtree(trimmomatic_dir)
