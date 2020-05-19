@@ -878,7 +878,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash):
+def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file):
     """
     Creates the final report.
     
@@ -891,6 +891,7 @@ def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir, info_p
         infro_pre_QC {dict} -- Prinseq information before running QC.
         info_post_QC {dict} -- Prinseq information after running QC.
         info_post_flash {dict} -- Prinseq information after running flash.
+        mlst_file {string} -- MLST results file.
     """
     
     csv_report = pd.DataFrame(columns=["Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)"])
@@ -1253,7 +1254,7 @@ if __name__ == "__main__":
     step_counter += 1
     abricate_call(input_dir=mauve_dir,
                 output_dir=vir_dir,
-                output_filename="VirulenceGenes.tab",
+                output_filename="Virulence_genes_ABRicate_VFDB.tab",
                 database = cfg.config["abricate"]["virus_database"])
 
 
@@ -1318,7 +1319,10 @@ if __name__ == "__main__":
                     spades_dir, 
                     mauve_dir, 
                     output_folder, 
-                    summary_pre_qc, summary_post_qc, summary_post_flash)
+                    summary_pre_qc, 
+                    summary_post_qc, 
+                    summary_post_flash,
+                    mlst_dir+"/MLST_edited.txt")
 
     
     # Remove temporal folders
