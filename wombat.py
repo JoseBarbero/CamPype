@@ -343,9 +343,9 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
     arguments = ["abricate", *input_filenames, "--db", database]
     
     if mincov:
-        arguments.extend(["--mincov", mincov])
+        arguments.extend(["--mincov", str(mincov)])
     if minid:
-        arguments.extend(["--minid", minid])
+        arguments.extend(["--minid", str(minid)])
     
     with open(tmp_file, "w") as initial_file:
         state = call(arguments, stdout=initial_file)
@@ -371,8 +371,14 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
     return state
 
 
-   
+def amrfinder_call():
+    # Update armfinder database before running (it doesn't take too long)
+    if cfg.config["amrfinder"]["update_db"]:
+        call(["amrfinder", "-u"])
 
+    
+
+    state = call(["amrfinder"])
 
 def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name):
     """
@@ -534,8 +540,6 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
 
     gene_presence_absence = pd.DataFrame(columns=["Protein", *samples, "Type"])
 
-    # TODO A veces cuando un gen sale dos veces no se queda con el mejor
-
     for gene in genes_type.keys():
         gene_content = blast_df[blast_df["Protein"] == gene]
         new_row = {"Protein": gene}
@@ -543,7 +547,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
         for sample in samples:
             sample_content = gene_content[gene_content["Sample"] == sample]
             if len(sample_content) == 1:
-                if sample_content.iloc["% protein cover"].max() > cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content.iloc["% protein identity"].max() > cfg.config["presence_absence_matrix"]["protein_cover"]:
+                if sample_content["% protein cover"].max() > cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() > cfg.config["presence_absence_matrix"]["protein_cover"]:
                     new_row[sample] = 1
                 else:
                     new_row[sample] = 0
@@ -675,6 +679,7 @@ def refactor_gff_from_dfast(gff_input, gff_output):
                 line_id = line.split("\tID=")[1].split(";")[0]
 
                 line = line.replace(line_id, locus_tag, 1)
+                line = line + ";" + line_id+"|"+locus_tag
             out_file.write(line)
         
 
@@ -1392,7 +1397,7 @@ if __name__ == "__main__":
     if cfg.config["antimicrobial_resistance"].lower() == "abricate":
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate)\n"), flush=True)
         step_counter += 1
-        abricate_output_file = "AMR_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+".tsv",
+        abricate_output_file = "AMR_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+".tsv"
         abricate_call(input_dir=mauve_dir,
                     output_dir=abricate_abr_dir,
                     output_filename=abricate_output_file,

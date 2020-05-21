@@ -42,11 +42,15 @@ config = {
         "sort": "false",
         "step": 1
     },
-    "antimicrobial_resistance": "abricate", # Set this to "abricate" or "amrfinder"
+    "antimicrobial_resistance": "abricate", # Set this to "abricate", "amrfinder" or False (if you want to skip this step)
     "abricate": {
-        "run_abricate": False, # If you want to omit this step, set it to False (Default: False).
         "virus_database": "vfdb",
-        "antimicrobial_resistance_database": "card" # Select database from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn.
+        "antimicrobial_resistance_database": "card", # Select database from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn.
+        "mincov": 90, # Minimum DNA % coverage for considering an antimicrobial resistance gene as present. Default: 90.
+        "minid": 90 # Minimum DNA % identity for considering an antimicrobial resistance gene as present. Default: 90.        
+    },
+    "amrfinder": {
+        "update_db": True   # Updates the db before running amrfinder. Set to True or False
     },
     "run_blast": True,     # Set this to True or False
     "blast": {
