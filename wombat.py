@@ -314,7 +314,7 @@ def mlst_postprocessing(mlst_file, output_file):
     output_data.to_csv(output_file, index=False, sep="\t")
 
 
-def abricate_call(input_dir, output_dir, output_filename, database):
+def abricate_call(input_dir, output_dir, output_filename, database, mincov=False, minid=False, gene_matrix_file=False):
     """
     ABRicate call.
     
@@ -342,8 +342,19 @@ def abricate_call(input_dir, output_dir, output_filename, database):
 
     arguments = ["abricate", *input_filenames, "--db", database]
     
+    if mincov:
+        arguments.extend(["--mincov", mincov])
+    if minid:
+        arguments.extend(["--minid", minid])
+    
     with open(tmp_file, "w") as initial_file:
         state = call(arguments, stdout=initial_file)
+
+    # Get gene presence/absence matrix
+    if gene_matrix_file:
+        with open(gene_matrix_file, "w") as out_file:
+            arguments = ["abricate", *input_filenames, "--summary", tmp_file]
+            call(arguments, stdout=out_file)
 
     with open(tmp_file, "r") as initial_file:
         with open(output_file, "w") as final_file:
@@ -358,6 +369,9 @@ def abricate_call(input_dir, output_dir, output_filename, database):
     os.remove(tmp_file)
 
     return state
+
+
+   
 
 
 def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name):
@@ -520,6 +534,8 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
 
     gene_presence_absence = pd.DataFrame(columns=["Protein", *samples, "Type"])
 
+    # TODO A veces cuando un gen sale dos veces no se queda con el mejor
+
     for gene in genes_type.keys():
         gene_content = blast_df[blast_df["Protein"] == gene]
         new_row = {"Protein": gene}
@@ -527,7 +543,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
         for sample in samples:
             sample_content = gene_content[gene_content["Sample"] == sample]
             if len(sample_content) == 1:
-                if sample_content.iloc[0]["% protein cover"] > cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content.iloc[0]["% protein identity"] > cfg.config["presence_absence_matrix"]["protein_cover"]:
+                if sample_content.iloc["% protein cover"].max() > cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content.iloc["% protein identity"].max() > cfg.config["presence_absence_matrix"]["protein_cover"]:
                     new_row[sample] = 1
                 else:
                     new_row[sample] = 0
@@ -1372,14 +1388,20 @@ if __name__ == "__main__":
                             samples=samples_basenames)
 
 
-    # ABRicate call (antibiotic resistance genes)
-    print(Banner(f"\nStep {step_counter}: ABRicate (antibiotic resistance genes)\n"), flush=True)
-    step_counter += 1
-    abricate_call(input_dir=mauve_dir,
-                output_dir=abricate_abr_dir,
-                output_filename="AntibioticResistanceGenes.tab",
-                database = cfg.config["abricate"]["bacteria_database"])
-    
+    # Antimicrobial resistance genes
+    if cfg.config["antimicrobial_resistance"].lower() == "abricate":
+        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate)\n"), flush=True)
+        step_counter += 1
+        abricate_output_file = "AMR_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+".tsv",
+        abricate_call(input_dir=mauve_dir,
+                    output_dir=abricate_abr_dir,
+                    output_filename=abricate_output_file,
+                    database = cfg.config["abricate"]["antimicrobial_resistance_database"],
+                    mincov=cfg.config["abricate"]["mincov"],
+                    minid=cfg.config["abricate"]["minid"],
+                    gene_matrix_file=abricate_abr_dir+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv")
+    elif cfg.config["antimicrobial_resistance"].lower() == "amrfinder":
+        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder)\n"), flush=True)
 
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)

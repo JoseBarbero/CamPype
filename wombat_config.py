@@ -44,8 +44,9 @@ config = {
     },
     "antimicrobial_resistance": "abricate", # Set this to "abricate" or "amrfinder"
     "abricate": {
+        "run_abricate": False, # If you want to omit this step, set it to False (Default: False).
         "virus_database": "vfdb",
-        "bacteria_database": "resfinder"
+        "antimicrobial_resistance_database": "card" # Select database from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn.
     },
     "run_blast": True,     # Set this to True or False
     "blast": {
