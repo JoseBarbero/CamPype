@@ -11,7 +11,7 @@ dependencies:
   - spades=3.14.0
   - quast=5.0.2
   - mlst=2.17.6
-  - abricate=0.8.13
+  - abricate=1.0.1
   - biopython=1.72
   - prokka=1.14
   - roary=3.12.0

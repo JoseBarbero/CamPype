@@ -1030,13 +1030,8 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                         "rRNAs": rrnas,
                         "tRNAs": trnas}
         
-
-        # Columnas siguientes. Se obtendrán a partir del archivo VF_matrix. 
-        # Para cada Sample, el contenido de cada columna será la suma de valores '1' de la matriz del conjunto de genes de una misma categoría. 
-        # En algún sitio se debe indicar el número total de genes de esa categoría. Creo que la forma más fácil para leerse es indicarlo en los nombres de cada categoría. 
-        # Por ejemplo: Stress (16). Otra forma que había pensado es poner los valores como 13/16, pero creo que "/16" sería muy repetitivo y se llenaría la tabla con mucha información, 
-        # que de la otra forma se pondría una vez. La última columna de este grupo será "Total" (suma de todos los números entre paréntesis), 
-        # que será la suma de todos los valores de este grupo de columnas.
+        # Information from VF_matrix
+        # For each sample its column has the sum of genes present from each category
         for category, total in vir_total_by_categories.items():
             report_dict[category+"("+str(total)+")"] = vir_types_summary[sample][category]
         
