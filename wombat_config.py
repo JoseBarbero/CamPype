@@ -50,7 +50,9 @@ config = {
         "minid": 90 # Minimum DNA % identity for considering an antimicrobial resistance gene as present. Default: 90.        
     },
     "amrfinder": {
-        "update_db": True   # Updates the db before running amrfinder. Set to True or False
+        "update_db": True,  # Updates the db before running amrfinder. Set to True or False
+        "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
+        "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
     },
     "run_blast": True,     # Set this to True or False
     "blast": {

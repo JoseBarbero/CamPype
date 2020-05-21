@@ -350,12 +350,6 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
     with open(tmp_file, "w") as initial_file:
         state = call(arguments, stdout=initial_file)
 
-    # Get gene presence/absence matrix
-    if gene_matrix_file:
-        with open(gene_matrix_file, "w") as out_file:
-            arguments = ["abricate", *input_filenames, "--summary", tmp_file]
-            call(arguments, stdout=out_file)
-
     with open(tmp_file, "r") as initial_file:
         with open(output_file, "w") as final_file:
             for line in initial_file:
@@ -367,18 +361,62 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
                     line = line.replace(path, sample)
                 final_file.write(line)
     os.remove(tmp_file)
+    
+    if gene_matrix_file:
+        abricate_presence_absence_matrix(output_file, gene_matrix_file)
 
     return state
 
+def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file):
+    """
+    Creates the presence/absence matrix for the input genes file.
 
-def amrfinder_call():
+    Arguments:
+        blast_df {pandas dataframe} -- Sample/genes information from blast.
+        p_a_matrix_file {string} -- Gene presence/absence matrix.
+    """
+
+    abricate_data = pd.read_csv(abricate_file, sep="\t")
+    samples = abricate_data["SAMPLE"].unique().tolist()
+    gene_presence_absence = pd.DataFrame(columns=["Protein", *samples, "Type"])
+
+    genes_type = dict(zip(abricate_data["GENE"], abricate_data["RESISTANCE"]))
+    for gene in genes_type.keys():
+        gene_content = abricate_data[abricate_data["GENE"] == gene]
+        new_row = {"Protein": gene}
+        new_row["Type"] = genes_type[gene].lower()
+        for sample in samples:
+            sample_content = gene_content[gene_content["SAMPLE"] == sample]
+            if len(sample_content) == 1:
+                if sample_content["%COVERAGE"].max() > cfg.config["abricate"]["mincov"] and sample_content["%IDENTITY"].max() > cfg.config["abricate"]["minid"]:
+                    new_row[sample] = 1
+                else:
+                    new_row[sample] = 0
+            else:
+                new_row[sample] = 0
+        gene_presence_absence = gene_presence_absence.append(new_row, ignore_index=True)
+
+    # Sort rows
+    gene_presence_absence = gene_presence_absence.sort_values(by=["Type", "Protein"])
+    
+    # Export to tsv
+    gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
+
+
+def amrfinder_call(input_file, genus, output_file):
     # Update armfinder database before running (it doesn't take too long)
     if cfg.config["amrfinder"]["update_db"]:
         call(["amrfinder", "-u"])
 
-    
-
-    state = call(["amrfinder"])
+    state = call([  "amrfinder", 
+                    "-n", "/path/to/each/annotation_directory/Sample/Sample.fna", 
+                    "-p", "/path/to/each/annotation_directory/Sample/Sample.faa", 
+                    "-g", "/path/to/each/annotation_directory/Sample/Sample.gff(el modificado antes)", 
+                    "--organism", genus, 
+                    "--plus", 
+                    "-i", str(cfg.config["amrfinder"]["minid"]),
+                    "-c", str(cfg.config["amrfinder"]["mincov"]),
+                    "-o", output_file])
 
 def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name):
     """
