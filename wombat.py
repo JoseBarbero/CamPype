@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import datetime
 import os
 import csv
@@ -298,7 +298,7 @@ def mlst_postprocessing(mlst_file, output_file):
                 col_names.append(row[column].split("(")[0])
             new_row.append(int("".join(filter(str.isdigit, row[column]))))
         
-        # Get clonal complex because MLST doesn't return it (https://github.com/tseemann/mlst/issues/60)
+        # Get clonal complex because it's not returned by MLST (https://github.com/tseemann/mlst/issues/60)
         if not "clonal_complex" in col_names:
             col_names.append("clonal_complex")
         
@@ -878,7 +878,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file):
+def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file):
     """
     Creates the final report.
     
@@ -886,16 +886,31 @@ def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir, info_p
         samples {list} -- Samples list.
         prinseq_dir {string} -- Prinseq results directory.
         spades_dir {string} -- SPAdes results directory.
+        annotation_dir {string} -- Annotator results directory.
         mauve_dir {string} --  Mauves results directory.
         out_dir {string} -- Output directory.
         infro_pre_QC {dict} -- Prinseq information before running QC.
         info_post_QC {dict} -- Prinseq information after running QC.
         info_post_flash {dict} -- Prinseq information after running flash.
         mlst_file {string} -- MLST results file.
+        vir_matrix_file {string} -- Matrix filecontaining virulence genes information.
     """
     
-    csv_report = pd.DataFrame(columns=["Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)"])
     assembly_report = pd.read_csv(spades_dir+"/"+"quality_assembly_report.tsv", sep="\t")
+    mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
+    vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
+    vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
+    vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
+    df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
+                "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
+                "rRNAs", "tRNAs"]
+    
+    # Every column by virulence category must have the total amount of genes of that type present
+    for category, total in vir_total_by_categories.items():
+            df_columns.append(category+"("+str(total)+")")
+    df_columns.append("Total ("+str(vir_matrix.groupby(["Type"]).sum().sum().sum())+")")
+
+    csv_report = pd.DataFrame(columns=df_columns)
 
     for sample in samples:
         
@@ -940,19 +955,94 @@ def generate_report(samples, prinseq_dir, spades_dir, mauve_dir, out_dir, info_p
         # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
         depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
 
-        csv_report = csv_report.append({ "Sample": sample, 
-                            "Reads": round(reads, 0), 
-                            "ReadLen": readlen,
-                            "ReadsQC": readsqc,
-                            "ReadsQCLen": readsqclen, 
-                            "JoinReads": joinreads, 
-                            "JoinReadsLen": joinreadslen, 
-                            "Contigs": n_contigs, 
-                            "GenomeLen": genome_len, 
-                            "ContigLen": round(avg_contig_len, 2), 
-                            "N50": round(n50, 0),
-                            "GC": round(gc, 2),
-                            "DepthCov (X)": round(depthcov, 2)}, ignore_index=True)
+        # Column ST (MLST)
+        st = mlst_data.loc[sample]["ST"]
+
+        # Column clonal_complex (MLST)
+        clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+        
+        cds = 0
+        crisprs = 0
+        rrnas = 0
+        trnas = 0
+        
+        if cfg.config["annotator"] == "prokka":
+            
+            with open(annotation_dir+"/"+sample+"/"+sample+".txt") as stats_file:
+                for line in stats_file:
+                    # Column 'CDS'. 
+                    if line.startswith("CDS:"):
+                        cds = line.split()[-1]
+
+                    # Column 'CRISPRs'. 
+                    elif line.startswith("CRISPR:"):
+                        crisprs = line.split()[-1]
+
+                    # Column 'rRNAs'. 
+                    elif line.startswith("rRNA:"):
+                        rrnas = line.split()[-1]
+
+                    # Column 'tRNAs'. 
+                    elif line.startswith("tRNA:"):
+                        trnas = line.split()[-1]
+
+        elif cfg.config["annotator"] == "dfast":
+
+            with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
+                for line in stats_file:
+                    # Column 'CDS'.
+                    if line.startswith("Number of CDSs"):
+                        cds = line.split("\t")[-1]
+                    
+                    # Column 'CRISPRs'.
+                    elif line.startswith("Number of CRISPRs"):
+                        crisprs = line.split("\t")[-1]
+
+                    # Column 'rRNAs'. 
+                    elif line.startswith("Number of rRNAs"):    
+                        rrnas = line.split("\t")[-1]
+
+                    # Column 'tRNAs'. 
+                    elif line.startswith("Number of tRNAs"):
+                        trnas = line.split("\t")[-1]
+
+
+
+        # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_resume.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
+        # TODO se necesita AMRFinder
+        report_dict = { "Sample": sample, 
+                        "Reads": round(reads, 0), 
+                        "ReadLen": readlen,
+                        "ReadsQC": readsqc,
+                        "ReadsQCLen": readsqclen, 
+                        "JoinReads": round(joinreads, 2), 
+                        "JoinReadsLen": joinreadslen, 
+                        "Contigs": n_contigs, 
+                        "GenomeLen": genome_len, 
+                        "ContigLen": round(avg_contig_len, 2), 
+                        "N50": round(n50, 0),
+                        "GC": round(gc, 2),
+                        "DepthCov (X)": round(depthcov, 2),
+                        "ST": st,
+                        "clonal_complex": clonal_complex,
+                        "CDS": cds,
+                        "CRISPRs": crisprs,
+                        "rRNAs": rrnas,
+                        "tRNAs": trnas}
+        
+
+        # Columnas siguientes. Se obtendrán a partir del archivo VF_matrix. 
+        # Para cada Sample, el contenido de cada columna será la suma de valores '1' de la matriz del conjunto de genes de una misma categoría. 
+        # En algún sitio se debe indicar el número total de genes de esa categoría. Creo que la forma más fácil para leerse es indicarlo en los nombres de cada categoría. 
+        # Por ejemplo: Stress (16). Otra forma que había pensado es poner los valores como 13/16, pero creo que "/16" sería muy repetitivo y se llenaría la tabla con mucha información, 
+        # que de la otra forma se pondría una vez. La última columna de este grupo será "Total" (suma de todos los números entre paréntesis), 
+        # que será la suma de todos los valores de este grupo de columnas.
+        for category, total in vir_total_by_categories.items():
+            report_dict[category+"("+str(total)+")"] = vir_types_summary[sample][category]
+        
+        report_dict["Total ("+str(vir_matrix.groupby(["Type"]).sum().sum().sum())+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
+        
+        csv_report = csv_report.append(report_dict, ignore_index=True)
 
     csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)
 
@@ -1310,21 +1400,22 @@ if __name__ == "__main__":
                     input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
                     output_dir=roary_plots_dir)
 
-    print(Banner("\nDONE\n"), flush=True)
-    
-
     # Final report
     generate_report(samples_basenames, 
                     prinseq_dir, 
                     spades_dir, 
+                    annotation_dir,
                     mauve_dir, 
                     output_folder, 
                     summary_pre_qc, 
                     summary_post_qc, 
                     summary_post_flash,
-                    mlst_dir+"/MLST_edited.txt")
+                    mlst_dir+"/MLST_edited.txt",
+                    blast_proteins_dir+"/VF_matrix.tsv")
 
     
     # Remove temporal folders
     if cfg.config["run_trimmomatic"]:
         shutil.rmtree(trimmomatic_dir)
+
+    print(Banner("\nDONE\n"), flush=True)

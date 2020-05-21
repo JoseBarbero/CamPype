@@ -29,7 +29,7 @@ config = {
         "icarus": "--no-icarus",    # Do not build Icarusviewers.
         "mode": "--silent"  # Do not print detailed information about each step in standard output. This option does not affect quast.log file.
     },
-    "annotator": "dfast",  # Set this to "prokka" or "dfast"
+    "annotator": "prokka",  # Set this to "prokka" or "dfast"
     "prokka": {
         "kingdom": "Bacteria",  # Annotation mode: Archaea|Bacteria|Mitochondria|Viruses (default 'Bacteria')
         "gcode": 11,  # Genetic code / Translation table (set if --kingdom is set) (default '11')
@@ -42,7 +42,7 @@ config = {
         "sort": "false",
         "step": 1
     },
-    "mlst": {},
+    "antimicrobial_resistance": "abricate", # Set this to "abricate" or "amrfinder"
     "abricate": {
         "virus_database": "vfdb",
         "bacteria_database": "resfinder"
