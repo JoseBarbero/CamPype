@@ -314,7 +314,7 @@ def mlst_postprocessing(mlst_file, output_file):
     output_data.to_csv(output_file, index=False, sep="\t")
 
 
-def abricate_call(input_dir, output_dir, output_filename, database, mincov=False, minid=False, gene_matrix_file=False):
+def abricate_call(input_dir, output_dir, output_filename, database, mincov=False, minid=False, gene_matrix_file=False, samples=False):
     """
     ABRicate call.
     
@@ -363,21 +363,23 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
     os.remove(tmp_file)
     
     if gene_matrix_file:
-        abricate_presence_absence_matrix(output_file, gene_matrix_file)
+        abricate_presence_absence_matrix(output_file, gene_matrix_file, samples)
 
     return state
 
-def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file):
+
+def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
     """
     Creates the presence/absence matrix for the input genes file.
 
     Arguments:
         blast_df {pandas dataframe} -- Sample/genes information from blast.
         p_a_matrix_file {string} -- Gene presence/absence matrix.
+        samples {list} -- List of samples to analyze.
     """
 
     abricate_data = pd.read_csv(abricate_file, sep="\t")
-    samples = abricate_data["SAMPLE"].unique().tolist()
+    samples = samples
     gene_presence_absence = pd.DataFrame(columns=["Protein", *samples, "Type"])
 
     genes_type = dict(zip(abricate_data["GENE"], abricate_data["RESISTANCE"]))
@@ -403,20 +405,64 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file):
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
 
 
-def amrfinder_call(input_file, genus, output_file):
+def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
+    amrfinder_out_file = output_dir+"/AMR_genes_AMRFinder.tsv"
+    resume_file = output_dir+"/AMR_genes_resume.tsv"
     # Update armfinder database before running (it doesn't take too long)
     if cfg.config["amrfinder"]["update_db"]:
         call(["amrfinder", "-u"])
 
-    state = call([  "amrfinder", 
-                    "-n", "/path/to/each/annotation_directory/Sample/Sample.fna", 
-                    "-p", "/path/to/each/annotation_directory/Sample/Sample.faa", 
-                    "-g", "/path/to/each/annotation_directory/Sample/Sample.gff(el modificado antes)", 
+    fnas = [annotation_dir+"/"+sample+"/"+sample+".fna" for sample in samples]
+    faas = [annotation_dir+"/"+sample+"/"+sample+".faa" for sample in samples]
+    gffs = [gff_dir+"/"+sample+".gff" for sample in samples]    
+
+    has_header = False
+
+    with open(amrfinder_out_file, "w") as global_file:
+        for sample in samples:
+            call([  "amrfinder",
+                    "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
+                    "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
+                    "-g", gff_dir+"/"+sample+".gff", 
                     "--organism", genus, 
                     "--plus", 
                     "-i", str(cfg.config["amrfinder"]["minid"]),
                     "-c", str(cfg.config["amrfinder"]["mincov"]),
-                    "-o", output_file])
+                    "-o", output_dir+"/"+sample+".txt"])
+
+            # Group all the results in a single file        
+            with open(output_dir+"/"+sample+".txt") as in_file:
+                lines = in_file.readlines()
+                for i in range(len(lines)):
+                    if i == 0:
+                        if has_header == False:
+                            global_file.write(lines[i])
+                            has_header = True
+                    else:
+                        global_file.write(lines[i])
+            os.remove(output_dir+"/"+sample+".txt")
+    
+    # Generate AMR Genes Resume
+    amr_data = pd.read_csv(amrfinder_out_file, sep="\t")
+    columns = amr_data["Class"].unique().tolist()
+    
+    resume = pd.DataFrame(columns=columns)
+    for index, row in amr_data[(amr_data["Element type"] == "AMR") & (amr_data["Element subtype"] == "AMR")].iterrows():
+        line = {"Sample": row["Protein identifier"]}
+        for column in columns:
+            if row["Class"] == column:
+                line[column] = row["Gene symbol"]
+            else:
+                line[column] = "-"
+        resume = resume.append(line, ignore_index=True)
+    
+    # Sort columns
+    resume = resume[["Sample"] + columns]
+
+    resume.to_csv(resume_file, sep="\t", index=False)
+    with open(resume_file, "a") as res_file:
+        res_file.write("'-' means no AMR gene found")
+
 
 def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name):
     """
@@ -424,7 +470,7 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
     
     Arguments:
         proteins_file_ori {string} -- Reference proteins file path (origin).
-        proteins_file_dest {string} -- Reference proteins file path (destination).
+        proteins_file_dest {string} -- Reference proteins file path (destination).create new partition windows 10
         contigs_files_paths {list} -- List of contig files.
         blast_database_output {string} -- Destination folder to blast database.
         blast_output_folder {string} -- Destination folder to blast output.
@@ -657,6 +703,28 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
     return call(arguments)
 
 
+def refactor_gff_from_prokka(gff_input, gff_output):
+    """
+    Refactor gff files from prokka to an AMR-ready format.
+
+    Arguments:
+        input_gff {[type]} -- [description]
+        output_gff {[type]} -- [description]
+    """
+    with open(gff_input) as in_file, open(gff_output, 'w+') as out_file:
+        for line in in_file:
+            if line.startswith("##FASTA"):
+                break
+            if "ID=" in line:
+                line_id = line.split("\tID=")[1].split(";")[0]
+                if "Name=" in line:
+                    line_name = line.split("Name=")[1].split(";")[0]
+                    line = line.replace("Name="+line_name, "Name="+line_id+";OldName="+line_name)
+                else:
+                    line = line.replace("ID="+line_id, "ID="+line_id+";Name="+line_id)
+            out_file.write(line)
+
+
 def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
     """
     Dfast call.
@@ -702,7 +770,7 @@ def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
     return state
 
 
-def refactor_gff_from_dfast(gff_input, gff_output):
+def refactor_gff_from_dfast(gff_input, gff_output, gff_roary_format):
     """
     Dfast sets a generic ID in its gff file, so we replace it with one related to each sample.
     
@@ -710,15 +778,22 @@ def refactor_gff_from_dfast(gff_input, gff_output):
         gff_input {string} -- Input gff file (from dfast)
         gff_output {string} -- Output gff file.
     """
-    with open(gff_input) as in_file, open(gff_output, 'w+') as out_file:
+    with open(gff_input) as in_file, open(gff_output, 'w+') as out_file, open(gff_roary_format, "w") as roary_gff:
+        in_assembly = False # Flag to avoid writing the assembly part in the gffs for AMRfinder but keep it in roary ones
         for line in in_file:
+            line_w_name = ""
+            if line.startswith("##FASTA"):
+                in_assembly = True
             if "locus_tag=" in line:
                 locus_tag = line.split("locus_tag=")[1].split(";")[0]
                 line_id = line.split("\tID=")[1].split(";")[0]
 
                 line = line.replace(line_id, locus_tag, 1)
-                line = line + ";" + line_id+"|"+locus_tag
-            out_file.write(line)
+                line_w_name = line[:-1] + ";" + "Name="+line_id+"|"+locus_tag+"\n"
+            if not in_assembly:
+                out_file.write(line_w_name)
+            roary_gff.write(line)
+
         
 
 def roary_call(input_files, output_dir, wombat_output_folder):
@@ -937,7 +1012,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file):
+def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, armfinder_matrix_file=False):
     """
     Creates the final report.
     
@@ -960,6 +1035,9 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
     vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
     vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
     vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
+    if armfinder_matrix_file:
+        amr_data = pd.read_csv(armfinder_matrix_file, sep="\t")
+
     df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
                 "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
                 "rRNAs", "tRNAs"]
@@ -1020,10 +1098,10 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         # Column clonal_complex (MLST)
         clonal_complex = mlst_data.loc[sample]["clonal_complex"]
         
-        cds = 0
-        crisprs = 0
-        rrnas = 0
-        trnas = 0
+        cds = ""
+        crisprs = ""
+        rrnas = ""
+        trnas = ""
         
         if cfg.config["annotator"] == "prokka":
             
@@ -1031,44 +1109,39 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                 for line in stats_file:
                     # Column 'CDS'. 
                     if line.startswith("CDS:"):
-                        cds = line.split()[-1]
+                        cds = line.split()[-1].replace("\n", "")
 
                     # Column 'CRISPRs'. 
                     elif line.startswith("CRISPR:"):
-                        crisprs = line.split()[-1]
+                        crisprs = line.split()[-1].replace("\n", "")
 
                     # Column 'rRNAs'. 
                     elif line.startswith("rRNA:"):
-                        rrnas = line.split()[-1]
+                        rrnas = line.split()[-1].replace("\n", "")
 
                     # Column 'tRNAs'. 
                     elif line.startswith("tRNA:"):
-                        trnas = line.split()[-1]
+                        trnas = line.split()[-1].replace("\n", "")
 
         elif cfg.config["annotator"] == "dfast":
-
             with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
                 for line in stats_file:
                     # Column 'CDS'.
                     if line.startswith("Number of CDSs"):
-                        cds = line.split("\t")[-1]
+                        cds = line.split("\t")[-1].replace("\n", "")
                     
                     # Column 'CRISPRs'.
                     elif line.startswith("Number of CRISPRs"):
-                        crisprs = line.split("\t")[-1]
+                        crisprs = line.split("\t")[-1].replace("\n", "")
 
                     # Column 'rRNAs'. 
                     elif line.startswith("Number of rRNAs"):    
-                        rrnas = line.split("\t")[-1]
+                        rrnas = line.split("\t")[-1].replace("\n", "")
 
                     # Column 'tRNAs'. 
                     elif line.startswith("Number of tRNAs"):
-                        trnas = line.split("\t")[-1]
+                        trnas = line.split("\t")[-1].replace("\n", "")
 
-
-
-        # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_resume.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
-        # TODO se necesita AMRFinder
         report_dict = { "Sample": sample, 
                         "Reads": round(reads, 0), 
                         "ReadLen": readlen,
@@ -1088,6 +1161,11 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                         "CRISPRs": crisprs,
                         "rRNAs": rrnas,
                         "tRNAs": trnas}
+
+        # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_resume.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
+        # TODO se necesita AMRFinder
+        if armfinder_matrix_file:
+            df_columns.append(amr_data.columns[1:])
         
         # Information from VF_matrix
         # For each sample its column has the sum of genes present from each category
@@ -1133,12 +1211,17 @@ if __name__ == "__main__":
     snps_dir = output_folder+"/SNP_SNIPPY"
     mlst_dir = output_folder+"/MLST"
     vir_dir = output_folder+"/Virulence_genes"
-    abricate_abr_dir = output_folder+"/ABRicate_antibiotic_resistanceGenes"
+    amr_analysis_dir = output_folder+"/Antimicrobial_resistance_genes"
+    amr_analysis_dir_abr = amr_analysis_dir+"/ABRicate"
+    amr_analysis_dir_amrfinder = amr_analysis_dir+"/AMRFinder"
     prokka_dir = output_folder+"/Prokka_annotation"
+    
     dfast_dir = output_folder+"/Dfast_annotation"
     roary_dir = output_folder+"/Roary_pangenome"
+    roary_input_dir = roary_dir+"/input_gffs"
     roary_plots_dir = roary_dir+"/Roary_plots"
-    dfast_refactor_dir = roary_dir+"/input_gff_files_edited"   # This refactor has to do with Roary so it's in Roary's folder
+    dfast_refactor_dir = dfast_dir+"/refactored_gff"
+    prokka_refactor_dir = prokka_dir+"/AMR_format_files"
     blast_proteins_dir = vir_dir+"/BLAST_custom_virulence_genes"
     dna_database_blast = blast_proteins_dir+"/DNA_database"
 
@@ -1158,14 +1241,24 @@ if __name__ == "__main__":
     os.mkdir(snps_dir)
     os.mkdir(mlst_dir)
     os.mkdir(vir_dir)
-    os.mkdir(abricate_abr_dir)
+
+    if cfg.config["amrfinder"]["run"] or cfg.config["abricate"]["run_amr"]:
+        os.mkdir(amr_analysis_dir)
+        if cfg.config["amrfinder"]["run"]:
+            os.mkdir(amr_analysis_dir_amrfinder)
+        if cfg.config["abricate"]["run_amr"]:
+            os.mkdir(amr_analysis_dir_abr)
+
     os.mkdir(roary_dir)
 
     if annotator == "dfast":
         os.mkdir(dfast_dir)
         os.mkdir(dfast_refactor_dir)
+        os.mkdir(roary_input_dir)
     else:
         os.mkdir(prokka_dir)
+        if cfg.config["amrfinder"]["run"]:
+            os.mkdir(prokka_refactor_dir)
 
     roary_input_files = []
     summary_pre_qc = {}
@@ -1186,10 +1279,11 @@ if __name__ == "__main__":
                         sample_basename=reference_genome_basename,
                         organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
             refactor_gff_from_dfast(dfast_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
-                                    dfast_refactor_dir+"/"+reference_genome_basename+".gff")
+                                    dfast_refactor_dir+"/"+reference_genome_basename+".gff",
+                                    roary_input_dir+"/+"+reference_genome_basename+".gff")
             # Set roary input files (renaming to get reference file first)
             os.rename(dfast_refactor_dir+"/"+reference_genome_basename+".gff", dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
-            roary_input_files.append(dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
+            roary_input_files.append(roary_input_dir+"/+"+reference_genome_basename+".gff")
         else:
             # Prokka call
             annotation_dir = prokka_dir
@@ -1344,9 +1438,11 @@ if __name__ == "__main__":
                        organism=organism)
             step_counter += 1
 
-            refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", dfast_refactor_dir+"/"+sample_basename+".gff")
+            refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", 
+                                    dfast_refactor_dir+"/"+sample_basename+".gff",
+                                    roary_input_dir+"/"+sample_basename+".gff")
             # Set roary input files
-            roary_input_files.append(dfast_refactor_dir+"/"+sample_basename+".gff")
+            roary_input_files.append(roary_input_dir+"/"+sample_basename+".gff")
 
         else:
             # Prokka call
@@ -1363,6 +1459,8 @@ if __name__ == "__main__":
                         metagenome=cfg.config["prokka"]["metagenome"],
                         rawproduct=cfg.config["prokka"]["rawproduct"])
             step_counter += 1
+            if cfg.config["amrfinder"]["run"]:
+                refactor_gff_from_prokka(prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff", prokka_refactor_dir+"/"+sample_basename+".gff")
             # Set roary input files
             roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
         
@@ -1432,22 +1530,35 @@ if __name__ == "__main__":
 
 
     # Antimicrobial resistance genes
-    if cfg.config["antimicrobial_resistance"].lower() == "abricate":
+    if cfg.config["abricate"]["run_amr"]:
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate)\n"), flush=True)
         step_counter += 1
         abricate_output_file = "AMR_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+".tsv"
         abricate_call(input_dir=mauve_dir,
-                    output_dir=abricate_abr_dir,
+                    output_dir=amr_analysis_dir_abr,
                     output_filename=abricate_output_file,
                     database = cfg.config["abricate"]["antimicrobial_resistance_database"],
                     mincov=cfg.config["abricate"]["mincov"],
                     minid=cfg.config["abricate"]["minid"],
-                    gene_matrix_file=abricate_abr_dir+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv")
-    elif cfg.config["antimicrobial_resistance"].lower() == "amrfinder":
+                    gene_matrix_file=amr_analysis_dir_abr+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv",
+                    samples=samples_basenames)
+    if cfg.config["amrfinder"]["run"]:
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder)\n"), flush=True)
+        step_counter += 1
+        # Update armfinder database before running (it doesn't take too long)
+        if cfg.config["amrfinder"]["update_db"]:
+            call(["amrfinder", "-u"])
+        if annotator == "prokka":
+            gff_dir = prokka_refactor_dir
+        elif annotator == "dfast":
+            gff_dir = dfast_refactor_dir
+        else:
+            print("Specified annotator is not valid.")
+        amrfinder_call(samples_basenames, annotation_dir, gff_dir, genus, amr_analysis_dir_amrfinder)
 
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
+    print("Roary input files:", roary_input_files)
     step_counter += 1
     roary_call(input_files=roary_input_files, output_dir=roary_dir, wombat_output_folder=output_folder)
 
@@ -1461,6 +1572,10 @@ if __name__ == "__main__":
                     output_dir=roary_plots_dir)
 
     # Final report
+    armfinder_matrix_file = False
+    if cfg.config["amrfinder"]["run"]:
+        armfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder.tsv"
+    
     generate_report(samples_basenames, 
                     prinseq_dir, 
                     spades_dir, 
@@ -1471,7 +1586,8 @@ if __name__ == "__main__":
                     summary_post_qc, 
                     summary_post_flash,
                     mlst_dir+"/MLST_edited.txt",
-                    blast_proteins_dir+"/VF_matrix.tsv")
+                    blast_proteins_dir+"/VF_matrix.tsv",
+                    armfinder_matrix_file=armfinder_matrix_file)
 
     
     # Remove temporal folders

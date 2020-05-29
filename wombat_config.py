@@ -29,7 +29,7 @@ config = {
         "icarus": "--no-icarus",    # Do not build Icarusviewers.
         "mode": "--silent"  # Do not print detailed information about each step in standard output. This option does not affect quast.log file.
     },
-    "annotator": "prokka",  # Set this to "prokka" or "dfast"
+    "annotator": "dfast",  # Set this to "prokka" or "dfast"
     "prokka": {
         "kingdom": "Bacteria",  # Annotation mode: Archaea|Bacteria|Mitochondria|Viruses (default 'Bacteria')
         "gcode": 11,  # Genetic code / Translation table (set if --kingdom is set) (default '11')
@@ -42,15 +42,16 @@ config = {
         "sort": "false",
         "step": 1
     },
-    "antimicrobial_resistance": "abricate", # Set this to "abricate", "amrfinder" or False (if you want to skip this step)
     "abricate": {
+        "run_amr": True,  # Run antimicrobial resistance gene search. If you want to omit this step, set it to False (Default: False)
         "virus_database": "vfdb",
         "antimicrobial_resistance_database": "card", # Select database from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn.
         "mincov": 90, # Minimum DNA % coverage for considering an antimicrobial resistance gene as present. Default: 90.
         "minid": 90 # Minimum DNA % identity for considering an antimicrobial resistance gene as present. Default: 90.        
     },
     "amrfinder": {
-        "update_db": True,  # Updates the db before running amrfinder. Set to True or False
+        "run": True,  # If you want to omit this step, set it to False (Default: True)
+        "update_db": False,  # Updates the db before running amrfinder. Set to True or False
         "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
     },
