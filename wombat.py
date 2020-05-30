@@ -433,13 +433,11 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
             # Group all the results in a single file        
             with open(output_dir+"/"+sample+".txt") as in_file:
                 lines = in_file.readlines()
-                for i in range(len(lines)):
-                    if i == 0:
-                        if has_header == False:
-                            global_file.write(lines[i])
-                            has_header = True
-                    else:
-                        global_file.write(lines[i])
+                if has_header == False:
+                    global_file.write("Sample\t"+lines[0])
+                    has_header = True
+                for line in lines[1:]:
+                    global_file.write(sample+"\t"+line)
             os.remove(output_dir+"/"+sample+".txt")
     
     # Generate AMR Genes Resume
@@ -447,14 +445,16 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
     columns = amr_data["Class"].unique().tolist()
     
     resume = pd.DataFrame(columns=columns)
+    samples_data = {}
+    for sample in samples:
+        samples_data[sample] = {"Sample": sample}
     for index, row in amr_data[(amr_data["Element type"] == "AMR") & (amr_data["Element subtype"] == "AMR")].iterrows():
-        line = {"Sample": row["Protein identifier"]}
         for column in columns:
             if row["Class"] == column:
-                line[column] = row["Gene symbol"]
-            else:
-                line[column] = "-"
-        resume = resume.append(line, ignore_index=True)
+                samples_data[str(row["Sample"])][column] = row["Gene symbol"]
+    for sample, values in samples_data.items():
+        resume = resume.append(values, ignore_index=True)
+    resume = resume.fillna("-")
     
     # Sort columns
     resume = resume[["Sample"] + columns]
@@ -1035,13 +1035,15 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
     vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
     vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
     vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
-    if armfinder_matrix_file:
-        amr_data = pd.read_csv(armfinder_matrix_file, sep="\t")
 
     df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
                 "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
                 "rRNAs", "tRNAs"]
-    
+    if armfinder_matrix_file:
+        amr_data = pd.read_csv(armfinder_matrix_file, sep="\t", skipfooter=1, engine="python")
+        amr_data["Sample"] = amr_data["Sample"].astype(str)
+        amr_data = amr_data.set_index("Sample")
+        df_columns.extend(amr_data.columns)
     # Every column by virulence category must have the total amount of genes of that type present
     for category, total in vir_total_by_categories.items():
             df_columns.append(category+"("+str(total)+")")
@@ -1165,7 +1167,7 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_resume.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
         # TODO se necesita AMRFinder
         if armfinder_matrix_file:
-            df_columns.append(amr_data.columns[1:])
+            report_dict.update(amr_data.loc[sample].to_dict())
         
         # Information from VF_matrix
         # For each sample its column has the sum of genes present from each category
@@ -1574,7 +1576,7 @@ if __name__ == "__main__":
     # Final report
     armfinder_matrix_file = False
     if cfg.config["amrfinder"]["run"]:
-        armfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder.tsv"
+        armfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_resume.tsv"
     
     generate_report(samples_basenames, 
                     prinseq_dir, 
