@@ -2,4 +2,4 @@
 OUTDIR=$(python -c "import wombat_config as cfg; print(cfg.config['output_directory'])")
 OUTDIR=$OUTDIR/Wombat_OUTPUT_`date "+%Y%m%d_%H%M%S"`
 mkdir -p $OUTDIR
-python wombat.py $OUTDIR "$@" 2>&1 | tee $OUTDIR/wombat_log.txt
+python wombat.py $OUTDIR "$@" 2>&1 | tee $OUTDIR/wombat.log

@@ -694,7 +694,7 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
                 "--species", species,
                 "--strain", strain,
                 "--gcode", str(cfg.config["prokka"]["gcode"])]
-    if proteins:
+    if cfg.config["prokka"]["reference_annotation"]:
         arguments.extend(["--proteins", proteins])
     if metagenome:
         arguments.append("--metagenome")
@@ -1473,7 +1473,11 @@ if __name__ == "__main__":
         step_counter += 1
         reference_genome_filename = reference_genome_file.split("/")[-1]
         reference_genome_basename = reference_genome_filename.split(".")[-2]
-        snippy_call(reference_genome=cfg.config["reference_genome"]["proteins"],
+        if cfg.config["reference_genome"]["proteins"]:
+            ref_genome = cfg.config["reference_genome"]["proteins"]
+        else:
+            ref_genome = cfg.config["reference_genome"]["file"]
+        snippy_call(reference_genome=ref_genome,
                     contigs=mauve_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)
