@@ -630,7 +630,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
         new_row["Type"] = genes_type[gene].lower()
         for sample in samples:
             sample_content = gene_content[gene_content["Sample"] == sample]
-            if len(sample_content) == 1:
+            if len(sample_content) > 0:
                 if sample_content["% protein cover"].max() > cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() > cfg.config["presence_absence_matrix"]["protein_cover"]:
                     new_row[sample] = 1
                 else:
