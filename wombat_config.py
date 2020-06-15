@@ -16,9 +16,7 @@ config = {
         "min_qual_mean": 30, # Minimum read quality. Default: 30
         "trim_qual_right": 25,  # Trim sequence by quality score from the 3'-end with this threshold score. Default: 25
         "trim_qual_window": 20,     # The sliding window size used to calculate quality score by type. To stop at the first base that fails the rule defined, use a window size of 1. Default: 20
-        "trim_qual_type": "mean",   # Type of quality score calculation to use. Default: 20
-        "out_format": 3,    # Output format 1 (FASTA only), 2 (FASTA and QUAL), 3 (FASTQ), 4 (FASTQ and FASTA), 5 (FASTQ, FASTA and QUAL) (default: {3})
-        "out_bad": "null"   # Data not passing anyfilter will be ignored
+        "trim_qual_type": "mean"   # Type of quality score calculation to use. Default: 20
         },  
     "spades": {
         "mode": "--isolate",    # Modes: --isolate, --careful or --sc. Default: --isolate
