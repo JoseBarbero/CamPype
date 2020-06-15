@@ -689,11 +689,11 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
                 "--locustag", locus_tag, 
                 "--outdir", output_dir, 
                 "--prefix", prefix, 
-                "--kingdom", cfg.config["prokka"]["kingdom"], 
+                "--kingdom", "Bacteria", 
                 "--genus", genus,
                 "--species", species,
                 "--strain", strain,
-                "--gcode", str(cfg.config["prokka"]["gcode"])]
+                "--gcode", 11]
     if cfg.config["prokka"]["reference_annotation"]:
         arguments.extend(["--proteins", proteins])
     if metagenome:
@@ -1165,7 +1165,6 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                         "tRNAs": trnas}
 
         # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_resume.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
-        # TODO se necesita AMRFinder
         if armfinder_matrix_file:
             report_dict.update(amr_data.loc[sample].to_dict())
         
