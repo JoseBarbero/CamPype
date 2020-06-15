@@ -605,10 +605,10 @@ def blast_postprocessing(blast_file, database_file, output_folder, samples):
     blast_output = blast_output.sort_values(by=["Protein type", "Protein", "Sample"])
 
     # Export to tsv
-    blast_output.to_csv(output_folder+"/BLASToutput_VF_custom_edited.tsv", sep="\t",index=False)    
+    blast_output.to_csv(output_folder+"/BLAST_custom_VFDB_processed.tsv", sep="\t",index=False)    
 
     # Create presence/absence matrix
-    get_presence_absence_matrix(samples, proteins_dict, blast_output, output_folder+"/VF_matrix.tsv")
+    get_presence_absence_matrix(samples, proteins_dict, blast_output, output_folder+"/BLAST_custom_VFDB_matrix.tsv")
 
 
 def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
@@ -631,7 +631,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
         for sample in samples:
             sample_content = gene_content[gene_content["Sample"] == sample]
             if len(sample_content) > 0:
-                if sample_content["% protein cover"].max() > cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() > cfg.config["presence_absence_matrix"]["protein_cover"]:
+                if sample_content["% protein cover"].max() >= cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() >= cfg.config["presence_absence_matrix"]["protein_cover"]:
                     new_row[sample] = 1
                 else:
                     new_row[sample] = 0
@@ -663,7 +663,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
                             str(cfg.config["presence_absence_matrix"]["protein_cover"]) +
                             ") % and identity > (" +
                             str(cfg.config["presence_absence_matrix"]["protein_cover"]) + 
-                            ") %) on each sample for considering a virulence gene as present.")
+                            ") % on each sample for considering a virulence gene as present.")
 
 def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", metagenome=False, rawproduct=False):
     """
@@ -1521,10 +1521,10 @@ if __name__ == "__main__":
         contig_files = ([os.path.join(contigs_dir, f) for f in os.listdir(contigs_dir)])
         contig_files.append(cfg.config["reference_genome"]["file"])
 
-        blast_output_name = "BLASToutput_VF_custom.txt"
+        blast_output_name = "BLAST_custom_VFDB.txt"
         proteins_file = cfg.config["proteins_reference_file"]
         dna_database_blast = blast_proteins_dir+"/DNA_database"
-        proteins_database_name = "VF_custom.txt"    # This is an output file name
+        proteins_database_name = "custom_VFDB.txt"    # This is an output file name
         if not os.path.exists(blast_proteins_dir):
             os.mkdir(blast_proteins_dir)
         if not os.path.exists(dna_database_blast):
@@ -1599,7 +1599,7 @@ if __name__ == "__main__":
                     summary_post_qc, 
                     summary_post_flash,
                     mlst_dir+"/MLST_edited.txt",
-                    blast_proteins_dir+"/VF_matrix.tsv",
+                    blast_proteins_dir+"/BLAST_custom_VFDB_matrix.tsv",
                     armfinder_matrix_file=armfinder_matrix_file)
 
     
