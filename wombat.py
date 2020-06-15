@@ -1208,8 +1208,8 @@ if __name__ == "__main__":
         prinseq_dir = output_folder+"/Prinseq_filtering"
     flash_dir = output_folder+"/Flash_read_extension"
     spades_dir = output_folder+"/SPAdes_assembly"
-    contigs_dir = output_folder+"/Contigs_renamed_shorten"
-    mauve_dir = output_folder+"/Mauve_reordered_contigs"
+    contigs_dir = output_folder+"/Draft_genomes"
+    mauve_dir = output_folder+"/Mauve_reordered_draft_genomes"
     snps_dir = output_folder+"/SNP_SNIPPY"
     mlst_dir = output_folder+"/MLST"
     vir_dir = output_folder+"/Virulence_genes"
@@ -1599,5 +1599,8 @@ if __name__ == "__main__":
     # Remove temporal folders
     if cfg.config["run_trimmomatic"]:
         shutil.rmtree(trimmomatic_dir)
+
+    if cfg.config["reference_genome"]["file"]:
+        shutil.rmtree(contigs_dir)
 
     print(Banner("\nDONE\n"), flush=True)
