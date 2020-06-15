@@ -6,7 +6,7 @@ config = {
         "genus": "Campylobacter",   
         "species": "jejuni",    
         "strain": "NCTC11168",
-        "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome, detailed information of SNPS, 
+        "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS 
     },
     "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True)
     "run_trimmomatic": True, # Set to True or False if you want to run Trimmomatic or not to filter sequenced reads
