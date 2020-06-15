@@ -1409,12 +1409,20 @@ if __name__ == "__main__":
 
         
         # Reordering contigs by a reference genome with MauveCM
-        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): reordering {sample_basename} genome against reference genome\n"), flush=True)
-        mauve_contigs = mauve_call(output_folder=mauve_dir,
-                                    reference_sequence=reference_genome_file,
-                                    input_contigs=contigs_dir+"/"+sample_basename+".fasta",
-                                    sample_basename=sample_basename)
-        step_counter += 1
+        if cfg.config["reference_genome"]["file"]:
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): reordering {sample_basename} genome against reference genome\n"), flush=True)
+            draft_contigs = mauve_call(output_folder=mauve_dir,
+                                        reference_sequence=reference_genome_file,
+                                        input_contigs=contigs_dir+"/"+sample_basename+".fasta",
+                                        sample_basename=sample_basename)
+            step_counter += 1
+            draft_contigs_dir = mauve_dir
+        else:
+            draft_contigs = contigs_dir+"/"+sample_basename+".fasta"
+            draft_contigs_dir = contigs_dir
+
+
+
 
         # Create Quast output directories
         quast_dir = sample_basename+"_assembly_statistics"
@@ -1422,7 +1430,7 @@ if __name__ == "__main__":
 
         # Quast call
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Quast\n"), flush=True)
-        quast_call( input_file=mauve_contigs,
+        quast_call( input_file=draft_contigs,
                     output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir,
                     min_contig_len=min_contig_threshold)
         step_counter += 1
@@ -1434,7 +1442,7 @@ if __name__ == "__main__":
             annotation_dir = dfast_dir
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
             dfast_call(locus_tag=sample_basename+"_L",
-                       contigs_file=mauve_contigs,
+                       contigs_file=draft_contigs,
                        output_dir=dfast_dir+"/"+sample_basename,
                        sample_basename=sample_basename,
                        organism=organism)
@@ -1453,7 +1461,7 @@ if __name__ == "__main__":
             prokka_call(locus_tag=sample_basename+"_L",
                         output_dir=prokka_dir+"/"+sample_basename,
                         prefix=sample_basename,
-                        input_file=mauve_contigs,
+                        input_file=draft_contigs,
                         genus=genus,
                         species=species,
                         strain=sample_basename,
@@ -1478,7 +1486,7 @@ if __name__ == "__main__":
         else:
             ref_genome = cfg.config["reference_genome"]["file"]
         snippy_call(reference_genome=ref_genome,
-                    contigs=mauve_contigs,
+                    contigs=draft_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)
 
@@ -1489,7 +1497,7 @@ if __name__ == "__main__":
     mlst_out_file = "MLST.txt"
     print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
     step_counter += 1
-    mlst_call(input_dir=mauve_dir,
+    mlst_call(input_dir=draft_contigs_dir,  
             reference_file=reference_genome_file,
             output_dir=mlst_dir,
             output_filename=mlst_out_file)
@@ -1500,7 +1508,7 @@ if __name__ == "__main__":
     # ABRicate call (virulence genes)
     print(Banner(f"\nStep {step_counter}: ABRicate (virulence genes)\n"), flush=True)
     step_counter += 1
-    abricate_call(input_dir=mauve_dir,
+    abricate_call(input_dir=draft_contigs_dir,
                 output_dir=vir_dir,
                 output_filename="Virulence_genes_ABRicate_VFDB.tab",
                 database = cfg.config["abricate"]["virus_database"])
@@ -1510,7 +1518,7 @@ if __name__ == "__main__":
     if cfg.config["run_blast"]:
         print(Banner(f"\nStep {step_counter}: BLAST (virulence genes against custom database)\n"), flush=True)
         step_counter += 1
-        contigs_dir = mauve_dir
+        contigs_dir = draft_contigs_dir
         contig_files = ([os.path.join(contigs_dir, f) for f in os.listdir(contigs_dir)])
         contig_files.append(cfg.config["reference_genome"]["file"])
 
@@ -1540,7 +1548,7 @@ if __name__ == "__main__":
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate)\n"), flush=True)
         step_counter += 1
         abricate_output_file = "AMR_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+".tsv"
-        abricate_call(input_dir=mauve_dir,
+        abricate_call(input_dir=draft_contigs_dir, 
                     output_dir=amr_analysis_dir_abr,
                     output_filename=abricate_output_file,
                     database = cfg.config["abricate"]["antimicrobial_resistance_database"],
@@ -1586,7 +1594,7 @@ if __name__ == "__main__":
                     prinseq_dir, 
                     spades_dir, 
                     annotation_dir,
-                    mauve_dir, 
+                    draft_contigs_dir,
                     output_folder, 
                     summary_pre_qc, 
                     summary_post_qc, 
