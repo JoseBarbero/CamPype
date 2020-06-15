@@ -17,7 +17,7 @@ config = {
         "trim_qual_type": "mean",   # Type of quality score calculation to use. Default: 20
         "out_format": 3,    # Output format 1 (FASTA only), 2 (FASTA and QUAL), 3 (FASTQ), 4 (FASTQ and FASTA), 5 (FASTQ, FASTA and QUAL) (default: {3})
         "out_bad": "null"   # Data not passing anyfilter will be ignored
-        },  
+    },  
     "spades": {
         "mode": "--isolate",    # Assembly modes: --isolate (highly recommended for high-coverage isolate and multi-cell Illumina data), --careful (reduce the number of mismatches and short indels, recommended only for assembly of small genomes) or --sc (required for MDA (single-cell) data). Default: --isolate
         "cov_cutoff": "auto",    # Read coverage cutoff value. Must be a positive float value, or 'auto', or 'off'. Default value is 'auto', when SPAdes automatically computes coverage threshold using conservative strategy
@@ -55,8 +55,8 @@ config = {
         "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
     },
-    "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True). You can edit this file with any sequence you want to scan
     "run_blast": True,     # Run tBLASTn to scan specific virulence genes from the custom_VFDB.txt. Remember that you can edit that database with your own sequences. If you want to omit this step, set it to False. Default: True
+    "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True). You can edit this file with any sequence you want to scan
     "blast": {
         "dbtype": "nucl",   # TODO
         "evalue": 10e-4,    # Maximum evalue for a hit. Default: 10e-4
