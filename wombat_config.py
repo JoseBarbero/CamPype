@@ -8,7 +8,7 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # TODO optional
     },
-    "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True)
+    "proteins_reference_file": "reference_files/custom_VFDB.txt", # OPTIONAL (mandatory if "run_blast" is set to True)
     "run_trimmomatic": True, # Set to True or False,
     "min_contig_len": 500,
     "prinseq": {
