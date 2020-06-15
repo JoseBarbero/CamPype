@@ -208,7 +208,7 @@ def contigs_trim_and_rename(contigs_file, output_filename, output_dir, min_len):
 
     large_sequences = []
     for record in SeqIO.parse(contigs_file, "fasta"):
-        if len(record.seq) > min_len:
+        if len(record.seq) >= min_len:
             record.id = "C_"+"_".join(record.id.split("_")[1:4])
             record.description = ""
             large_sequences.append(record)
