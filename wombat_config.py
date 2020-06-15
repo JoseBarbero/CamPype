@@ -8,9 +8,7 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS 
     },
-    "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True). You can edit this file with any sequence you want to scan
     "run_trimmomatic": True, # Set to True or False if you want to run Trimmomatic or not to filter sequenced reads
-    "min_contig_len": 500,
     "prinseq": {
         "min_len": 50, # Minimum read length. Default: 50
         "min_qual_mean": 30, # Minimum read quality. Default: 30
@@ -25,6 +23,7 @@ config = {
         "cov_cutoff": "auto",    # Read coverage cutoff value. Must be a positive float value, or 'auto', or 'off'. Default value is 'auto', when SPAdes automatically computes coverage threshold using conservative strategy
         "k": False     # k-mer sizes to be used. Set this to a number or comma-separated list of numbers (all values must be odd, less than 128 and listed in ascending order). Example: 55,77,121. If set to False, values are automatically selected using maximum read length. If mode --sc is set, the default values are 21, 33 and 55. Default: False 
     },
+    "min_contig_len": 500,
     "quast": {
         "icarus": "--no-icarus",    # Do not build Icarusviewers
         "mode": "--silent"  # Do not print detailed information about each step in standard output. This option does not affect quast.log file
@@ -56,6 +55,7 @@ config = {
         "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
     },
+    "proteins_reference_file": "reference_files/VF_custom.txt", # OPTIONAL (mandatory if "run_blast" is set to True). You can edit this file with any sequence you want to scan
     "run_blast": True,     # Run tBLASTn to scan specific virulence genes from the custom_VFDB.txt. Remember that you can edit that database with your own sequences. If you want to omit this step, set it to False. Default: True
     "blast": {
         "dbtype": "nucl",   # TODO
