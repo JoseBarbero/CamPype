@@ -46,7 +46,7 @@ config = {
     },
     "amrfinder": {
         "run": True,  # Run antimicrobial resistance gene search using AMRFinder (database: NDARO). If you want to omit this step, set it to False. Default: True
-        "update_db": False,  # Updates the database before running AMRFinder (Internet connection is required) if set to True. Otherwise, set to False. Default: False
+        "update_db": True,  # Updates the database before running AMRFinder (Internet connection is required) if set to True. Otherwise, set to False. Default: False
         "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
     },

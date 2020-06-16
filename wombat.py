@@ -1567,7 +1567,7 @@ if __name__ == "__main__":
         elif annotator == "dfast":
             gff_dir = dfast_refactor_dir
         else:
-            print("Specified annotator is not valid.")
+            print("Specified annotator("+annotator+") is not valid.")
         amrfinder_call(samples_basenames, annotation_dir, gff_dir, genus, amr_analysis_dir_amrfinder)
 
     # Roary call
