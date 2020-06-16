@@ -56,7 +56,7 @@ config = {
         "evalue": 10e-4,    # Maximum evalue for a hit. Default: 10e-4
         "soft_masking": True    # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
     },
-    "presence_absence_matrix": {    # Parameteres for blast matrix construction
+    "presence_absence_matrix": {    # Parameters for blast matrix construction
         "protein_cover": 90,    # Minimum % protein cover for considering a virulence gene as present. Default: 90
         "protein_identity": 90  # Minimum % protein identity for considering a virulence gene as present. Default: 90
     },
