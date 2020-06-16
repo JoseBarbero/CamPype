@@ -1505,17 +1505,18 @@ if __name__ == "__main__":
     mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_edited.txt")
 
     # ABRicate call (virulence genes)
-    print(Banner(f"\nStep {step_counter}: ABRicate (virulence genes)\n"), flush=True)
+    vf_database = "vfdb"
+    print(Banner(f"\nStep {step_counter}: Virulence genes (ABRicate: "+vf_database+")\n"), flush=True)
     step_counter += 1
     abricate_call(input_dir=draft_contigs_dir,
                 output_dir=vir_dir,
                 output_filename="Virulence_genes_ABRicate_VFDB.tab",
-                database = "vfdb")
+                database = vf_database)
 
 
     # Blast call
     if cfg.config["run_blast"]:
-        print(Banner(f"\nStep {step_counter}: BLAST (virulence genes against custom database)\n"), flush=True)
+        print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against custom database)\n"), flush=True)
         step_counter += 1
         contigs_dir = draft_contigs_dir
         contig_files = ([os.path.join(contigs_dir, f) for f in os.listdir(contigs_dir)])
@@ -1544,7 +1545,7 @@ if __name__ == "__main__":
 
     # Antimicrobial resistance genes
     if cfg.config["abricate"]["run_amr"]:
-        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate)\n"), flush=True)
+        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate: "+cfg.config["abricate"]["antimicrobial_resistance_database"]+")\n"), flush=True)
         step_counter += 1
         abricate_output_file = "AMR_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+".tsv"
         abricate_call(input_dir=draft_contigs_dir, 
@@ -1556,7 +1557,7 @@ if __name__ == "__main__":
                     gene_matrix_file=amr_analysis_dir_abr+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv",
                     samples=samples_basenames)
     if cfg.config["amrfinder"]["run"]:
-        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder)\n"), flush=True)
+        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: NDARO)\n"), flush=True)
         step_counter += 1
         # Update armfinder database before running (it doesn't take too long)
         if cfg.config["amrfinder"]["update_db"]:
