@@ -22,6 +22,7 @@ dependencies:
   - flash=1.2.11
   - mauve=2.4.0
   - snippy=4.3.6
+  - snpeff=4.3.1t
   - samtools=1.9
   - bcftools=1.9
   - tbl2asn-forever=25.7.1f
