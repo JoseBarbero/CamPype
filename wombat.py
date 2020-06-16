@@ -238,7 +238,7 @@ def quast_call(input_file, output_dir, min_contig_len):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig_len), cfg.config["quast"]["icarus"], cfg.config["quast"]["mode"]]
+    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig_len), cfg.config["quast"]["icarus"], "--silent"]
     return call(arguments)
 
 
@@ -493,13 +493,13 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
     # Create blast database
     blast_db_path = os.path.dirname(os.path.abspath(blast_database_output))+"/DNA_database"
     print(blast_db_path)
-    call(["makeblastdb", "-in", blast_database_output, "-dbtype", cfg.config["blast"]["dbtype"], 
+    call(["makeblastdb", "-in", blast_database_output, "-dbtype", "nucl", 
           "-out", blast_db_path, "-title", "DNA_Database"])
 
     # Call tblastn
     tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest, "-evalue", str(cfg.config["blast"]["evalue"]), 
                         "-soft_masking", str(cfg.config["blast"]["soft_masking"]).lower(),
-                        "-outfmt", cfg.config["blast"]["outfmt"],
+                        "-outfmt", "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq",
                         "-out", blast_output_folder+"/"+blast_output_name])
 
     # Add header to tblastn output
@@ -742,7 +742,7 @@ def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
                 "--sort_sequence", cfg.config["dfast"]["sort"],
                 "--minimum_length", str(cfg.config["min_contig_len"]),
                 "--use_original_name", str(cfg.config["dfast"]["use_original_name"]),
-                "--step", str(cfg.config["dfast"]["step"]),
+                "--step", "1",
                 "--organism", organism, 
                 "--strain", sample_basename,
                 "--locus_tag_prefix", locus_tag,
@@ -1510,7 +1510,7 @@ if __name__ == "__main__":
     abricate_call(input_dir=draft_contigs_dir,
                 output_dir=vir_dir,
                 output_filename="Virulence_genes_ABRicate_VFDB.tab",
-                database = cfg.config["abricate"]["virus_database"])
+                database = "vfdb")
 
 
     # Blast call

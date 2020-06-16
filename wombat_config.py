@@ -25,13 +25,10 @@ config = {
     },
     "min_contig_len": 500,
     "quast": {
-        "icarus": "--no-icarus",    # Do not build Icarusviewers
-        "mode": "--silent"  # Do not print detailed information about each step in standard output. This option does not affect quast.log file
+        "icarus": "--no-icarus"    # Do not build Icarusviewers
     },
     "annotator": "prokka",  # Set this to "prokka" or "dfast"
     "prokka": {
-        "kingdom": "Bacteria",  # Annotation mode: Archaea|Bacteria|Mitochondria|Viruses (default 'Bacteria')
-        "gcode": 11,  # Genetic code / Translation table (set if --kingdom is set) (default '11')
         "metagenome": True, # Improve gene predictions for highly fragmented genomes if set to True (not for reference genome). Otherwise, set to False. Default: True
         "rawproduct": True, # Do not clean up product annotation if set to True. Otherwise, set to False. Default: True
         "reference_annotation": True    # Use reference genome annotation GenBank file to first annotate from if set to True. Otherwise, set to False. Default: True
@@ -39,12 +36,10 @@ config = {
     "dfast": {
         "min_length": 1,    # Minimum sequence length (bp) to annotate. Default: 1
         "use_original_name": "true",    # Use original sequence names in a query FASTA file (true or false). Default: True
-        "sort": "false",    # Sort sequences by length (true or false). Default: False
-        "step": 1
+        "sort": "false"    # Sort sequences by length (true or false). Default: False
     },
     "abricate": {
         "run_amr": True,  # Run antimicrobial resistance gene search using ABRicate. If you want to omit this step, set it to False. Default: False
-        "virus_database": "vfdb",
         "antimicrobial_resistance_database": "card", # Select database from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn. Default: card
         "mincov": 90, # Minimum DNA % coverage for considering an antimicrobial resistance gene as present. Default: 90
         "minid": 90 # Minimum DNA % identity for considering an antimicrobial resistance gene as present. Default: 90      
@@ -58,9 +53,7 @@ config = {
     "run_blast": True,     # Run tBLASTn to scan specific virulence genes from the custom_VFDB.txt. Remember that you can edit that database with your own sequences. If you want to omit this step, set it to False. Default: True
     "proteins_reference_file": "reference_files/custom_VFDB.txt", # OPTIONAL (mandatory if "run_blast" is set to True). You can edit this file with any sequence you want to scan
     "blast": {
-        "dbtype": "nucl",   # TODO
         "evalue": 10e-4,    # Maximum evalue for a hit. Default: 10e-4
-        "outfmt": "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq", # Output format
         "soft_masking": True    # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
     },
     "presence_absence_matrix": {    # Parameteres for blast matrix construction
