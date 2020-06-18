@@ -390,7 +390,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
         for sample in samples:
             sample_content = gene_content[gene_content["SAMPLE"] == sample]
             if len(sample_content) == 1:
-                if sample_content["%COVERAGE"].max() > cfg.config["abricate"]["mincov"] and sample_content["%IDENTITY"].max() > cfg.config["abricate"]["minid"]:
+                if sample_content["%COVERAGE"].max() >= cfg.config["abricate"]["mincov"] and sample_content["%IDENTITY"].max() >= cfg.config["abricate"]["minid"]:
                     new_row[sample] = 1
                 else:
                     new_row[sample] = 0
@@ -406,9 +406,9 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
 
 
 def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
-    amrfinder_out_file = output_dir+"/AMR_genes_AMRFinder.tsv"
-    resume_file = output_dir+"/AMR_genes_resume.tsv"
-    # Update armfinder database before running (it doesn't take too long)
+    amrfinder_out_file = output_dir+"/AMR_AMRFinder.tsv"
+    resume_file = output_dir+"/AMR_genes_AMRFinder_matrix.tsv"
+    # Update amrfinder database before running (it doesn't take too long)
     if cfg.config["amrfinder"]["update_db"]:
         call(["amrfinder", "-u"])
 
@@ -659,9 +659,9 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
     # Export to tsv
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
     with open(p_a_matrix_file, "a") as matrix_file:
-        matrix_file.write("Coverage > (" + 
+        matrix_file.write("Coverage >= (" + 
                             str(cfg.config["presence_absence_matrix"]["protein_cover"]) +
-                            ") % and identity > (" +
+                            ") % and identity >= (" +
                             str(cfg.config["presence_absence_matrix"]["protein_cover"]) + 
                             ") % on each sample for considering a virulence gene as present.")
 
@@ -1012,7 +1012,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, armfinder_matrix_file=False):
+def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, amrfinder_matrix_file=False):
     """
     Creates the final report.
     
@@ -1039,8 +1039,8 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
     df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
                 "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
                 "rRNAs", "tRNAs"]
-    if armfinder_matrix_file:
-        amr_data = pd.read_csv(armfinder_matrix_file, sep="\t", skipfooter=1, engine="python")
+    if amrfinder_matrix_file:
+        amr_data = pd.read_csv(amrfinder_matrix_file, sep="\t", skipfooter=1, engine="python")
         amr_data["Sample"] = amr_data["Sample"].astype(str)
         amr_data = amr_data.set_index("Sample")
         df_columns.extend(amr_data.columns)
@@ -1165,7 +1165,7 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                         "tRNAs": trnas}
 
         # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_resume.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
-        if armfinder_matrix_file:
+        if amrfinder_matrix_file:
             report_dict.update(amr_data.loc[sample].to_dict())
         
         # Information from VF_matrix
@@ -1557,7 +1557,7 @@ if __name__ == "__main__":
     if cfg.config["amrfinder"]["run"]:
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: NDARO)\n"), flush=True)
         step_counter += 1
-        # Update armfinder database before running (it doesn't take too long)
+        # Update amrfinder database before running (it doesn't take too long)
         if cfg.config["amrfinder"]["update_db"]:
             call(["amrfinder", "-u"])
         if annotator == "prokka":
@@ -1584,9 +1584,9 @@ if __name__ == "__main__":
                     output_dir=roary_plots_dir)
 
     # Final report
-    armfinder_matrix_file = False
+    amrfinder_matrix_file = False
     if cfg.config["amrfinder"]["run"]:
-        armfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_resume.tsv"
+        amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_resume.tsv"
     
     generate_report(samples_basenames, 
                     prinseq_dir, 
@@ -1599,7 +1599,7 @@ if __name__ == "__main__":
                     summary_post_flash,
                     mlst_dir+"/MLST_edited.txt",
                     blast_proteins_dir+"/BLAST_custom_VFDB_matrix.tsv",
-                    armfinder_matrix_file=armfinder_matrix_file)
+                    amrfinder_matrix_file=amrfinder_matrix_file)
 
     
     # Remove temporal folders
