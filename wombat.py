@@ -1552,8 +1552,6 @@ if __name__ == "__main__":
                     output_dir=amr_analysis_dir_abr,
                     output_filename=abricate_output_file,
                     database = cfg.config["abricate"]["antimicrobial_resistance_database"],
-                    mincov=cfg.config["abricate"]["mincov"],
-                    minid=cfg.config["abricate"]["minid"],
                     gene_matrix_file=amr_analysis_dir_abr+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv",
                     samples=samples_basenames)
     if cfg.config["amrfinder"]["run"]:
