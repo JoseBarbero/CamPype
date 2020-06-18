@@ -1608,5 +1608,6 @@ if __name__ == "__main__":
 
     if cfg.config["reference_genome"]["file"]:
         shutil.rmtree(contigs_dir)
-
+    if annotator == "prokka":
+        shutil.rmtree(prokka_refactor_dir)
     print(Banner("\nDONE\n"), flush=True)
