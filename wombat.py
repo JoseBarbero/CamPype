@@ -1553,7 +1553,7 @@ if __name__ == "__main__":
                     output_filename=abricate_output_file,
                     database = cfg.config["abricate"]["antimicrobial_resistance_database"],
                     gene_matrix_file=amr_analysis_dir_abr+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv",
-                    samples=samples_basenames)
+                    samples=samples_basenames+cfg.config["reference_genome"]["strain"])
     if cfg.config["amrfinder"]["run"]:
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: NDARO)\n"), flush=True)
         step_counter += 1
@@ -1566,7 +1566,7 @@ if __name__ == "__main__":
             gff_dir = dfast_refactor_dir
         else:
             print("Specified annotator("+annotator+") is not valid.")
-        amrfinder_call(samples_basenames, annotation_dir, gff_dir, genus, amr_analysis_dir_amrfinder)
+        amrfinder_call(samples_basenames+cfg.config["reference_genome"]["strain"], annotation_dir, gff_dir, genus, amr_analysis_dir_amrfinder)
 
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
