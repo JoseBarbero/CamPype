@@ -454,10 +454,11 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
                 samples_data[str(row["Sample"])][column] = row["Gene symbol"]
     for sample, values in samples_data.items():
         resume = resume.append(values, ignore_index=True)
-    resume = resume.fillna("-")
     
     # Sort columns
     resume = resume[["Sample"] + columns]
+    resume = resume.dropna(how ="all", axis=1)
+    resume = resume.fillna("-")
 
     resume.to_csv(resume_file, sep="\t", index=False)
     with open(resume_file, "a") as res_file:
@@ -1012,7 +1013,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, amrfinder_matrix_file=False):
+def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, custom_VFDB, amrfinder_matrix_file=False):
     """
     Creates the final report.
     
@@ -1170,8 +1171,13 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         
         # Information from VF_matrix
         # For each sample its column has the sum of genes present from each category
+        occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
         for category, total in vir_total_by_categories.items():
-            report_dict[category+"("+str(total)+")"] = vir_types_summary[sample][category]
+            
+            with open(custom_VFDB) as custom_DB:
+                count = sum(category in line for line in custom_DB)
+
+            report_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
         
         report_dict["Total ("+str(vir_matrix.groupby(["Type"]).sum().sum().sum())+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
         
@@ -1587,6 +1593,8 @@ if __name__ == "__main__":
                     output_dir=roary_plots_dir)
 
     # Final report
+    print(Banner(f"\nStep {step_counter}: Generate final report\n"), flush=True)
+    step_counter += 1
     amrfinder_matrix_file = False
     if cfg.config["amrfinder"]["run"]:
         amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
@@ -1602,15 +1610,16 @@ if __name__ == "__main__":
                     summary_post_flash,
                     mlst_dir+"/MLST_edited.txt",
                     blast_proteins_dir+"/BLAST_custom_VFDB_matrix.tsv",
+                    custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
                     amrfinder_matrix_file=amrfinder_matrix_file)
 
     
     # Remove temporal folders
-    # if cfg.config["run_trimmomatic"]:
-    #     shutil.rmtree(trimmomatic_dir)
+    if cfg.config["run_trimmomatic"]:
+        shutil.rmtree(trimmomatic_dir)
+    if cfg.config["reference_genome"]["file"]:
+        shutil.rmtree(contigs_dir)
+    if annotator == "prokka" and cfg.config["amrfinder"]["run"]:
+        shutil.rmtree(prokka_refactor_dir)
 
-    # if cfg.config["reference_genome"]["file"]:
-    #     shutil.rmtree(contigs_dir)
-    # if annotator == "prokka" and cfg.config["amrfinder"]["run"]:
-    #     shutil.rmtree(prokka_refactor_dir)
     print(Banner("\nDONE\n"), flush=True)
