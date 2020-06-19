@@ -386,7 +386,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
     for gene in genes_type.keys():
         gene_content = abricate_data[abricate_data["GENE"] == gene]
         new_row = {"Protein": gene}
-        new_row["Type"] = genes_type[gene].lower()
+        new_row["Type"] = str(genes_type[gene]).lower()
         for sample in samples:
             sample_content = gene_content[gene_content["SAMPLE"] == sample]
             if len(sample_content) == 1:
@@ -1164,7 +1164,7 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                         "rRNAs": rrnas,
                         "tRNAs": trnas}
 
-        # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_resume.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
+        # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_AMRFinder_matrix.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
         if amrfinder_matrix_file:
             report_dict.update(amr_data.loc[sample].to_dict())
         
@@ -1303,6 +1303,8 @@ if __name__ == "__main__":
             # Set roary input files (renaming to get reference file first)
             os.rename(annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
                       annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
+            if cfg.config["amrfinder"]["run"]: 
+                refactor_gff_from_prokka(prokka_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff", prokka_refactor_dir+"/"+reference_genome_basename+".gff")
             roary_input_files.append(annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
 
     
@@ -1511,8 +1513,9 @@ if __name__ == "__main__":
     abricate_call(input_dir=draft_contigs_dir,
                 output_dir=vir_dir,
                 output_filename="Virulence_genes_ABRicate_VFDB.tab",
-                database = vf_database)
-
+                database = vf_database,
+                gene_matrix_file=vir_dir+"/Virulence_genes_ABRicate_"+vf_database+"_matrix.tsv",
+                samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
 
     # Blast call
     if cfg.config["run_blast"]:
@@ -1553,7 +1556,7 @@ if __name__ == "__main__":
                     output_filename=abricate_output_file,
                     database = cfg.config["abricate"]["antimicrobial_resistance_database"],
                     gene_matrix_file=amr_analysis_dir_abr+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv",
-                    samples=samples_basenames+cfg.config["reference_genome"]["strain"])
+                    samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
     if cfg.config["amrfinder"]["run"]:
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: NDARO)\n"), flush=True)
         step_counter += 1
@@ -1566,7 +1569,7 @@ if __name__ == "__main__":
             gff_dir = dfast_refactor_dir
         else:
             print("Specified annotator("+annotator+") is not valid.")
-        amrfinder_call(samples_basenames+cfg.config["reference_genome"]["strain"], annotation_dir, gff_dir, genus, amr_analysis_dir_amrfinder)
+        amrfinder_call(samples_basenames+[cfg.config["reference_genome"]["strain"]], annotation_dir, gff_dir, genus, amr_analysis_dir_amrfinder)
 
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
@@ -1586,7 +1589,7 @@ if __name__ == "__main__":
     # Final report
     amrfinder_matrix_file = False
     if cfg.config["amrfinder"]["run"]:
-        amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_resume.tsv"
+        amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
     
     generate_report(samples_basenames, 
                     prinseq_dir, 
@@ -1603,11 +1606,11 @@ if __name__ == "__main__":
 
     
     # Remove temporal folders
-    if cfg.config["run_trimmomatic"]:
-        shutil.rmtree(trimmomatic_dir)
+    # if cfg.config["run_trimmomatic"]:
+    #     shutil.rmtree(trimmomatic_dir)
 
-    if cfg.config["reference_genome"]["file"]:
-        shutil.rmtree(contigs_dir)
-    if annotator == "prokka":
-        shutil.rmtree(prokka_refactor_dir)
+    # if cfg.config["reference_genome"]["file"]:
+    #     shutil.rmtree(contigs_dir)
+    # if annotator == "prokka" and cfg.config["amrfinder"]["run"]:
+    #     shutil.rmtree(prokka_refactor_dir)
     print(Banner("\nDONE\n"), flush=True)
