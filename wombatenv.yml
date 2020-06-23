@@ -13,7 +13,7 @@ dependencies:
   - mlst=2.17.6
   - abricate=1.0.1
   - biopython=1.72
-  - prokka=1.14
+  - prokka=1.14.6
   - roary=3.12.0
   - pandas=1.0.3
   - seaborn=0.9.0
