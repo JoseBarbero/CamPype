@@ -1045,9 +1045,7 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         amr_data["Sample"] = amr_data["Sample"].astype(str)
         amr_data = amr_data.set_index("Sample")
         df_columns.extend(amr_data.columns)
-    # Every column by virulence category must have the total amount of genes of that type present
-    for category, total in vir_total_by_categories.items():
-            df_columns.append(category+"("+str(total)+")")
+        
     df_columns.append("Total ("+str(vir_matrix.groupby(["Type"]).sum().sum().sum())+")")
 
     csv_report = pd.DataFrame(columns=df_columns)
@@ -1115,7 +1113,8 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                         cds = line.split()[-1].replace("\n", "")
 
                     # Column 'CRISPRs'. 
-                    elif line.startswith("CRISPR:"):
+                    #elif line.startswith("CRISPR:"):
+                    elif line.startswith("repeat_region:"):
                         crisprs = line.split()[-1].replace("\n", "")
 
                     # Column 'rRNAs'. 
@@ -1175,7 +1174,7 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         for category, total in vir_total_by_categories.items():
             
             with open(custom_VFDB) as custom_DB:
-                count = sum(category in line for line in custom_DB)
+                occurrences = sum(category.lower() in line.lower() for line in custom_DB)
 
             report_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
         
