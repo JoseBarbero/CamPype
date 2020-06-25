@@ -1525,8 +1525,7 @@ if __name__ == "__main__":
     if cfg.config["run_blast"]:
         print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against custom database)\n"), flush=True)
         step_counter += 1
-        contigs_dir = draft_contigs_dir
-        contig_files = ([os.path.join(contigs_dir, f) for f in os.listdir(contigs_dir)])
+        contig_files = ([os.path.join(draft_contigs_dir, f) for f in os.listdir(draft_contigs_dir)])
         contig_files.append(cfg.config["reference_genome"]["file"])
 
         blast_output_name = "BLAST_custom_VFDB.txt"
