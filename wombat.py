@@ -1099,10 +1099,10 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         # Column clonal_complex (MLST)
         clonal_complex = mlst_data.loc[sample]["clonal_complex"]
         
-        cds = ""
-        crisprs = ""
-        rrnas = ""
-        trnas = ""
+        cds = "0"
+        crisprs = "0"
+        rrnas = "0"
+        trnas = "0"
         
         if cfg.config["annotator"] == "prokka":
             
@@ -1113,8 +1113,7 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                         cds = line.split()[-1].replace("\n", "")
 
                     # Column 'CRISPRs'. 
-                    #elif line.startswith("CRISPR:"):
-                    elif line.startswith("repeat_region:"):
+                    elif line.startswith("repeat_region:") or line.startswith("CRISPR:"):
                         crisprs = line.split()[-1].replace("\n", "")
 
                     # Column 'rRNAs'. 
