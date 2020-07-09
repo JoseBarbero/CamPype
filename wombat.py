@@ -1049,7 +1049,6 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         amr_data = amr_data.set_index("Sample")
         df_columns.extend(amr_data.columns)
         
-    df_columns.append("Total ("+str(vir_matrix.groupby(["Type"]).sum().sum().sum())+")")
 
     csv_report = pd.DataFrame(columns=df_columns)
 
@@ -1173,15 +1172,15 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         # Information from VF_matrix
         # For each sample its column has the sum of genes present from each category
         occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
-        total = 0
+        total_occurrences = 0
         for category, total in vir_total_by_categories.items():
             
             with open(custom_VFDB) as custom_DB:
                 occurrences = sum(category.lower() in line.lower() for line in custom_DB)
-                total += occurrences
-            report_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
+                total_occurrences += occurrences
+            report_dict[category+"("+str(occurrences)+")"] = round(vir_types_summary[sample][category], 0)
         
-        report_dict["Total ("+str(total)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
+        report_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
         
         csv_report = csv_report.append(report_dict, ignore_index=True)
 
