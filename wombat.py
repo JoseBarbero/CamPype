@@ -380,13 +380,16 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
 
     abricate_data = pd.read_csv(abricate_file, sep="\t")
     samples = samples
-    gene_presence_absence = pd.DataFrame(columns=["Protein", *samples, "Type"])
+    gene_presence_absence = pd.DataFrame(columns=["Gene", *samples, "Product"])
 
-    genes_type = dict(zip(abricate_data["GENE"], abricate_data["RESISTANCE"]))
-    for gene in genes_type.keys():
+    genes_type_ABR = dict(zip(abricate_data["GENE"], abricate_data["RESISTANCE"]))
+    genes_type_VIR = dict(zip(abricate_data["GENE"], abricate_data["PRODUCT"]))
+    for gene in genes_type_ABR.keys():
         gene_content = abricate_data[abricate_data["GENE"] == gene]
-        new_row = {"Protein": gene}
-        new_row["Type"] = str(genes_type[gene]).lower()
+        new_row = {"Gene": gene}
+        new_row["Product"] = str(genes_type_ABR[gene]).lower()
+        if new_row["Product"] == "nan":
+            new_row["Product"] = str(genes_type_VIR[gene]).lower()
         for sample in samples:
             sample_content = gene_content[gene_content["SAMPLE"] == sample]
             if len(sample_content) == 1:
@@ -399,7 +402,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
         gene_presence_absence = gene_presence_absence.append(new_row, ignore_index=True)
 
     # Sort rows
-    gene_presence_absence = gene_presence_absence.sort_values(by=["Type", "Protein"])
+    gene_presence_absence = gene_presence_absence.sort_values(by=["Product", "Gene"])
     
     # Export to tsv
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
@@ -1170,14 +1173,15 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         # Information from VF_matrix
         # For each sample its column has the sum of genes present from each category
         occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
+        total = 0
         for category, total in vir_total_by_categories.items():
             
             with open(custom_VFDB) as custom_DB:
                 occurrences = sum(category.lower() in line.lower() for line in custom_DB)
-
+                total += occurrences
             report_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
         
-        report_dict["Total ("+str(vir_matrix.groupby(["Type"]).sum().sum().sum())+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
+        report_dict["Total ("+str(total)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
         
         csv_report = csv_report.append(report_dict, ignore_index=True)
 
