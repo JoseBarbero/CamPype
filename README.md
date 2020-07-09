@@ -10,8 +10,10 @@
     ```bash
     $ cd Wombat
     ```
-1. Create a conda environment
+1. Create the environment with conda
     ```bash
+    $ conda config --append channels conda-forge
+    $ conda config --append channels bioconda
     $ conda env create -f wombatenv.yml 
     ```
 1. *(On Ubuntu systems you may find missing font problems running Mauve. We recommend you to install the required fonts just in case.)
