@@ -415,10 +415,6 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
     if cfg.config["amrfinder"]["update_db"]:
         call(["amrfinder", "-u"])
 
-    fnas = [annotation_dir+"/"+sample+"/"+sample+".fna" for sample in samples]
-    faas = [annotation_dir+"/"+sample+"/"+sample+".faa" for sample in samples]
-    gffs = [gff_dir+"/"+sample+".gff" for sample in samples]    
-
     has_header = False
 
     with open(amrfinder_out_file, "w") as global_file:
@@ -451,7 +447,7 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
     samples_data = {}
     for sample in samples:
         samples_data[sample] = {"Sample": sample}
-    for index, row in amr_data[(amr_data["Element type"] == "AMR") & (amr_data["Element subtype"] == "AMR")].iterrows():
+    for _, row in amr_data[(amr_data["Element type"] == "AMR") & (amr_data["Element subtype"] == "AMR")].iterrows():
         for column in columns:
             if row["Class"] == column:
                 samples_data[str(row["Sample"])][column] = row["Gene symbol"]
@@ -578,7 +574,6 @@ def blast_postprocessing(blast_file, database_file, output_folder, samples):
                                 inplace=True)
 
     # Add protein type column
-    protein_type = []
     proteins_dict = {}
     for record in SeqIO.parse(database_file, "fasta"):
         proteins_dict[record.id] = record.description.split()[1]
@@ -877,15 +872,12 @@ def get_reads_table(input1, input2, sample_name, output, after_qc=False):
     # Write in a bypass file prinseq-lite result
     bypass = "bypass.tsv"
     with open(bypass, "w") as f:
-        state = call(arguments, stdout=f)
+        call(arguments, stdout=f)
     call(["cat", bypass])
 
     # Create a new dataset with prinseq stats for every sample
     with open(bypass, "r") as bypass_file:
         data = csv.reader(bypass_file, delimiter="\t")
-
-        has_header = False
-        
 
         if not os.path.isfile(output):
             with open(output, "w") as out_file:
@@ -947,7 +939,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
                 "-fastq", extended, 
                 "-stats_info", 
                 "-stats_len"]
-        state = call(arguments, stdout=f)
+        call(arguments, stdout=f)
     call(["cat", bypass1])
 
     bypass2 = "bypass2.tsv"
@@ -957,7 +949,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
                 "-fastq2", notcombined2, 
                 "-stats_info", 
                 "-stats_len"]
-        state2 = call(arguments, stdout=f)
+        call(arguments, stdout=f)
     call(["cat", bypass2])
 
     # Create a new dataset with prinseq stats for every sample
@@ -966,7 +958,6 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
             data1 = csv.reader(bypass_file1, delimiter="\t")
             data2 = csv.reader(bypass_file2, delimiter="\t")
 
-            has_header = False
             if not os.path.isfile(output):
                 with open(output, "w") as out_file:
                     outputwriter = csv.writer(out_file, delimiter="\t")
@@ -1173,12 +1164,12 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         # For each sample its column has the sum of genes present from each category
         occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
         total_occurrences = 0
-        for category, total in vir_total_by_categories.items():
+        for category, _ in vir_total_by_categories.items():
             
             with open(custom_VFDB) as custom_DB:
-                occurrences = sum(category.lower() in line.lower() for line in custom_DB)
+                occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
                 total_occurrences += occurrences
-            report_dict[category+"("+str(occurrences)+")"] = round(vir_types_summary[sample][category], 0)
+            report_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
         
         report_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
         
