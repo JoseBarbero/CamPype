@@ -170,8 +170,10 @@ def mauve_call(output_folder, reference_sequence, input_contigs, sample_basename
     """
     arguments = ["MauveCM", "-output", output_folder+"/"+sample_basename, "-ref", reference_sequence, "-draft", input_contigs]    
     call(arguments)
+
     # Here we take the fasta file from the last iteration folder.
-    shutil.copyfile(output_folder+"/"+sample_basename+"/"+max(next(os.walk(output_folder+"/"+sample_basename))[1])+"/"+sample_basename+".fasta", output_folder+"/"+sample_basename+".fasta")
+    contigs_basename = os.path.basename(input_contigs).split(".")[0]   # Mauve names it's output files after the input file basename
+    shutil.copyfile(output_folder+"/"+sample_basename+"/"+max(next(os.walk(output_folder+"/"+sample_basename))[1])+"/"+contigs_basename+".fasta", output_folder+"/"+sample_basename+".fasta")
     shutil.rmtree(output_folder+"/"+sample_basename)
     return output_folder+"/"+sample_basename+".fasta"
 
@@ -1031,9 +1033,15 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
     vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
     vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
 
-    df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
-                "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
-                "rRNAs", "tRNAs"]
+    fasta_mode = cfg.config["assembled_genomes"]
+
+    if fasta_mode:    
+        df_columns = [ "Sample", "ContigLen", "ST", "clonal_complex", "CDS", "CRISPRs",
+                    "rRNAs", "tRNAs"]
+    else:
+        df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
+                    "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
+                    "rRNAs", "tRNAs"]
     if amrfinder_matrix_file:
         amr_data = pd.read_csv(amrfinder_matrix_file, sep="\t", skipfooter=1, engine="python")
         amr_data["Sample"] = amr_data["Sample"].astype(str)
@@ -1044,30 +1052,40 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
     csv_report = pd.DataFrame(columns=df_columns)
 
     for sample in samples:
-        
-        # "Reads": Total number of reads after quality filtering
-        reads = info_pre_QC[sample]["R1Reads"] + info_pre_QC[sample]["R2Reads"]
-        
-        # "ReadLen": Average read length (bp) before quality control.
-        readlen = np.mean([info_pre_QC[sample]["R1LenMean"], info_pre_QC[sample]["R2LenMean"]])
 
-        # "ReadsQC": Total number of reads after quality control.
-        readsqc = info_post_QC[sample]["R1Reads"] + info_post_QC[sample]["R2Reads"]
+        if not fasta_mode:
+            # "Reads": Total number of reads after quality filtering
+            reads = info_pre_QC[sample]["R1Reads"] + info_pre_QC[sample]["R2Reads"]
+            
+            # "ReadLen": Average read length (bp) before quality control.
+            readlen = np.mean([info_pre_QC[sample]["R1LenMean"], info_pre_QC[sample]["R2LenMean"]])
 
-        # "ReadsQCLen": Average read length (bp) after quality control.
-        readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
+            # "ReadsQC": Total number of reads after quality control.
+            readsqc = info_post_QC[sample]["R1Reads"] + info_post_QC[sample]["R2Reads"]
 
-        # "JoinReads": Total combined reads.
-        joinreads = info_post_flash[sample]["JoinReads"]
+            # "ReadsQCLen": Average read length (bp) after quality control.
+            readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
 
-        # "JoinReadsLen: Mean length of combined reads.
-        joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
+            # "JoinReads": Total combined reads.
+            joinreads = info_post_flash[sample]["JoinReads"]
 
-        # "Contigs": Number of contigs of the genome (> 500bp).
-        n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
-        
-        # "GenomeLen": Length (bp) of the genome.
-        genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
+            # "JoinReadsLen: Mean length of combined reads.
+            joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
+
+            # "Contigs": Number of contigs of the genome (> 500bp).
+            n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
+            
+            # "GenomeLen": Length (bp) of the genome.
+            genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
+
+            # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
+            n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
+            
+            # "GC": GC content (%) of the draft genome
+            gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
+            
+            # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
+            depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
         
         # "ContigLen": Average contig length (bp) (> 500bp).
         contig_len_summatory = 0
@@ -1076,15 +1094,6 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
             contig_len_summatory += len(record.seq)
             contig_counter += 1
         avg_contig_len = contig_len_summatory/contig_counter
-
-        # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
-        n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
-        
-        # "GC": GC content (%) of the draft genome
-        gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
-        
-        # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
-        depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
 
         # Column ST (MLST)
         st = mlst_data.loc[sample]["ST"]
@@ -1136,7 +1145,17 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
                     elif line.startswith("Number of tRNAs"):
                         trnas = line.split("\t")[-1].replace("\n", "")
 
-        report_dict = { "Sample": sample, 
+        if fasta_mode:  
+            report_dict = { "Sample": sample, 
+                        "ContigLen": round(avg_contig_len, 2), 
+                        "ST": st,
+                        "clonal_complex": clonal_complex,
+                        "CDS": cds,
+                        "CRISPRs": crisprs,
+                        "rRNAs": rrnas,
+                        "tRNAs": trnas}
+        else:
+            report_dict = { "Sample": sample, 
                         "Reads": round(reads, 0), 
                         "ReadLen": readlen,
                         "ReadsQC": readsqc,
@@ -1264,6 +1283,18 @@ if __name__ == "__main__":
     summary_post_qc = {}
     summary_post_flash = {}
 
+    fasta_mode = cfg.config["assembled_genomes"]
+
+    # Checking correct input files format in fasta mode
+    for sample_basename, data in read_input_files("input_files.csv"):
+        sample_fw = data["FW"]
+        sample_rv = data["RV"]
+        if fasta_mode:
+            if not sample_fw.split(".")[-1] in ["fasta", "fa", "fna"]:
+                print("WRONG INPUT FORMAT:", sample_fw)
+                print("Input must be a valid fasta format file.")
+
+
     # Annotate reference fasta file 
     if reference_genome_file:
         reference_genome_filename = reference_genome_file.split("/")[-1]
@@ -1312,6 +1343,7 @@ if __name__ == "__main__":
     n_samples = len(read_input_files("input_files.csv"))
 
     for sample_basename, data in read_input_files("input_files.csv"):
+        
         sample_fw = data["FW"]
         sample_rv = data["RV"]
         genus = data["Genus"]
@@ -1321,98 +1353,102 @@ if __name__ == "__main__":
         step_counter = 1 # Just to let the user know the number of each step
         sample_counter += 1
         samples_basenames.append(sample_basename)
+        
+        if not fasta_mode:
+            # Run trimmomatic or not
+            if cfg.config["run_trimmomatic"]:
+                
+                print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Trimmomatic\n"), flush=True)
+                trimmomatic_call(input_file1=sample_fw,
+                                input_file2=sample_rv,
+                                phred="-phred33",
+                                trimfile="ILLUMINACLIP:"+adapters_file+":1:30:11",
+                                paired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
+                                unpaired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
+                                paired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
+                                unpaired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq")
+                step_counter += 1
+                prinseq_input1 = trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq"
+                prinseq_input2 = trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq"
+            else:
+                prinseq_input1 = sample_fw
+                prinseq_input2 = sample_rv
 
-        # Run trimmomatic or not
-        if cfg.config["run_trimmomatic"]:
-            
-            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Trimmomatic\n"), flush=True)
-            trimmomatic_call(input_file1=sample_fw,
-                            input_file2=sample_rv,
-                            phred="-phred33",
-                            trimfile="ILLUMINACLIP:"+adapters_file+":1:30:11",
-                            paired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
-                            unpaired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
-                            paired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
-                            unpaired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq")
+
+            # Create prinseq output directories
+            os.mkdir(prinseq_dir+"/"+sample_basename)
+
+            # Prinseq call
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Prinseq\n"), flush=True)
+            prinseq_call(input_file1=prinseq_input1,
+                        input_file2=prinseq_input2,
+                        output_folder=prinseq_dir+"/"+sample_basename,
+                        sample=sample_basename,
+                        log_name=prinseq_dir+"/"+sample_basename+"/"+sample_basename+".log")
             step_counter += 1
-            prinseq_input1 = trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq"
-            prinseq_input2 = trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq"
+            
+            # Prinseq output files refactor
+            prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
+            
+
+            # Flash call
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Flash\n"), flush=True)
+            flash_call(input_file_1=prinseq_files["R1"],
+                    input_file_2=prinseq_files["R2"],
+                    output_filename=sample_basename,
+                    output_dir=flash_dir+"/"+sample_basename)
+            step_counter += 1
+
+            # Quality reports
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Read statistics\n"), flush=True)
+            step_counter += 1
+            report_pre_qc = get_reads_table(sample_fw, sample_rv, sample_basename, prinseq_dir+"/reads_statistics_beforeQC.tsv", False)
+
+            report_post_qc = get_reads_table(prinseq_files["R1"], prinseq_files["R2"], sample_basename, prinseq_dir+"/reads_statistics_afterQC.tsv", True)
+
+            report_post_flash = get_flash_reads_table(flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq", 
+                                    flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
+                                    flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
+                                    sample_basename, flash_dir+"/reads_statistics_FLASH.tsv", report_post_qc)
+
+            summary_pre_qc[sample_basename] = report_pre_qc
+            summary_post_qc[sample_basename] = report_post_qc
+            summary_post_flash[sample_basename] = report_post_flash
+
+            # Create SPAdes output directories
+            os.mkdir(spades_dir+"/"+sample_basename)
+
+            # SPAdes call
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SPAdes\n"), flush=True)
+            
+            spades_call(merged_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq",
+                        forward_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
+                        reverse_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
+                        sample=sample_basename,
+                        out_dir=spades_dir)
+            step_counter += 1
+
+            # Get minimum contig length
+            # min_contig_threshold = get_reads_length(prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R1.fastq") * 2
+            min_contig_threshold = cfg.config["min_contig_len"]
+
+            # Trim short contigs and shorten sequences id
+            contigs_trim_and_rename(contigs_file=spades_dir+"/"+sample_basename+"/"+"contigs.fasta",
+                                    output_filename=sample_basename+".fasta",
+                                    output_dir=contigs_dir,
+                                    min_len=min_contig_threshold)
+            sample_contigs = contigs_dir+"/"+sample_basename+".fasta"
         else:
-            prinseq_input1 = sample_fw
-            prinseq_input2 = sample_rv
-
-
-        # Create prinseq output directories
-        os.mkdir(prinseq_dir+"/"+sample_basename)
-
-        # Prinseq call
-        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Prinseq\n"), flush=True)
-        prinseq_call(input_file1=prinseq_input1,
-                    input_file2=prinseq_input2,
-                    output_folder=prinseq_dir+"/"+sample_basename,
-                    sample=sample_basename,
-                    log_name=prinseq_dir+"/"+sample_basename+"/"+sample_basename+".log")
-        step_counter += 1
-        
-        # Prinseq output files refactor
-        prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
-        
-
-        # Flash call
-        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Flash\n"), flush=True)
-        flash_call(input_file_1=prinseq_files["R1"],
-                   input_file_2=prinseq_files["R2"],
-                   output_filename=sample_basename,
-                   output_dir=flash_dir+"/"+sample_basename)
-        step_counter += 1
-
-        # Quality reports
-        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Read statistics\n"), flush=True)
-        step_counter += 1
-        report_pre_qc = get_reads_table(sample_fw, sample_rv, sample_basename, prinseq_dir+"/reads_statistics_beforeQC.tsv", False)
-
-        report_post_qc = get_reads_table(prinseq_files["R1"], prinseq_files["R2"], sample_basename, prinseq_dir+"/reads_statistics_afterQC.tsv", True)
-
-        report_post_flash = get_flash_reads_table(flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq", 
-                                flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
-                                flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
-                                sample_basename, flash_dir+"/reads_statistics_FLASH.tsv", report_post_qc)
-
-        summary_pre_qc[sample_basename] = report_pre_qc
-        summary_post_qc[sample_basename] = report_post_qc
-        summary_post_flash[sample_basename] = report_post_flash
-
-        # Create SPAdes output directories
-        os.mkdir(spades_dir+"/"+sample_basename)
-
-        # SPAdes call
-        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SPAdes\n"), flush=True)
-        
-        spades_call(merged_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq",
-                    forward_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
-                    reverse_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
-                    sample=sample_basename,
-                    out_dir=spades_dir)
-        step_counter += 1
-
-
-        # Get minimum contig length
-        # min_contig_threshold = get_reads_length(prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R1.fastq") * 2
-        min_contig_threshold = cfg.config["min_contig_len"]
-
-        # Trim short contigs and shorten sequences id
-        contigs_trim_and_rename(contigs_file=spades_dir+"/"+sample_basename+"/"+"contigs.fasta",
-                                output_filename=sample_basename+".fasta",
-                                output_dir=contigs_dir,
-                                min_len=min_contig_threshold)
-
+            min_contig_threshold = cfg.config["min_contig_len"]
+            # If in fasta mode, we just skip everything until this point
+            sample_contigs = data["FW"]
         
         # Reordering contigs by a reference genome with MauveCM
         if cfg.config["reference_genome"]["file"]:
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): reordering {sample_basename} genome against reference genome\n"), flush=True)
             draft_contigs = mauve_call(output_folder=mauve_dir,
                                         reference_sequence=reference_genome_file,
-                                        input_contigs=contigs_dir+"/"+sample_basename+".fasta",
+                                        input_contigs=sample_contigs,
                                         sample_basename=sample_basename)
             step_counter += 1
             draft_contigs_dir = mauve_dir
@@ -1424,13 +1460,20 @@ if __name__ == "__main__":
 
 
         # Create Quast output directories
-        quast_dir = sample_basename+"_assembly_statistics"
-        os.mkdir(spades_dir+"/"+sample_basename+"/"+quast_dir)
+        quast_sample_dir = sample_basename+"_assembly_statistics"
+        if fasta_mode: # In fasta mode the Spades directory does not exist
+            quast_dir = output_folder+"/Quast/"
+            os.makedirs(quast_dir+quast_sample_dir)
+        else:
+            quast_dir = spades_dir+"/"+sample_basename+"/"
+            os.mkdir(quast_dir+quast_sample_dir)
+            
+        
 
         # Quast call
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Quast\n"), flush=True)
         quast_call( input_file=draft_contigs,
-                    output_dir=spades_dir+"/"+sample_basename+"/"+quast_dir,
+                    output_dir=spades_dir+"/"+sample_basename+"/"+quast_sample_dir,
                     min_contig_len=min_contig_threshold)
         step_counter += 1
 
@@ -1612,5 +1655,14 @@ if __name__ == "__main__":
         shutil.rmtree(contigs_dir)
     if annotator == "prokka" and cfg.config["amrfinder"]["run"]:
         shutil.rmtree(prokka_refactor_dir)
+    
+    # Remove empty folders
+    for root, dirnames, filenames in os.walk(output_folder, topdown=False):
+        for dirname in dirnames:
+            try:
+                os.rmdir(os.path.join(root, dirname))
+            except OSError:
+                pass
+            
 
     print(Banner("\nDONE\n"), flush=True)
