@@ -1148,7 +1148,11 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
 
         if fasta_mode:  
             report_dict = { "Sample": sample, 
+                        "Contigs": n_contigs, 
+                        "GenomeLen": genome_len, 
                         "ContigLen": round(avg_contig_len, 2), 
+                        "N50": round(n50, 0),
+                        "GC": round(gc, 2),
                         "ST": st,
                         "clonal_complex": clonal_complex,
                         "CDS": cds,
