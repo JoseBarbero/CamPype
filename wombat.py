@@ -1009,14 +1009,14 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, custom_VFDB, amrfinder_matrix_file=False):
+def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, custom_VFDB, amrfinder_matrix_file=False):
     """
     Creates the final report.
     
     Arguments:
         samples {list} -- Samples list.
         prinseq_dir {string} -- Prinseq results directory.
-        spades_dir {string} -- SPAdes results directory.
+        assembly_dir {string} -- Assembly results directory.
         annotation_dir {string} -- Annotator results directory.
         mauve_dir {string} --  Mauves results directory.
         out_dir {string} -- Output directory.
@@ -1027,7 +1027,7 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
         vir_matrix_file {string} -- Matrix filecontaining virulence genes information.
     """
     
-    assembly_report = pd.read_csv(spades_dir+"/"+"quality_assembly_report.tsv", sep="\t")
+    assembly_report = pd.read_csv(assembly_dir+"/"+"quality_assembly_report.tsv", sep="\t")
     mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
     vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
     vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
@@ -1071,22 +1071,23 @@ def generate_report(samples, prinseq_dir, spades_dir, annotation_dir, mauve_dir,
 
             # "JoinReadsLen: Mean length of combined reads.
             joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
-
-            # "Contigs": Number of contigs of the genome (> 500bp).
-            n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
-            
-            # "GenomeLen": Length (bp) of the genome.
-            genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
-
-            # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
-            n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
-            
-            # "GC": GC content (%) of the draft genome
-            gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
             
             # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
             depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
         
+        # "Contigs": Number of contigs of the genome (> 500bp).
+        n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
+        
+        # "GenomeLen": Length (bp) of the genome.
+        genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
+
+        # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
+        n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
+        
+        # "GC": GC content (%) of the draft genome
+        gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
+
+
         # "ContigLen": Average contig length (bp) (> 500bp).
         contig_len_summatory = 0
         contig_counter = 0
@@ -1442,6 +1443,7 @@ if __name__ == "__main__":
             min_contig_threshold = cfg.config["min_contig_len"]
             # If in fasta mode, we just skip everything until this point
             sample_contigs = data["FW"]
+            
         
         # Reordering contigs by a reference genome with MauveCM
         if cfg.config["reference_genome"]["file"]:
@@ -1463,17 +1465,20 @@ if __name__ == "__main__":
         quast_sample_dir = sample_basename+"_assembly_statistics"
         if fasta_mode: # In fasta mode the Spades directory does not exist
             quast_dir = output_folder+"/Quast/"
-            os.makedirs(quast_dir+quast_sample_dir)
+            assembly_dir = quast_dir
+            os.makedirs(assembly_dir+quast_sample_dir)
         else:
-            quast_dir = spades_dir+"/"+sample_basename+"/"
+            assembly_dir = spades_dir
+            quast_dir = assembly_dir+"/"+sample_basename+"/"
             os.mkdir(quast_dir+quast_sample_dir)
+            
             
         
 
         # Quast call
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Quast\n"), flush=True)
         quast_call( input_file=draft_contigs,
-                    output_dir=spades_dir+"/"+sample_basename+"/"+quast_sample_dir,
+                    output_dir=assembly_dir+"/"+sample_basename+"/"+quast_sample_dir,
                     min_contig_len=min_contig_threshold)
         step_counter += 1
 
@@ -1533,7 +1538,7 @@ if __name__ == "__main__":
                     prefix=sample_basename)
 
     # Quast report unification
-    quast_report_unification(spades_dir, samples_basenames, spades_dir)
+    quast_report_unification(assembly_dir, samples_basenames, assembly_dir)
 
     # MLST call
     mlst_out_file = "MLST.txt"
@@ -1635,7 +1640,7 @@ if __name__ == "__main__":
     
     generate_report(samples_basenames, 
                     prinseq_dir, 
-                    spades_dir, 
+                    assembly_dir, 
                     annotation_dir,
                     draft_contigs_dir,
                     output_folder, 
