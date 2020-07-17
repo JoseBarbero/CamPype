@@ -1052,6 +1052,18 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     csv_report = pd.DataFrame(columns=df_columns)
 
     for sample in samples:
+        
+        # "Contigs": Number of contigs of the genome (> 500bp).
+        n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
+        
+        # "GenomeLen": Length (bp) of the genome.
+        genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
+
+        # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
+        n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
+        
+        # "GC": GC content (%) of the draft genome
+        gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
 
         if not fasta_mode:
             # "Reads": Total number of reads after quality filtering
@@ -1075,18 +1087,6 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
             depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
         
-        # "Contigs": Number of contigs of the genome (> 500bp).
-        n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
-        
-        # "GenomeLen": Length (bp) of the genome.
-        genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
-
-        # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
-        n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
-        
-        # "GC": GC content (%) of the draft genome
-        gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
-
 
         # "ContigLen": Average contig length (bp) (> 500bp).
         contig_len_summatory = 0
