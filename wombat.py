@@ -289,7 +289,7 @@ def mlst_call(input_dir, reference_file, output_dir, output_filename):
 def mlst_postprocessing(mlst_file, output_file):
     col_names = ["Sample", "Genus", "ST"]
     output_data = pd.DataFrame()
-    mlst_df = pd.read_csv(mlst_file, delimiter="\t",header=None)
+    mlst_df = pd.read_csv(mlst_file, delimiter="\t", header=None)
     for _, row in mlst_df.iterrows():
         new_row = []
         new_row.append(os.path.basename(row[0]).split(".")[0])  # Basename
@@ -308,7 +308,11 @@ def mlst_postprocessing(mlst_file, output_file):
         urlData = requests.get(url).content
         database = pd.read_csv(StringIO(urlData.decode('utf-8')), sep="\t")
 
-        new_row.append(database.loc[database["ST"] == row[2]]["clonal_complex"].values[0])
+        if len(database.loc[database["ST"] == row[2]]["clonal_complex"].values) > 0:
+            new_row.append(database.loc[database["ST"] == row[2]]["clonal_complex"].values[0])
+        else:
+            new_row.append("-")
+        
 
 
         output_data = output_data.append(pd.DataFrame([new_row], columns=col_names), ignore_index=True)
