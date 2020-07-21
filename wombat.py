@@ -290,6 +290,11 @@ def mlst_postprocessing(mlst_file, output_file):
     col_names = ["Sample", "Genus", "ST"]
     output_data = pd.DataFrame()
     mlst_df = pd.read_csv(mlst_file, delimiter="\t", header=None)
+
+    url = "http://rest.pubmlst.org/db/pubmlst_campylobacter_seqdef/schemes/1/profiles_csv"
+    urlData = requests.get(url).content
+    database = pd.read_csv(StringIO(urlData.decode('utf-8')), sep="\t")
+
     for _, row in mlst_df.iterrows():
         new_row = []
         new_row.append(os.path.basename(row[0]).split(".")[0])  # Basename
@@ -304,13 +309,13 @@ def mlst_postprocessing(mlst_file, output_file):
         if not "clonal_complex" in col_names:
             col_names.append("clonal_complex")
         
-        url = "http://rest.pubmlst.org/db/pubmlst_campylobacter_seqdef/schemes/1/profiles_csv"
-        urlData = requests.get(url).content
-        database = pd.read_csv(StringIO(urlData.decode('utf-8')), sep="\t")
-
-        if len(database.loc[database["ST"] == row[2]]["clonal_complex"].values) > 0:
-            new_row.append(database.loc[database["ST"] == row[2]]["clonal_complex"].values[0])
-        else:
+        try:
+            st = int(row[2])
+            if len(database.loc[database["ST"] == st]["clonal_complex"].values) > 0:
+                new_row.append(database.loc[database["ST"] == st]["clonal_complex"].values[0])
+            else:
+                new_row.append("-")
+        except ValueError:
             new_row.append("-")
         
 
