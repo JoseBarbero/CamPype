@@ -9,6 +9,7 @@ import logging
 import sys
 import wombat_config as cfg
 import requests
+import json
 from terminal_banner import Banner
 from subprocess import call
 from Bio import SeqIO
@@ -1217,6 +1218,10 @@ if __name__ == "__main__":
 
     # Welcome
     welcome("resources/wombat_ascii.txt")
+
+    # Generate json config file from wombat_config.py
+    with open('wombat_config.json', 'w') as json_file:
+        json.dump(cfg.config, json_file)
 
     # Get config file parameters
     annotator = cfg.config["annotator"]
