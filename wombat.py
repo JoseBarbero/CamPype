@@ -504,7 +504,6 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
                 
     # Create blast database
     blast_db_path = os.path.dirname(os.path.abspath(blast_database_output))+"/DNA_database"
-    print(blast_db_path)
     call(["makeblastdb", "-in", blast_database_output, "-dbtype", "nucl", 
           "-out", blast_db_path, "-title", "DNA_Database"])
 

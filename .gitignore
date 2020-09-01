@@ -109,3 +109,12 @@ Wombat_OUTPUT*
 
 # VSCode configuration
 .vscode
+
+# Auto-generated json config file
+wombat_config.json
+
+# Dev utils
+Util*
+util*
+Test*
+test*
