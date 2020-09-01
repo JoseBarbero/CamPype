@@ -40,13 +40,13 @@ config = {
         "sort": "false"    # Sort sequences by length (true or false). Default: False
     },
     "abricate": {
-        "run_amr": True,  # Run antimicrobial resistance gene search using ABRicate. If you want to omit this step, set it to False. Default: False
+        "run_amr": True,  # Run antimicrobial resistance gene search using ABRicate and blastn. If you want to omit this step, set it to False. Default: False
         "antimicrobial_resistance_database": "card", # Select database from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn. Default: card
         "mincov": 90, # Minimum DNA % coverage for considering an antimicrobial resistance gene as present. Default: 90
         "minid": 90 # Minimum DNA % identity for considering an antimicrobial resistance gene as present. Default: 90      
     },
     "amrfinder": {
-        "run": True,  # Run antimicrobial resistance gene search using AMRFinder (database: NDARO). If you want to omit this step, set it to False. Default: True
+        "run": True,  # Run antimicrobial resistance gene search using AMRFinder and blastp (database: NDARO). If you want to omit this step, set it to False. Default: True
         "update_db": True,  # Updates the database before running AMRFinder (Internet connection is required) if set to True. Otherwise, set to False. Default: False
         "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
