@@ -973,7 +973,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
             if not os.path.isfile(output):
                 with open(output, "w") as out_file:
                     outputwriter = csv.writer(out_file, delimiter="\t")
-                    outputwriter.writerow(["Sample", "JoinPercentage", "JoinReads", "JoinLenMeanReads", "JoinLenSdReads", "UnjoinR1Reads", "UnjoinR1LenMeanReads", "UnjoinR1LenSdReads", "UnjoinR2Reads", "UnjoinR2LenMeanReads", "UnjoinR2LenSdReads"])
+                    outputwriter.writerow(["Sample", "JoinReads (%)", "JoinReads", "JoinLenMeanReads", "JoinLenSdReads", "UnjoinR1Reads", "UnjoinR1LenMeanReads", "UnjoinR1LenSdReads", "UnjoinR2Reads", "UnjoinR2LenMeanReads", "UnjoinR2LenSdReads"])
                     
             
             with open(output, "a") as out_file:
@@ -992,7 +992,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
                         elif row[1] == "mean":
                             data_dict["JoinLenMeanReads"] = round(float(row[2]),2)
 
-                data_dict["JoinPercentage"] = str(round(data_dict["JoinReads"] / (previous_data["R1Reads"] * 2) * 100, 2))+"%"
+                data_dict["JoinReads (%)"] = str(round(data_dict["JoinReads"] / (previous_data["R1Reads"] * 2) * 100, 2))
 
                 for row in data2:
                     if row[0] == "stats_info" and row[1] == "reads":
@@ -1010,7 +1010,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
                         elif row[1] == "mean":
                             data_dict["UnjoinR2LenMeanReads"] = round(float(row[2]),2)
                             
-                outputwriter.writerow([ data_dict["Sample"], data_dict["JoinPercentage"], data_dict["JoinReads"], data_dict["JoinLenMeanReads"], 
+                outputwriter.writerow([ data_dict["Sample"], data_dict["JoinReads (%)"], data_dict["JoinReads"], data_dict["JoinLenMeanReads"], 
                                         data_dict["JoinLenSdReads"], data_dict["UnjoinR1Reads"], data_dict["UnjoinR1LenMeanReads"], data_dict["UnjoinR1LenSdReads"], 
                                         data_dict["UnjoinR2Reads"], data_dict["UnjoinR2LenMeanReads"], data_dict["UnjoinR2LenSdReads"]])
                 
