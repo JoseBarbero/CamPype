@@ -620,10 +620,10 @@ def blast_postprocessing(blast_file, database_file, output_folder, samples):
     blast_output = blast_output.sort_values(by=["Protein type", "Protein", "Sample"])
 
     # Export to tsv
-    blast_output.to_csv(output_folder+"/BLAST_custom_VFDB_processed.tsv", sep="\t",index=False)    
+    blast_output.to_csv(output_folder+"/Virulence_genes_BLAST_processed.tsv", sep="\t",index=False)    
 
     # Create presence/absence matrix
-    get_presence_absence_matrix(samples, proteins_dict, blast_output, output_folder+"/BLAST_custom_VFDB_matrix.tsv")
+    get_presence_absence_matrix(samples, proteins_dict, blast_output, output_folder+"/Virulence_genes_BLAST_matrix.tsv")
 
 
 def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
@@ -653,6 +653,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
             else:
                 new_row[sample] = 0
         gene_presence_absence = gene_presence_absence.append(new_row, ignore_index=True)
+    
 
     # capA special distinction (the protein is split in two fragments)
     capA_row = {"Protein": "capA", "Type": genes_type["capA_ORF1"].lower()}
@@ -667,6 +668,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
     gene_presence_absence = gene_presence_absence.append(capA_row, ignore_index=True)
     gene_presence_absence = gene_presence_absence[gene_presence_absence["Protein"] != "capA_ORF1"]
     gene_presence_absence = gene_presence_absence[gene_presence_absence["Protein"] != "capA_ORF2"]
+    gene_presence_absence["DATABASE"] = "custom_VFDB"
 
     # Sort rows
     gene_presence_absence = gene_presence_absence.sort_values(by=["Type", "Protein"])
@@ -1672,7 +1674,7 @@ if __name__ == "__main__":
                     summary_post_qc, 
                     summary_post_flash,
                     mlst_dir+"/MLST_edited.txt",
-                    blast_proteins_dir+"/BLAST_custom_VFDB_matrix.tsv",
+                    blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
                     custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
                     amrfinder_matrix_file=amrfinder_matrix_file)
 
