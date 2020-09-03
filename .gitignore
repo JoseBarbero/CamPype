@@ -115,6 +115,6 @@ wombat_config.json
 
 # Dev utils
 Util*
-util*
 Test*
+TEST*
 test*

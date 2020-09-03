@@ -840,6 +840,7 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
     Roary plots call
     
     Arguments:
+        general_dir {string} -- General output directory.
         input_newick {string} -- Filename (and route) to newick input file.
         input_gene_presence_absence {[type]} -- Filename (and route) to gene presence/absence input file.
         output_dir {[type]} -- Route to output files.
@@ -851,10 +852,10 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
     ex_state = call(arguments)
     
     # Roary_plots saves output files in the current directory, so we move them to our own
-    for root, _dirs, files in os.walk("."):
-        for filename in files:
-            if filename.startswith("pangenome_"):
-                shutil.move(root+"/"+filename, output_dir+"/"+filename)
+    for filename in os.listdir("."):
+        # I'm being this specific so we don't move any other similar file
+        if filename.startswith("pangenome_frequency.png") or filename.startswith("pangenome_matrix.png") or filename.startswith("pangenome_pie.png"):
+            shutil.move("./"+filename, output_dir+"/"+filename)
     return ex_state
 
 

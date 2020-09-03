@@ -128,6 +128,7 @@ if __name__ == "__main__":
     with open("tmp_tree.xml") as infile, open(tmptree2, 'w') as outfile:
         for line in infile:
             for sample in mlst_data["Sample"]:
+                line = line.replace("+", "")
                 line = line.replace(str(sample)+":", str(sample)+"{"+str(mlst_data.loc[mlst_data["Sample"] == sample]["clonal_complex"].values[0])+"}:").replace(" ", "_")
             outfile.write(line)
 
