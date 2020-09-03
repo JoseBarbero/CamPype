@@ -420,9 +420,10 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
 
 
-def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
+def amrfinder_call(samples, annotation_dir, gff_dir, genus, db_name, output_dir):
     amrfinder_out_file = output_dir+"/AMR_AMRFinder.tsv"
     resume_file = output_dir+"/AMR_genes_AMRFinder_matrix.tsv"
+    
     # Update amrfinder database before running (it doesn't take too long)
     if cfg.config["amrfinder"]["update_db"]:
         call(["amrfinder", "-u"])
@@ -454,6 +455,7 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
     # Generate AMR Genes Resume
     amr_data = pd.read_csv(amrfinder_out_file, sep="\t")
     columns = amr_data["Class"].unique().tolist()
+    columns.append("DATABASE")
     
     resume = pd.DataFrame(columns=columns)
     samples_data = {}
@@ -463,6 +465,7 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
         for column in columns:
             if row["Class"] == column:
                 samples_data[str(row["Sample"])][column] = row["Gene symbol"]
+            
     for sample, values in samples_data.items():
         resume = resume.append(values, ignore_index=True)
     
@@ -470,6 +473,8 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, output_dir):
     resume = resume[["Sample"] + columns]
     resume = resume.dropna(how ="all", axis=1)
     resume = resume.fillna("-")
+
+    resume["DATABASE"] = db_name
 
     resume.to_csv(resume_file, sep="\t", index=False)
     with open(resume_file, "a") as res_file:
@@ -1621,7 +1626,8 @@ if __name__ == "__main__":
                     gene_matrix_file=amr_analysis_dir_abr+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv",
                     samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
     if cfg.config["amrfinder"]["run"]:
-        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: NDARO)\n"), flush=True)
+        amrfinder_db_name = "NDARO"
+        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: {amrfinder_db_name})\n"), flush=True)
         step_counter += 1
         # Update amrfinder database before running (it doesn't take too long)
         if cfg.config["amrfinder"]["update_db"]:
@@ -1632,7 +1638,7 @@ if __name__ == "__main__":
             gff_dir = dfast_refactor_dir
         else:
             print("Specified annotator("+annotator+") is not valid.")
-        amrfinder_call(samples_basenames+[cfg.config["reference_genome"]["strain"]], annotation_dir, gff_dir, genus, amr_analysis_dir_amrfinder)
+        amrfinder_call(samples_basenames+[cfg.config["reference_genome"]["strain"]], annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
 
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
