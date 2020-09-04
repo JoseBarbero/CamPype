@@ -375,24 +375,25 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
     os.remove(tmp_file)
     
     if gene_matrix_file:
-        abricate_presence_absence_matrix(output_file, gene_matrix_file, samples)
+        abricate_presence_absence_matrix(output_file, gene_matrix_file, samples, database)
 
     return state
 
 
-def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
+def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, database):
     """
     Creates the presence/absence matrix for the input genes file.
 
     Arguments:
-        blast_df {pandas dataframe} -- Sample/genes information from blast.
+        abricate_file {string} -- File from abricate.
         p_a_matrix_file {string} -- Gene presence/absence matrix.
         samples {list} -- List of samples to analyze.
+        database {str} -- Database.
     """
 
     abricate_data = pd.read_csv(abricate_file, sep="\t")
     samples = samples
-    gene_presence_absence = pd.DataFrame(columns=["Gene", *samples, "Product"])
+    gene_presence_absence = pd.DataFrame(columns=["Gene", *samples, "Product", "DATABASE"])
 
     genes_type_ABR = dict(zip(abricate_data["GENE"], abricate_data["RESISTANCE"]))
     genes_type_VIR = dict(zip(abricate_data["GENE"], abricate_data["PRODUCT"]))
@@ -411,6 +412,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
                     new_row[sample] = 0
             else:
                 new_row[sample] = 0
+        new_row["DATABASE"] = database
         gene_presence_absence = gene_presence_absence.append(new_row, ignore_index=True)
 
     # Sort rows
@@ -418,6 +420,15 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples):
     
     # Export to tsv
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
+
+    # End line
+    with open(p_a_matrix_file, "a") as matrix_file:
+        matrix_file.write("Coverage >= (" + 
+                            str(cfg.config["abricate"]["mincov"]) +
+                            ") % and identity >= (" +
+                            str(cfg.config["abricate"]["minid"]) + 
+                            ") % on each sample for considering a virulence gene as present.")
+
 
 
 def amrfinder_call(samples, annotation_dir, gff_dir, genus, db_name, output_dir):
