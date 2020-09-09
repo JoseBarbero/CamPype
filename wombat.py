@@ -394,16 +394,16 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
 
     abricate_data = pd.read_csv(abricate_file, sep="\t")
     samples = samples
-    gene_presence_absence = pd.DataFrame(columns=["Gene", *samples, "Product", "DATABASE"])
+    gene_presence_absence = pd.DataFrame(columns=["Gene", *samples, "RESISTANCE", "DATABASE"])
 
     genes_type_ABR = dict(zip(abricate_data["GENE"], abricate_data["RESISTANCE"]))
     genes_type_VIR = dict(zip(abricate_data["GENE"], abricate_data["PRODUCT"]))
     for gene in genes_type_ABR.keys():
         gene_content = abricate_data[abricate_data["GENE"] == gene]
         new_row = {"Gene": gene}
-        new_row["Product"] = str(genes_type_ABR[gene]).lower()
-        if new_row["Product"] == "nan":
-            new_row["Product"] = str(genes_type_VIR[gene]).lower()
+        new_row["RESISTANCE"] = str(genes_type_ABR[gene]).lower()
+        if new_row["RESISTANCE"] == "nan":
+            new_row["RESISTANCE"] = str(genes_type_VIR[gene]).lower()
         for sample in samples:
             sample_content = gene_content[gene_content["SAMPLE"] == sample]
             if len(sample_content) == 1:
@@ -417,7 +417,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
         gene_presence_absence = gene_presence_absence.append(new_row, ignore_index=True)
 
     # Sort rows
-    gene_presence_absence = gene_presence_absence.sort_values(by=["Product", "Gene"])
+    gene_presence_absence = gene_presence_absence.sort_values(by=["RESISTANCE", "Gene"])
     
     # Export to tsv
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
@@ -1620,7 +1620,7 @@ if __name__ == "__main__":
             
         
     # End line
-    with open(global_vf_matrix_file, "a") as matrix_file:
+    with open(vir_dir+"/"+global_vf_matrix_file, "a") as matrix_file:
         matrix_file.write("Coverage >= (" + 
                             str(cfg.config["abricate"]["mincov"]) +
                             ") % and identity >= (" +
@@ -1694,7 +1694,7 @@ if __name__ == "__main__":
             os.remove(amr_analysis_dir_abr+"/"+amr_matrix_file)
 
         # End line
-        with open(global_amr_matrix_file, "a") as matrix_file:
+        with open(amr_analysis_dir_abr+"/"+global_amr_matrix_file, "a") as matrix_file:
             matrix_file.write("Coverage >= (" + 
                                 str(cfg.config["abricate"]["mincov"]) +
                                 ") % and identity >= (" +
