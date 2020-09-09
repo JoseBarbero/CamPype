@@ -341,6 +341,7 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
     """
     tmp_file = output_dir+"/tmp_"+output_filename
     output_file = output_dir+"/"+output_filename
+    output_matrix = output_dir+"/"+gene_matrix_file
     
     input_filenames = []
 
@@ -375,7 +376,7 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
     os.remove(tmp_file)
     
     if gene_matrix_file:
-        abricate_presence_absence_matrix(output_file, gene_matrix_file, samples, database)
+        abricate_presence_absence_matrix(output_file, output_matrix, samples, database)
 
     return state
 
@@ -420,14 +421,6 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
     
     # Export to tsv
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
-
-    # End line
-    with open(p_a_matrix_file, "a") as matrix_file:
-        matrix_file.write("Coverage >= (" + 
-                            str(cfg.config["abricate"]["mincov"]) +
-                            ") % and identity >= (" +
-                            str(cfg.config["abricate"]["minid"]) + 
-                            ") % on each sample for considering a virulence gene as present.")
 
 
 
@@ -1237,10 +1230,6 @@ if __name__ == "__main__":
     # Welcome
     welcome("resources/wombat_ascii.txt")
 
-    # Generate json config file from wombat_config.py
-    with open('wombat_config.json', 'w') as json_file:
-        json.dump(cfg.config, json_file)
-
     # Get config file parameters
     annotator = cfg.config["annotator"]
 
@@ -1253,6 +1242,10 @@ if __name__ == "__main__":
     proteins_file = cfg.config["proteins_reference_file"]
     
     output_folder = sys.argv[1]
+
+    # Generate json config file from wombat_config.py
+    with open(output_folder+"/wombat_config.json", 'w') as json_file:
+        json.dump(cfg.config, json_file)
 
     trimmomatic_dir = output_folder+"/tmp_Trimmomatic_filtering"
     if cfg.config["run_trimmomatic"]:
@@ -1589,15 +1582,51 @@ if __name__ == "__main__":
     mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_edited.txt")
 
     # ABRicate call (virulence genes)
-    vf_database = "vfdb"
-    print(Banner(f"\nStep {step_counter}: Virulence genes (ABRicate: "+vf_database+")\n"), flush=True)
-    step_counter += 1
-    abricate_call(input_dir=draft_contigs_dir,
-                output_dir=vir_dir,
-                output_filename="Virulence_genes_ABRicate_VFDB.tab",
-                database = vf_database,
-                gene_matrix_file=vir_dir+"/Virulence_genes_ABRicate_"+vf_database+"_matrix.tsv",
-                samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+    
+    global_vf_output_file = "Virulence_genes_ABRicate.tsv"
+    global_vf_matrix_file = "Virulence_genes_ABRicate_matrix.tsv"
+    for vf_database in cfg.config["abricate"]["virulence_factors_databases"]:
+        print(Banner(f"\nStep {step_counter}: Virulence genes (ABRicate: "+vf_database+")\n"), flush=True)
+        step_counter += 1
+        vf_output_file = "Virulence_genes_ABRicate_"+vf_database+".tsv"
+        vf_matrix_file = "Virulence_genes_ABRicate_"+vf_database+"_matrix.tsv"
+        abricate_call(input_dir=draft_contigs_dir,
+                    output_dir=vir_dir,
+                    output_filename=vf_output_file,
+                    database=vf_database,
+                    mincov=cfg.config["abricate"]["mincov"],
+                    minid=cfg.config["abricate"]["minid"],
+                    gene_matrix_file=vf_matrix_file,
+                    samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+        
+        # Concatenate every ABRicate output in a single file
+        with open(vir_dir+"/"+global_vf_output_file, "a") as global_file, open(vir_dir+"/"+vf_output_file, "r") as current_file:
+            if os.stat(vir_dir+"/"+global_vf_output_file).st_size == 0:   # If global file is empty, i.e. there is no header
+                global_file.write(current_file.read())
+            else:
+                for line in current_file.readlines()[1:]:
+                    global_file.write(line)
+            
+        with open(vir_dir+"/"+global_vf_matrix_file, "a") as global_matrix, open(vir_dir+"/"+vf_matrix_file, "r") as current_matrix:
+            if os.stat(vir_dir+"/"+global_vf_matrix_file).st_size == 0:   # If global file is empty, i.e. there is no header
+                global_matrix.write(current_matrix.read())
+            else:
+                for line in current_matrix.readlines()[1:]:
+                    global_matrix.write(line)
+
+        # Remove innecesary single files
+        os.remove(vir_dir+"/"+vf_output_file)
+        os.remove(vir_dir+"/"+vf_matrix_file)
+            
+        
+    # End line
+    with open(global_vf_matrix_file, "a") as matrix_file:
+        matrix_file.write("Coverage >= (" + 
+                            str(cfg.config["abricate"]["mincov"]) +
+                            ") % and identity >= (" +
+                            str(cfg.config["abricate"]["minid"]) + 
+                            ") % on each sample for considering a virulence gene as present.")
+
 
     # Blast call
     if cfg.config["run_blast"]:
@@ -1629,15 +1658,51 @@ if __name__ == "__main__":
 
     # Antimicrobial resistance genes
     if cfg.config["abricate"]["run_amr"]:
-        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate: "+cfg.config["abricate"]["antimicrobial_resistance_database"]+")\n"), flush=True)
-        step_counter += 1
-        abricate_output_file = "AMR_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+".tsv"
-        abricate_call(input_dir=draft_contigs_dir, 
-                    output_dir=amr_analysis_dir_abr,
-                    output_filename=abricate_output_file,
-                    database = cfg.config["abricate"]["antimicrobial_resistance_database"],
-                    gene_matrix_file=amr_analysis_dir_abr+"/AMR_genes_ABRicate_"+cfg.config["abricate"]["antimicrobial_resistance_database"]+"_matrix.tsv",
-                    samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+        global_amr_output_file = "AMR_ABRicate.tsv"
+        global_amr_matrix_file = "AMR_genes_ABRicate_matrix.tsv"
+        for amr_db in cfg.config["abricate"]["antimicrobial_resistance_databases"]:
+            print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate: "+amr_db+")\n"), flush=True)
+            step_counter += 1
+            amr_output_file = "AMR_ABRicate_"+amr_db+".tsv"
+            amr_matrix_file = "AMR_genes_ABRicate_"+amr_db+"_matrix.tsv"
+            abricate_call(input_dir=draft_contigs_dir, 
+                        output_dir=amr_analysis_dir_abr,
+                        output_filename=amr_output_file,
+                        database=amr_db,
+                        mincov=cfg.config["abricate"]["mincov"],
+                        minid=cfg.config["abricate"]["minid"],
+                        gene_matrix_file=amr_matrix_file,
+                        samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+
+            # Concatenate every ABRicate output in a single file
+            with open(amr_analysis_dir_abr+"/"+global_amr_output_file, "a") as global_file, open(amr_analysis_dir_abr+"/"+amr_output_file, "r") as current_file:
+                if os.stat(amr_analysis_dir_abr+"/"+global_amr_output_file).st_size == 0:   # If global file is empty, i.e. there is no header
+                    global_file.write(current_file.read())
+                else:
+                    for line in current_file.readlines()[1:]:
+                        global_file.write(line)
+                
+            with open(amr_analysis_dir_abr+"/"+global_amr_matrix_file, "a") as global_matrix, open(amr_analysis_dir_abr+"/"+amr_matrix_file, "r") as current_matrix:
+                if os.stat(amr_analysis_dir_abr+"/"+global_amr_matrix_file).st_size == 0:   # If global file is empty, i.e. there is no header
+                    global_matrix.write(current_matrix.read())
+                else:
+                    for line in current_matrix.readlines()[1:]:
+                        global_matrix.write(line)
+            
+            # Remove innecesary single files
+            os.remove(amr_analysis_dir_abr+"/"+amr_output_file)
+            os.remove(amr_analysis_dir_abr+"/"+amr_matrix_file)
+
+        # End line
+        with open(global_amr_matrix_file, "a") as matrix_file:
+            matrix_file.write("Coverage >= (" + 
+                                str(cfg.config["abricate"]["mincov"]) +
+                                ") % and identity >= (" +
+                                str(cfg.config["abricate"]["minid"]) + 
+                                ") % on each sample for considering a virulence gene as present.")
+    
+
+
     if cfg.config["amrfinder"]["run"]:
         amrfinder_db_name = "NDARO"
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: {amrfinder_db_name})\n"), flush=True)

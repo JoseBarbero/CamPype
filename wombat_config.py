@@ -8,7 +8,7 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS 
     },
-    "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need assembled genomes in fasta files as input). If not, set it to False. Default: False
+    "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need assembled genomes in fasta files as input). If not, set it to False. Default: False
     "run_trimmomatic": True, # Set to True or False if you want to run Trimmomatic or not to filter sequenced reads
     "prinseq": {
         "min_len": 50, # Minimum read length. Default: 50
@@ -41,9 +41,11 @@ config = {
     },
     "abricate": {
         "run_amr": True,  # Run antimicrobial resistance gene search using ABRicate and blastn. If you want to omit this step, set it to False. Default: False
-        "antimicrobial_resistance_database": "card", # Select database from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn. Default: card
+        "antimicrobial_resistance_databases": ["card", "ncbi"], # Select as many databases as desired from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn. Default: card
+        "virulence_factors_databases": ["vfdb", "ecoli_vf"], # Select as many databases as desired from ABRicate to identify cirulence factors: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn. Default: vfdb
         "mincov": 90, # Minimum DNA % coverage for considering an antimicrobial resistance gene as present. Default: 90
         "minid": 90 # Minimum DNA % identity for considering an antimicrobial resistance gene as present. Default: 90      
+        
     },
     "amrfinder": {
         "run": True,  # Run antimicrobial resistance gene search using AMRFinder and blastp (database: NDARO). If you want to omit this step, set it to False. Default: True
