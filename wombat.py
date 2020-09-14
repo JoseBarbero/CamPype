@@ -6,6 +6,7 @@ import csv
 import shutil
 import re
 import logging
+import copy
 import sys
 import wombat_config as cfg
 import requests
@@ -194,6 +195,37 @@ def snippy_call(reference_genome, contigs, output_dir, prefix):
     """
     arguments = ["snippy", "--ref", reference_genome, "--ctgs", contigs, "--outdir", output_dir, "--prefix", prefix, "--report"]    
     return call(arguments)
+
+
+def snippy_summary(snippy_files, output_file):
+    """
+    Generates a summary table from snippy data.
+
+    Args:
+        snippy_files {list}: List of snippy files.
+        output_file {str}: Summary output file.
+    """
+    summary_df = pd.DataFrame(columns=["Sample", "Variant-COMPLEX", "Variant-DEL", "Variant-INS", "Variant-SNP", "VariantTotal"])
+    for snippy_file in snippy_files:
+        snippy_data = {}
+
+        # Get snippy data into a dictionary
+        with open(snippy_file) as f:
+            for line in f:
+                snippy_data[line.split("\t")[0]] = line.split("\t")[1].replace("\n", "")
+        
+        new_row = {}
+        new_row["Sample"] = os.path.splitext(os.path.basename(snippy_file))[0]  # We get the file basename to get the sample name
+        new_row["Variant-COMPLEX"] = snippy_data["Variant-COMPLEX"]
+        new_row["Variant-DEL"] = snippy_data["Variant-DEL"]
+        new_row["Variant-INS"] = snippy_data["Variant-INS"]
+        new_row["Variant-SNP"] = snippy_data["Variant-SNP"]
+        new_row["VariantTotal"] = snippy_data["VariantTotal"]
+
+        summary_df = summary_df.append(new_row, ignore_index=True)
+
+        # Export to tsv
+        summary_df.to_csv(output_file, sep="\t",index=False)
 
 
 def contigs_trim_and_rename(contigs_file, output_filename, output_dir, min_len):
@@ -1030,7 +1062,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, custom_VFDB, amrfinder_matrix_file=False):
+def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, snippy_summary, custom_VFDB, amrfinder_matrix_file=False):
     """
     Creates the final report.
     
@@ -1045,7 +1077,8 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         info_post_QC {dict} -- Prinseq information after running QC.
         info_post_flash {dict} -- Prinseq information after running flash.
         mlst_file {string} -- MLST results file.
-        vir_matrix_file {string} -- Matrix filecontaining virulence genes information.
+        vir_matrix_file {string} -- Matrix file containing virulence genes information.
+        snippy_summary {string} -- Snippy summary file.
     """
     
     assembly_report = pd.read_csv(assembly_dir+"/"+"quality_assembly_report.tsv", sep="\t")
@@ -1205,21 +1238,36 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         if amrfinder_matrix_file:
             report_dict.update(amr_data.loc[sample].to_dict())
         
+        # Column blocks to sort columns in final file
+        df_1st_column_block = [*report_dict.keys()]
         # Information from VF_matrix
         # For each sample its column has the sum of genes present from each category
         occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
         total_occurrences = 0
+        virulence_dict = {}
         for category, _ in vir_total_by_categories.items():
-            
             with open(custom_VFDB) as custom_DB:
                 occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
                 total_occurrences += occurrences
-            report_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
+            virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
+        df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
+        virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
         
-        report_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
-        
-        csv_report = csv_report.append(report_dict, ignore_index=True)
+        report_dict.update(virulence_dict)
 
+
+        #Snippy block 
+        snippy_data = pd.read_csv(snippy_summary, sep="\t", dtype={'Sample':str})
+        snippy_data.set_index("Sample", inplace=True)
+        df_3rd_column_block = [*snippy_data.columns]
+        report_dict.update(snippy_data.loc[sample].to_dict())
+
+
+        csv_report = csv_report.append(report_dict, ignore_index=True)
+        
+    new_colums_order = [*df_1st_column_block, *df_2nd_column_block, "Total ("+str(total_occurrences)+")", *df_3rd_column_block]
+    
+    csv_report = csv_report.reindex(columns=new_colums_order)
     csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)
 
 
@@ -1309,6 +1357,7 @@ if __name__ == "__main__":
             os.mkdir(prokka_refactor_dir)
 
     roary_input_files = []
+    snippy_output_files = []
     summary_pre_qc = {}
     summary_post_qc = {}
     summary_post_flash = {}
@@ -1565,6 +1614,11 @@ if __name__ == "__main__":
                     contigs=draft_contigs,
                     output_dir=snps_dir+"/"+sample_basename,
                     prefix=sample_basename)
+        snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
+
+    # Snippy summary
+    snippy_summary_outfile = snps_dir+"/Genomic_variants_summary.tsv"
+    snippy_summary(snippy_output_files, snippy_summary_outfile)
 
     # Quast report unification
     quast_report_unification(assembly_dir, samples_basenames, assembly_dir)
@@ -1751,6 +1805,7 @@ if __name__ == "__main__":
                     summary_post_flash,
                     mlst_dir+"/MLST_edited.txt",
                     blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
+                    snippy_summary=snippy_summary_outfile,
                     custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
                     amrfinder_matrix_file=amrfinder_matrix_file)
 
