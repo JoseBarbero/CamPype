@@ -6,7 +6,7 @@ config = {
         "genus": "Campylobacter",   
         "species": "jejuni",    
         "strain": "NCTC11168",
-        "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS 
+        "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
     "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need assembled genomes in fasta files as input). If not, set it to False. Default: False
     "run_trimmomatic": True, # Set to True or False if you want to run Trimmomatic or not to filter sequenced reads
