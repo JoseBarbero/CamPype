@@ -177,8 +177,31 @@ def mauve_call(output_folder, reference_sequence, input_contigs, sample_basename
     contigs_basename = os.path.basename(input_contigs).split(".")[0]   # Mauve names it's output files after the input file basename
     shutil.copyfile(output_folder+"/"+sample_basename+"/"+max(next(os.walk(output_folder+"/"+sample_basename))[1])+"/"+contigs_basename+".fasta", output_folder+"/"+sample_basename+".fasta")
     shutil.rmtree(output_folder+"/"+sample_basename)
+
+    # Mauve sets locus string too long to process to tools like dfast. So we need to reprocess those loci to make them shorter.
+    shorten_loci(output_folder+"/"+sample_basename+".fasta")
+
     return output_folder+"/"+sample_basename+".fasta"
 
+def shorten_loci(original_file):
+    """
+    For BioPython loci must have names lower than 16 characters.
+    This function will remove everything after the second "_" character.
+
+    Args:
+        originalfile (str): Path to original file.
+        correctedfile (str): Path to corrected file.
+    """
+    corrected_file = original_file+".tmp"
+    with open(original_file) as original, open(corrected_file, 'w') as corrected:
+        records = SeqIO.parse(original_file, 'fasta')
+        for record in records:
+            original_id = record.id
+            record.id = "_".join(original_id.split("_")[:2])
+            record.description = "_".join(original_id.split("_")[2:])
+            SeqIO.write(record, corrected, 'fasta')
+    os.remove(original_file)
+    shutil.move(corrected_file, original_file)
 
 def snippy_call(reference_genome, contigs, output_dir, prefix):
     """
@@ -456,7 +479,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
 
 
 
-def amrfinder_call(samples, annotation_dir, gff_dir, genus, db_name, output_dir):
+def amrfinder_call(samples_basenames, ref_genome_basename, annotation_dir, gff_dir, genus, db_name, output_dir):
     amrfinder_out_file = output_dir+"/AMR_AMRFinder.tsv"
     resume_file = output_dir+"/AMR_genes_AMRFinder_matrix.tsv"
     
@@ -466,17 +489,31 @@ def amrfinder_call(samples, annotation_dir, gff_dir, genus, db_name, output_dir)
 
     has_header = False
 
+    samples = samples_basenames.copy()
+    samples.append(ref_genome_basename)
+
     with open(amrfinder_out_file, "w") as global_file:
         for sample in samples:
-            call([  "amrfinder",
-                    "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
-                    "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
-                    "-g", gff_dir+"/"+sample+".gff", 
-                    "--organism", genus, 
-                    "--plus", 
-                    "-i", str(cfg.config["amrfinder"]["minid"]),
-                    "-c", str(cfg.config["amrfinder"]["mincov"]),
-                    "-o", output_dir+"/"+sample+".txt"])
+            if sample == ref_genome_basename:
+                call([  "amrfinder",
+                        "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
+                        "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
+                        "-g", gff_dir+"/+"+sample+".gff", 
+                        "--organism", genus, 
+                        "--plus", 
+                        "-i", str(cfg.config["amrfinder"]["minid"]),
+                        "-c", str(cfg.config["amrfinder"]["mincov"]),
+                        "-o", output_dir+"/"+sample+".txt"])
+            else:
+                call([  "amrfinder",
+                        "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
+                        "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
+                        "-g", gff_dir+"/"+sample+".gff", 
+                        "--organism", genus, 
+                        "--plus", 
+                        "-i", str(cfg.config["amrfinder"]["minid"]),
+                        "-c", str(cfg.config["amrfinder"]["mincov"]),
+                        "-o", output_dir+"/"+sample+".txt"])
 
             # Group all the results in a single file        
             with open(output_dir+"/"+sample+".txt") as in_file:
@@ -1062,7 +1099,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, snippy_summary, custom_VFDB, amrfinder_matrix_file=False):
+def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, snippy_summary, custom_VFDB, amrfinder_matrix_file=False, reference_genome_basename=None):
     """
     Creates the final report.
     
@@ -1079,9 +1116,13 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         mlst_file {string} -- MLST results file.
         vir_matrix_file {string} -- Matrix file containing virulence genes information.
         snippy_summary {string} -- Snippy summary file.
+        reference_genome_basename {string} -- Reference genome basename.
     """
-    
+
     assembly_report = pd.read_csv(assembly_dir+"/"+"quality_assembly_report.tsv", sep="\t")
+    if reference_genome_basename:
+        ref_assembly_report = pd.read_csv(assembly_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+"_assembly_statistics/"+"report.tsv", sep="\t")
+
     mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
     vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
     vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
@@ -1105,172 +1146,199 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
 
     csv_report = pd.DataFrame(columns=df_columns)
 
-    for sample in samples:
-        
-        # "Contigs": Number of contigs of the genome (> 500bp).
-        n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
-        
-        # "GenomeLen": Length (bp) of the genome.
-        genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
+    # TODO es posible que no haga falta usar blast en la referencia. Igual se puede dejar vacío.
 
-        # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
-        n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
-        
-        # "GC": GC content (%) of the draft genome
-        gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
+    for sample in samples+[reference_genome_basename]:
+        if sample is not None:
 
-        if not fasta_mode:
-            # "Reads": Total number of reads after quality filtering
-            reads = info_pre_QC[sample]["R1Reads"] + info_pre_QC[sample]["R2Reads"]
+            if sample == reference_genome_basename:
+                assembly_report = ref_assembly_report
             
-            # "ReadLen": Average read length (bp) before quality control.
-            readlen = np.mean([info_pre_QC[sample]["R1LenMean"], info_pre_QC[sample]["R2LenMean"]])
-
-            # "ReadsQC": Total number of reads after quality control.
-            readsqc = info_post_QC[sample]["R1Reads"] + info_post_QC[sample]["R2Reads"]
-
-            # "ReadsQCLen": Average read length (bp) after quality control.
-            readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
-
-            # "JoinReads": Total combined reads.
-            joinreads = info_post_flash[sample]["JoinReads"]
-
-            # "JoinReadsLen: Mean length of combined reads.
-            joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
+            # "Contigs": Number of contigs of the genome (> 500bp).
+            n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
             
-            # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
-            depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
-        
+            # "GenomeLen": Length (bp) of the genome.
+            genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
 
-        # "ContigLen": Average contig length (bp) (> 500bp).
-        contig_len_summatory = 0
-        contig_counter = 0
-        for record in SeqIO.parse(mauve_dir+"/"+sample+".fasta", "fasta"):
-            contig_len_summatory += len(record.seq)
-            contig_counter += 1
-        avg_contig_len = contig_len_summatory/contig_counter
-
-        # Column ST (MLST)
-        st = mlst_data.loc[sample]["ST"]
-
-        # Column clonal_complex (MLST)
-        clonal_complex = mlst_data.loc[sample]["clonal_complex"]
-        
-        cds = "0"
-        crisprs = "0"
-        rrnas = "0"
-        trnas = "0"
-        
-        if cfg.config["annotator"] == "prokka":
+            # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
+            n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
             
-            with open(annotation_dir+"/"+sample+"/"+sample+".txt") as stats_file:
-                for line in stats_file:
-                    # Column 'CDS'. 
-                    if line.startswith("CDS:"):
-                        cds = line.split()[-1].replace("\n", "")
+            # "GC": GC content (%) of the draft genome
+            gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
 
-                    # Column 'CRISPRs'. 
-                    elif line.startswith("repeat_region:") or line.startswith("CRISPR:"):
-                        crisprs = line.split()[-1].replace("\n", "")
 
-                    # Column 'rRNAs'. 
-                    elif line.startswith("rRNA:"):
-                        rrnas = line.split()[-1].replace("\n", "")
+            if  sample != reference_genome_basename:
+                if not fasta_mode:
 
-                    # Column 'tRNAs'. 
-                    elif line.startswith("tRNA:"):
-                        trnas = line.split()[-1].replace("\n", "")
-
-        elif cfg.config["annotator"] == "dfast":
-            with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
-                for line in stats_file:
-                    # Column 'CDS'.
-                    if line.startswith("Number of CDSs"):
-                        cds = line.split("\t")[-1].replace("\n", "")
+                    # "Rads": Total number of reads after quality filtering
+                    reads = info_pre_QC[sample]["R1Reads"] + info_pre_QC[sample]["R2Reads"]
                     
-                    # Column 'CRISPRs'.
-                    elif line.startswith("Number of CRISPRs"):
-                        crisprs = line.split("\t")[-1].replace("\n", "")
+                    # "ReadLen": Average read length (bp) before quality control.
+                    readlen = np.mean([info_pre_QC[sample]["R1LenMean"], info_pre_QC[sample]["R2LenMean"]])
 
-                    # Column 'rRNAs'. 
-                    elif line.startswith("Number of rRNAs"):    
-                        rrnas = line.split("\t")[-1].replace("\n", "")
+                    # "ReadsQC": Total number of reads after quality control.
+                    readsqc = info_post_QC[sample]["R1Reads"] + info_post_QC[sample]["R2Reads"]
 
-                    # Column 'tRNAs'. 
-                    elif line.startswith("Number of tRNAs"):
-                        trnas = line.split("\t")[-1].replace("\n", "")
+                    # "ReadsQCLen": Average read length (bp) after quality control.
+                    readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
 
-        if fasta_mode:  
-            report_dict = { "Sample": sample, 
-                        "Contigs": n_contigs, 
-                        "GenomeLen": genome_len, 
-                        "ContigLen": round(avg_contig_len, 2), 
-                        "N50": round(n50, 0),
-                        "GC": round(gc, 2),
-                        "ST": st,
-                        "clonal_complex": clonal_complex,
-                        "CDS": cds,
-                        "CRISPRs": crisprs,
-                        "rRNAs": rrnas,
-                        "tRNAs": trnas}
-        else:
-            report_dict = { "Sample": sample, 
-                        "Reads": round(reads, 0), 
-                        "ReadLen": readlen,
-                        "ReadsQC": readsqc,
-                        "ReadsQCLen": readsqclen, 
-                        "JoinReads": round(joinreads, 2), 
-                        "JoinReadsLen": joinreadslen, 
-                        "Contigs": n_contigs, 
-                        "GenomeLen": genome_len, 
-                        "ContigLen": round(avg_contig_len, 2), 
-                        "N50": round(n50, 0),
-                        "GC": round(gc, 2),
-                        "DepthCov (X)": round(depthcov, 2),
-                        "ST": st,
-                        "clonal_complex": clonal_complex,
-                        "CDS": cds,
-                        "CRISPRs": crisprs,
-                        "rRNAs": rrnas,
-                        "tRNAs": trnas}
+                    # "JoinReads": Total combined reads.
+                    joinreads = info_post_flash[sample]["JoinReads"]
 
-        # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_AMRFinder_matrix.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
-        if amrfinder_matrix_file:
-            report_dict.update(amr_data.loc[sample].to_dict())
-        
-        # Column blocks to sort columns in final file
-        df_1st_column_block = [*report_dict.keys()]
-        # Information from VF_matrix
-        # For each sample its column has the sum of genes present from each category
-        occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
-        total_occurrences = 0
-        virulence_dict = {}
-        for category, _ in vir_total_by_categories.items():
-            with open(custom_VFDB) as custom_DB:
-                occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
-                total_occurrences += occurrences
-            virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
-        df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
-        virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
-        
-        report_dict.update(virulence_dict)
+                    # "JoinReadsLen: Mean length of combined reads.
+                    joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
+                    
+                    # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
+                    depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
+                
+                # "ContigLen": Average contig length (bp) (> 500bp).
+                contig_len_summatory = 0
+                contig_counter = 0
+                for record in SeqIO.parse(mauve_dir+"/"+sample+".fasta", "fasta"):
+                    contig_len_summatory += len(record.seq)
+                    contig_counter += 1
+                avg_contig_len = contig_len_summatory/contig_counter
+            else:
+                # "ContigLen": Average contig length (bp) (> 500bp).
+                contig_len_summatory = 0
+                contig_counter = 0
+                for record in SeqIO.parse(cfg.config["reference_genome"]["file"], "fasta"):
+                    contig_len_summatory += len(record.seq)
+                    contig_counter += 1
+                avg_contig_len = contig_len_summatory/contig_counter
+                if not fasta_mode:
+                    reads = readlen = readsqc = readsqclen = joinreads = joinreadslen = depthcov = 0
 
+            # Column ST (MLST)
+            st = mlst_data.loc[sample]["ST"]
 
-        #Snippy block 
-        snippy_data = pd.read_csv(snippy_summary, sep="\t", dtype={'Sample':str})
-        snippy_data.set_index("Sample", inplace=True)
-        df_3rd_column_block = [*snippy_data.columns]
-        report_dict.update(snippy_data.loc[sample].to_dict())
+            # Column clonal_complex (MLST)
+            clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+            
+            cds = "0"
+            crisprs = "0"
+            rrnas = "0"
+            trnas = "0"
+            
+            if cfg.config["annotator"] == "prokka":
+                
+                with open(annotation_dir+"/"+sample+"/"+sample+".txt") as stats_file:
+                    for line in stats_file:
+                        # Column 'CDS'. 
+                        if line.startswith("CDS:"):
+                            cds = line.split()[-1].replace("\n", "")
+
+                        # Column 'CRISPRs'. 
+                        elif line.startswith("repeat_region:") or line.startswith("CRISPR:"):
+                            crisprs = line.split()[-1].replace("\n", "")
+
+                        # Column 'rRNAs'. 
+                        elif line.startswith("rRNA:"):
+                            rrnas = line.split()[-1].replace("\n", "")
+
+                        # Column 'tRNAs'. 
+                        elif line.startswith("tRNA:"):
+                            trnas = line.split()[-1].replace("\n", "")
+
+                with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
+                    # Column 'Hypothetical_proteins'
+                    hy_prot = faa_file.read().count("hypothetical protein")
 
 
-        csv_report = csv_report.append(report_dict, ignore_index=True)
+            elif cfg.config["annotator"] == "dfast":
+                with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
+                    for line in stats_file:
+                        # Column 'CDS'.
+                        if line.startswith("Number of CDSs"):
+                            cds = line.split("\t")[-1].replace("\n", "")
+                        
+                        # Column 'CRISPRs'.
+                        elif line.startswith("Number of CRISPRs"):
+                            crisprs = line.split("\t")[-1].replace("\n", "")
+
+                        # Column 'rRNAs'. 
+                        elif line.startswith("Number of rRNAs"):    
+                            rrnas = line.split("\t")[-1].replace("\n", "")
+
+                        # Column 'tRNAs'. 
+                        elif line.startswith("Number of tRNAs"):
+                            trnas = line.split("\t")[-1].replace("\n", "")
+                # TODO Column 'Hypothetical proteins'
+                with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
+                    # Column 'Hypothetical_proteins'
+                    hy_prot = faa_file.read().count("hypothetical protein")
+            if fasta_mode:  
+                report_dict = { "Sample": sample, 
+                            "Contigs": n_contigs, 
+                            "GenomeLen": genome_len, 
+                            "ContigLen": round(avg_contig_len, 2), 
+                            "N50": round(n50, 0),
+                            "GC": round(gc, 2),
+                            "ST": st,
+                            "clonal_complex": clonal_complex,
+                            "CDS": cds,
+                            "Hypotetical proteins": round(hy_prot, 0),
+                            "CRISPRs": crisprs,
+                            "rRNAs": rrnas,
+                            "tRNAs": trnas}
+            else:
+                report_dict = { "Sample": sample, 
+                            "Reads": round(reads, 0), 
+                            "ReadLen": readlen,
+                            "ReadsQC": readsqc,
+                            "ReadsQCLen": readsqclen, 
+                            "JoinReads": round(joinreads, 2), 
+                            "JoinReadsLen": joinreadslen, 
+                            "Contigs": n_contigs, 
+                            "GenomeLen": genome_len, 
+                            "ContigLen": round(avg_contig_len, 2), 
+                            "N50": round(n50, 0),
+                            "GC": round(gc, 2),
+                            "DepthCov (X)": round(depthcov, 2),
+                            "ST": st,
+                            "clonal_complex": clonal_complex,
+                            "CDS": cds,
+                            "Hypotetical proteins": round(hy_prot, 0),
+                            "CRISPRs": crisprs,
+                            "rRNAs": rrnas,
+                            "tRNAs": trnas}
+
+            # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_AMRFinder_matrix.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
+            if amrfinder_matrix_file:
+                report_dict.update(amr_data.loc[sample].to_dict())
+            
+            # Column blocks to sort columns in final file
+            df_1st_column_block = [*report_dict.keys()]
+            # Information from VF_matrix
+            # For each sample its column has the sum of genes present from each category
+            occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
+            total_occurrences = 0
+            virulence_dict = {}
+            for category, _ in vir_total_by_categories.items():
+                with open(custom_VFDB) as custom_DB:
+                    occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
+                    total_occurrences += occurrences
+                virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
+            df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
+            virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
+            
+            report_dict.update(virulence_dict)
+
+
+            #Snippy block 
+            if sample != reference_genome_basename:
+                snippy_data = pd.read_csv(snippy_summary, sep="\t", dtype={'Sample':str})
+                snippy_data.set_index("Sample", inplace=True)
+                df_3rd_column_block = [*snippy_data.columns]
+                report_dict.update(snippy_data.loc[sample].to_dict())
+
+
+            csv_report = csv_report.append(report_dict, ignore_index=True)
         
     new_colums_order = [*df_1st_column_block, *df_2nd_column_block, "Total ("+str(total_occurrences)+")", *df_3rd_column_block]
     
     csv_report = csv_report.reindex(columns=new_colums_order)
     csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)
-
-
 
 
 if __name__ == "__main__":
@@ -1372,12 +1440,33 @@ if __name__ == "__main__":
             if not sample_fw.split(".")[-1] in ["fasta", "fa", "fna"]:
                 print("WRONG INPUT FORMAT:", sample_fw)
                 print("Input must be a valid fasta format file.")
+    
 
-
-    # Annotate reference fasta file 
     if reference_genome_file:
         reference_genome_filename = reference_genome_file.split("/")[-1]
         reference_genome_basename = reference_genome_filename.split(".")[-2]
+
+        # Quast call for reference file
+
+        # Create Quast output directories
+        quast_sample_dir = reference_genome_basename+"_assembly_statistics"
+        if fasta_mode: # In fasta mode the Spades directory does not exist
+            quast_dir = output_folder+"/Quast/"
+            assembly_dir = quast_dir
+            os.makedirs(assembly_dir+quast_sample_dir)
+        else:
+            assembly_dir = spades_dir
+            quast_dir = assembly_dir+"/"+reference_genome_basename+"/"
+            os.mkdir(quast_dir)
+            os.mkdir(quast_dir+quast_sample_dir)
+
+        print(Banner(f"\nQuast on reference sequence ({reference_genome_basename})\n"), flush=True)
+        quast_call( input_file=reference_genome_file,
+                    output_dir=assembly_dir+"/"+reference_genome_basename+"/"+quast_sample_dir,
+                    min_contig_len=cfg.config["min_contig_len"])
+
+
+        # Annotate reference fasta file 
         if annotator.lower() == "dfast":
             # Dfast call
             annotation_dir = dfast_dir
@@ -1535,8 +1624,6 @@ if __name__ == "__main__":
         else:
             draft_contigs = contigs_dir+"/"+sample_basename+".fasta"
             draft_contigs_dir = contigs_dir
-
-
 
 
         # Create Quast output directories
@@ -1700,14 +1787,14 @@ if __name__ == "__main__":
 
         blast_call( proteins_file_ori=proteins_file, 
                     proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
-                    contigs_files_paths=contig_files, 
+                    contigs_files_paths=contig_files+[ref_genome], 
                     blast_database_output=dna_database_blast+"/DNA_database.fna", 
                     blast_output_folder=blast_proteins_dir,
                     blast_output_name=blast_output_name)
         blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
                             database_file=blast_proteins_dir+"/"+proteins_database_name,
                             output_folder=blast_proteins_dir,
-                            samples=samples_basenames)
+                            samples=samples_basenames+[reference_genome_basename])
 
 
     # Antimicrobial resistance genes
@@ -1770,7 +1857,7 @@ if __name__ == "__main__":
             gff_dir = dfast_refactor_dir
         else:
             print("Specified annotator("+annotator+") is not valid.")
-        amrfinder_call(samples_basenames+[cfg.config["reference_genome"]["strain"]], annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
+        amrfinder_call(samples_basenames, reference_genome_basename, annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
 
     # Roary call
     print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
@@ -1794,20 +1881,37 @@ if __name__ == "__main__":
     if cfg.config["amrfinder"]["run"]:
         amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
     
-    generate_report(samples_basenames, 
-                    prinseq_dir, 
-                    assembly_dir, 
-                    annotation_dir,
-                    draft_contigs_dir,
-                    output_folder, 
-                    summary_pre_qc, 
-                    summary_post_qc, 
-                    summary_post_flash,
-                    mlst_dir+"/MLST_edited.txt",
-                    blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
-                    snippy_summary=snippy_summary_outfile,
-                    custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
-                    amrfinder_matrix_file=amrfinder_matrix_file)
+    if cfg.config["report"]["include_reference"]:
+        generate_report(samples_basenames,                    
+                        prinseq_dir, 
+                        assembly_dir, 
+                        annotation_dir,
+                        draft_contigs_dir,
+                        output_folder, 
+                        summary_pre_qc, 
+                        summary_post_qc, 
+                        summary_post_flash,
+                        mlst_dir+"/MLST_edited.txt",
+                        blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
+                        snippy_summary=snippy_summary_outfile,
+                        custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
+                        amrfinder_matrix_file=amrfinder_matrix_file,
+                        reference_genome_basename=reference_genome_basename)
+    else:
+        generate_report(samples_basenames,                    
+                        prinseq_dir, 
+                        assembly_dir, 
+                        annotation_dir,
+                        draft_contigs_dir,
+                        output_folder, 
+                        summary_pre_qc, 
+                        summary_post_qc, 
+                        summary_post_flash,
+                        mlst_dir+"/MLST_edited.txt",
+                        blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
+                        snippy_summary=snippy_summary_outfile,
+                        custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
+                        amrfinder_matrix_file=amrfinder_matrix_file)
 
     
     # Remove temporal folders

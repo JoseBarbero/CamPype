@@ -8,7 +8,7 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
-    "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need assembled genomes in fasta files as input). If not, set it to False. Default: False
+    "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
     "run_trimmomatic": True, # Set to True or False if you want to run Trimmomatic or not to filter sequenced reads
     "prinseq": {
         "min_len": 50, # Minimum read length. Default: 50
@@ -28,7 +28,7 @@ config = {
     "quast": {
         "icarus": "--no-icarus"    # Do not build Icarusviewers
     },
-    "annotator": "prokka",  # Set this to "prokka" or "dfast"
+    "annotator": "dfast",  # Set this to "prokka" or "dfast"
     "prokka": {
         "metagenome": True, # Improve gene predictions for highly fragmented genomes if set to True (not for reference genome). Otherwise, set to False. Default: True
         "rawproduct": True, # Do not clean up product annotation if set to True. Otherwise, set to False. Default: True
@@ -49,7 +49,7 @@ config = {
     },
     "amrfinder": {
         "run": True,  # Run antimicrobial resistance gene search using AMRFinder and blastp (database: NDARO). If you want to omit this step, set it to False. Default: True
-        "update_db": True,  # Updates the database before running AMRFinder (Internet connection is required) if set to True. Otherwise, set to False. Default: False
+        "update_db": False,  # Updates the database before running AMRFinder (Internet connection is required) if set to True. Otherwise, set to False. Default: False
         "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
     },
@@ -66,6 +66,9 @@ config = {
     "roary":{
         "split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
         "min_identity": 95  # Minimum percentage identity for blastp (1-100). Default: 95
+    },
+    "report":{
+        "include_reference": True, # Set this to True to include the reference genome in the final report.
     }
 
 }
