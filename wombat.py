@@ -1375,6 +1375,7 @@ if __name__ == "__main__":
     snps_dir = output_folder+"/SNP_SNIPPY"
     mlst_dir = output_folder+"/MLST"
     vir_dir = output_folder+"/Virulence_genes"
+    plasmid_dir = output_folder+"/Plasmids"
     amr_analysis_dir = output_folder+"/Antimicrobial_resistance_genes"
     amr_analysis_dir_abr = amr_analysis_dir+"/ABRicate"
     amr_analysis_dir_amrfinder = amr_analysis_dir+"/AMRFinder"
@@ -1396,6 +1397,9 @@ if __name__ == "__main__":
     
     if cfg.config["run_trimmomatic"]:
         os.mkdir(trimmomatic_dir)
+
+    if cfg.config["abricate"]["find_plasmids"]:
+        os.mkdir(plasmid_dir)
 
     os.mkdir(prinseq_dir)
     os.mkdir(flash_dir)
@@ -1759,7 +1763,22 @@ if __name__ == "__main__":
         os.remove(vir_dir+"/"+vf_output_file)
         os.remove(vir_dir+"/"+vf_matrix_file)
             
-        
+    # ABRicate call (Plasmids)
+    if cfg.config["abricate"]["find_plasmids"]:
+        plasmids_database = "plasmidfinder"
+        plasmids_output_file = "Plasmids_ABRicate_plasmidfinder.tsv"
+        plasmids_matrix_file = "Plasmids_ABRicate_plasmidfinder_matrix.tsv"
+        print(Banner(f"\nStep {step_counter}: Plasmids (ABRicate: "+plasmids_database+")\n"), flush=True)
+        step_counter += 1
+        abricate_call(input_dir=draft_contigs_dir,
+                    output_dir=plasmid_dir,
+                    output_filename=plasmids_output_file,
+                    database=vf_database,
+                    mincov=cfg.config["abricate"]["mincov"],
+                    minid=cfg.config["abricate"]["minid"],
+                    gene_matrix_file=plasmids_matrix_file,
+                    samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+
     # End line
     with open(vir_dir+"/"+global_vf_matrix_file, "a") as matrix_file:
         matrix_file.write("Coverage >= (" + 
