@@ -175,7 +175,8 @@ def mauve_call(output_folder, reference_sequence, input_contigs, sample_basename
 
     # Here we take the fasta file from the last iteration folder.
     contigs_basename = os.path.basename(input_contigs).split(".")[0]   # Mauve names it's output files after the input file basename
-    shutil.copyfile(output_folder+"/"+sample_basename+"/"+max(next(os.walk(output_folder+"/"+sample_basename))[1])+"/"+contigs_basename+".fasta", output_folder+"/"+sample_basename+".fasta")
+    fasta_output = max(os.walk(output_folder+"/"+sample_basename))[0]+"/"+[f for f in max(os.walk(output_folder+"/"+sample_basename))[2] if f.startswith(contigs_basename) and (f.endswith('.fna') or f.endswith('.fasta'))][0]
+    shutil.copyfile(fasta_output, output_folder+"/"+sample_basename+".fasta")
     shutil.rmtree(output_folder+"/"+sample_basename)
 
     # Mauve sets locus string too long to process to tools like dfast. So we need to reprocess those loci to make them shorter.
@@ -239,11 +240,16 @@ def snippy_summary(snippy_files, output_file):
         
         new_row = {}
         new_row["Sample"] = os.path.splitext(os.path.basename(snippy_file))[0]  # We get the file basename to get the sample name
-        new_row["Variant-COMPLEX"] = snippy_data["Variant-COMPLEX"]
-        new_row["Variant-DEL"] = snippy_data["Variant-DEL"]
-        new_row["Variant-INS"] = snippy_data["Variant-INS"]
-        new_row["Variant-SNP"] = snippy_data["Variant-SNP"]
-        new_row["VariantTotal"] = snippy_data["VariantTotal"]
+        if 'Variant-COMPLEX' in snippy_data:
+            new_row["Variant-COMPLEX"] = snippy_data["Variant-COMPLEX"]
+        if 'Variant-DEL' in snippy_data:
+            new_row["Variant-DEL"] = snippy_data["Variant-DEL"]
+        if 'Variant-INS' in snippy_data:
+            new_row["Variant-INS"] = snippy_data["Variant-INS"]
+        if 'Variant-SNP' in snippy_data:
+            new_row["Variant-SNP"] = snippy_data["Variant-SNP"]
+        if 'VariantTotal' in snippy_data:
+            new_row["VariantTotal"] = snippy_data["VariantTotal"]
 
         summary_df = summary_df.append(new_row, ignore_index=True)
 
@@ -1186,8 +1192,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     joinreads = info_post_flash[sample]["JoinReads"]
 
                     # "JoinReadsLen: Mean length of combined reads.
-                    joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
-                    
+                    joinreadslen = info_post_flash[sample]["Join-
                     # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
                     depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
                 
@@ -1615,7 +1620,6 @@ if __name__ == "__main__":
             # If in fasta mode, we just skip everything until this point
             sample_contigs = data["FW"]
             
-        
         # Reordering contigs by a reference genome with MauveCM
         if cfg.config["reference_genome"]["file"]:
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): reordering {sample_basename} genome against reference genome\n"), flush=True)
