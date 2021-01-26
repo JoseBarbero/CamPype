@@ -1192,7 +1192,8 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     joinreads = info_post_flash[sample]["JoinReads"]
 
                     # "JoinReadsLen: Mean length of combined reads.
-                    joinreadslen = info_post_flash[sample]["Join-
+                    joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
+                    
                     # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
                     depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
                 
