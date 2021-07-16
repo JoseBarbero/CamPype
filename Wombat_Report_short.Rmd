@@ -1,0 +1,967 @@
+---
+title:    | 
+ | Wombat Analysis Report
+ 
+author:    | 
+ |
+ | *Jose A. Barbero, Antonio Canepa and Irene Ortega*
+ | *[Wombat, 2021]( https://github.com/JoseBarbero/Wombat)*
+ |
+ 
+
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    df_print: paged
+    toc: yes  
+    toc_float: yes
+  pdf_document:
+    toc: yes
+params:
+  directory: directory
+---
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(dpi = 120, fig.align = "center")
+```
+
+```{r, setup, include=FALSE}
+knitr::opts_knit$set(root.dir = paste(getwd(), params$directory, sep = ""))
+```
+
+<br>
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, DT, ape, plotly, rjson, viridis, scales, ggrepel, rmarkdown, cowplot)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("ComplexHeatmap", force = FALSE)
+library(ComplexHeatmap)
+```
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+# Loading the configuration file to extract parameters into the report text
+wombat_config_json <- fromJSON(file = "wombat_config.json")
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Create a function to pass all the configuration for tables along the wombat report
+Create_DT <- function(x, caption = caption, filter = "none"){
+  DT::datatable(x,
+                caption = caption,
+                filter = filter,
+                extensions = 'Buttons',
+                rownames = FALSE,
+                options = list(dom = 'Blfrtip',
+                               buttons = c('copy', 'csv', 'excel', 'pdf'),
+                               lengthMenu = list(c(10,25,50,-1),
+                                                 c(10,25,50,"All"))))
+}
+```
+
+
+
+### Wombat's report sections {.sidebar #index}
+* #### [Assembly analysis and annotation](#annotation)
+* #### [Multi-Locus Sequence Typing (MLST)](#mlst)
+* #### [Antibiotic resistance genes](#resistance)
+* #### [Virulence genes](#virulence)
+* #### [Pangenome analysis](#pangenome)
+* #### [Genomic variants](#variants)
+* #### [Summary report](#summary)
+* #### [Citation](#citation)
+
+<br>
+
+##### Analysis performed on `r format(Sys.time(), '%B %d, %Y at %X')`, using WOMBAT.
+
+<br>
+
+## Assembly analysis and annotation {#annotation}
+Following table shows the number of contigs (> 500 bp), genome length, average contig length, N50, GC content (%) and depth coverage using [SPAdes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519) and annotation information using [Prokka](https://www.ncbi.nlm.nih.gov/pubmed/24642063) o [DFAST](https://pubmed.ncbi.nlm.nih.gov/29106469) for each draft genome.
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Assembly_left <- 
+  read_tsv(file = "wombat_report.csv") %>% 
+  mutate(across(where(is_character), as_factor)) #%>% 
+  #dplyr::select(1,2, 8:13, 16:19)
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Assembly_right <- 
+  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  #select_at(c(1, 3, ncol(.))) %>% 
+  rename(ST = ST, `Clonal complex` = clonal_complex)
+```
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+# Joining both datasets
+Assembly_full <-
+  left_join(x = Assembly_left, y = Assembly_right, by = c("Sample", "ST")) 
+
+Create_DT(x = Assembly_full, caption = 'Table 4: Assembly analysis summary')
+```
+  
+#### Graphical Overview of the Data
+
+#### Select the parameter {.tabset .tabset-fade .tabset-pills}
+##### Number of contigs
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = Contigs)) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Number of contigs", title = "") +
+  facet_grid(rows = vars(ST), cols = vars(`Clonal complex`), margins = FALSE)
+)
+```
+
+
+
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+Number_of_contigs <-
+  ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = Contigs, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE)
+)
+
+# Move the label further to the left
+Number_of_contigs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.05
+
+Number_of_contigs 
+```
+
+
+##### Draft genome lengh
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+Draft_genome_lengh <- ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$GenomeLen) + 150000))
+)
+
+# Move the label further to the left
+Draft_genome_lengh[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
+
+Draft_genome_lengh 
+
+```
+
+##### Average contig length
+
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+
+Contig_length <- 
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
+)
+
+# Move the label further to the left
+Contig_length[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
+
+Contig_length 
+
+```
+
+
+##### N50
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+
+N50 <- 
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = N50, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "N50", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$N50) + 35000))
+)
+
+# Move the label further to the left
+N50[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
+
+N50 
+
+```
+
+
+##### GC Content
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+
+GC_Content <- 
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = GC, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "GC Content", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$GC) + 1000))
+)
+
+# Move the label further to the left
+GC_Content[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
+
+GC_Content 
+
+```
+
+
+##### Sequencing depth
+```{r, echo=FALSE, eval=FALSE}
+options("scipen" = 100, "digits" = 0)
+
+Sequencing_depth <- 
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = `DepthCov (X)`, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Sequencing depth", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$`DepthCov (X)`) + 100))
+)
+
+# Move the label further to the left
+Sequencing_depth[['x']][['layout']][['annotations']][[2]][['x']] <- -0.055
+
+Sequencing_depth
+
+```
+
+##### Number of CDS
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+
+Number_CDS <- 
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = CDS, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$CDS) + 100))
+)
+
+# Move the label further to the left
+Number_CDS[['x']][['layout']][['annotations']][[2]][['x']] <- -0.06
+
+Number_CDS
+
+```
+
+##### Number of CRISPRs
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+
+Number_CRISPRs <- 
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$CRISPRs) + 1))
+)
+
+# Move the label further to the left
+Number_CRISPRs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.03
+
+Number_CRISPRs
+
+```
+
+
+##### Number of rRNAs
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+
+Number_rRNAs <- 
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = rRNAs, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$rRNAs) + 1))
+)
+
+# Move the label further to the left
+Number_rRNAs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.03
+
+Number_rRNAs
+
+```
+
+
+##### Number of tRNAs
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+
+Number_tRNAs <- 
+ggplotly(
+ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs, fill = factor(ST))) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.minor = element_line(colour = "grey90"),
+        panel.grid.major = element_line(colour = "grey90"),
+        panel.grid.major.x = element_line(colour = "grey90"),
+        axis.text = element_text(size = 10),
+        axis.title = element_text(size = 12, face = "bold")) +
+  labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST") +
+  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  lims(y = c(0, max(Assembly_full$tRNAs) + 10))
+)
+
+# Move the label further to the left
+Number_tRNAs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.045
+
+Number_tRNAs
+
+```
+
+
+
+
+<br>
+
+[Back to index](#index)
+
+## Multi-Locus Sequence Typing (MLST) {#mlst}
+Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst).
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+MLST <- 
+  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  rename(ST = ST, `Clonal complex` = clonal_complex)
+
+Create_DT(x = MLST, caption = 'Table 5: Multi-Locus Sequence Typing (MLST)')
+```
+***
+
+<br>
+
+[Back to index](#index)
+
+## Antibiotic resistance genes {#resistance}
+Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity below `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))` was removed.
+
+Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Protein identifier`, `Contig id`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+AMR <- 
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv") %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  filter(`Element subtype` != "POINT" ) %>% 
+  select(-c("Scope", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Create_DT(x = AMR, filter = "top", caption = 'Table 6: default caption')
+```
+
+
+***
+
+<br>
+
+Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))`.
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+AMR_HeatMap <- 
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv") %>% 
+  slice(., 1:(n() - 1)) %>% 
+  pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
+  mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample")
+```
+
+
+```{r echo=FALSE, eval=FALSE, purl=FALSE, echo=FALSE}
+AMR_HeatMap %>%
+  pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
+  select(!c("-")) %>% 
+  base::as.matrix() %>%
+  Heatmap()
+```
+
+***
+
+
+
+<br>
+
+*    Point mutations conferring antibiotic resistance
+
+
+Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))`.
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+AntBioRes <-
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv") %>%
+  slice(., 1:(n() - 1)) %>% 
+  left_join(x = ., y = Assembly_right, by = "Sample")
+```
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Create_DT(AntBioRes, caption = 'Table 7: Point mutations conferring antibiotic resistance')
+```
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Anti_Res_Genes <- 
+  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv") %>% 
+  select(!c("COVERAGE", "COVERAGE_MAP", "DATABASE")) %>% 
+  mutate(across(where(is_character), as_factor))
+```
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Create_DT(x = Anti_Res_Genes, filter = "top", caption = 'Table 8: antibiotic resistance genes')
+```
+
+
+
+<br>
+
+
+Following figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$abricate$mincov), "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$abricate$minid), "%", sep = ""))`.
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Anti_Res_Genes_PA <- 
+  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv") %>% 
+  slice(-n()) %>% 
+  pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
+  left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+  pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0)
+```
+
+```{r echo=FALSE, eval=FALSE, purl=FALSE}
+Anti_Res_Genes_PA
+```
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+DBs <- levels(factor(Anti_Res_Genes_PA$DATABASE))
+plot_list = list()
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+for (i in seq_along(DBs)) {
+Anti_Res_Genes_PA.i <- NULL
+Anti_Res_Genes_PA.i <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
+Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i, select = -c(RESISTANCE, `Clonal complex`, DATABASE))
+
+Anti_Res_Genes_matrix <- as.matrix(Anti_Res_Genes_PA.i)
+  
+plot_list[[i]] = grid.grabExpr(draw(Heatmap(Anti_Res_Genes_matrix, column_title = paste("Database = ", DBs[i], sep = ""))))
+
+}
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+plot_grid(plotlist = plot_list)
+```
+
+
+
+<br>
+
+[Back to index](#index)
+
+## Virulence genes {#virulence}
+
+Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __??80%__ and identity below __??80%__ was removed.
+
+
+Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Virulence_Genes <- 
+  read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv") %>% 
+  select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+  mutate(across(where(is_character), as_factor))
+```
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Create_DT(x = Virulence_Genes, filter = "top", caption = 'Table 9: virulence genes')
+```
+
+***
+
+Following figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$abricate$mincov), "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$abricate$minid), "%", sep = ""))`.
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Virulence_Genes_PA <- 
+  Virulence_Genes %>%  
+  rename(.data = ., Sample = SAMPLE) %>% 
+  left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+  mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`GENE`, "^-$"))) %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  pivot_wider(data = ., names_from = "GENE", values_from = "Presence / Absence", values_fill = 0) 
+```
+
+```{r echo=FALSE, eval=FALSE, purl=FALSE}
+# Run for verification only
+# Virulence_Genes_PA
+```
+
+```{r, echo=FALSE}
+Virulence_Genes_PA %>% 
+  select(c(1, 13:ncol(.))) %>% 
+  base::as.matrix() %>%
+  Heatmap()
+```
+
+
+***
+
+
+Following table shows virulence genes by screening the draft genomes against the custom database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below 50 % was removed.
+
+Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Virulence_Genes_Screening <- 
+  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
+  relocate(Sample) %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  select(!tail(names(.), 1))
+```
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = 'Table 10: virulence genes from blast')
+```
+
+***
+
+Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = ""))`.
+
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Virulence_Genes_Blast <- 
+  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_matrix.tsv") %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  slice(-n()) %>% 
+  pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
+  relocate(Sample) %>% 
+  left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+  pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
+```
+
+```{r echo=FALSE, eval=FALSE, purl=FALSE}
+# Run for verification only
+# Virulence_Genes_Blast
+```
+
+```{r fig.width= 10, echo=FALSE}
+Virulence_Genes_Blast %>% 
+  select(!c(DATABASE, ST, `Clonal complex`)) %>% 
+  base::as.matrix() %>%
+  Heatmap()
+```
+
+
+<br>
+
+[Back to index](#index)
+
+## Pangenome analysis {#pangenome}
+
+Following charts show pangenome analysis using [Roary](https://pubmed.ncbi.nlm.nih.gov/26198102):
+
+
+*     Pangenome genes summary
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Pangenome_genes_summary <- 
+  read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  slice(., 1:(n() - 1))
+```
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+Pangenome_genes_summary %>% 
+ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
+  geom_bar(width = 1, stat = "identity") +
+  labs(fill = "Core genes") +
+  coord_polar("y", start = 0) + 
+  scale_fill_brewer(palette = "Blues") +
+  theme_minimal() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.border = element_blank(),
+    panel.grid = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.x = element_blank(),
+    plot.title = element_text(size = 14, face = "bold")
+  ) +
+  geom_text(aes(y = Pangenome_genes_summary[[3]]/3 + c(0, cumsum(Pangenome_genes_summary[[3]])[-length(Pangenome_genes_summary[[3]])]), label = percent(Pangenome_genes_summary[[3]]/100)),
+            size = 4,
+            position = position_jitter(width = 0.5, height = 0.8)
+     )
+```
+
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+Pangenome_genes_summary %>% 
+  ggplot(data = ., aes(x = reorder(.[[1]], -.[[3]]), y = .[[3]], fill = .[[1]])) +
+  geom_bar( stat = "identity") +
+  scale_fill_viridis(discrete = TRUE, direction = -1) + 
+  theme_classic() +
+  labs(x = "", y = "Value??", fill = "Genes") +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(size = 14),
+  )
+```
+
+<br>
+
+*     Pangenome frequency
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Pangenome_frequency <- 
+  readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv") %>% 
+  dplyr::mutate(across(where(is_character), as_factor)) %>% 
+  dplyr::select(.data = ., c(1, 15:last_col())) 
+
+# Run for verification only
+# Pangenome_frequency
+```
+
+```{r echo=FALSE}
+Pangenome_frequency_Genomes <-
+  Pangenome_frequency %>% 
+  select(-1) %>% 
+  dplyr::mutate(across(where(is_character), as_factor)) %>% 
+  dplyr::mutate(across(where(is.factor), as.numeric)) %>% 
+  mutate_all(~ +(. > 0)) %>% 
+  dplyr::transmute(Genomes = rowSums(., na.rm = TRUE))
+```
+
+```{r, echo=FALSE}
+Pangenome_frequency$Genomes <- Pangenome_frequency_Genomes$Genomes
+# Run for verification only
+# Pangenome_frequency 
+```
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+Pangenome_frequency %>% 
+  ggplot(data = ., aes(x = Genomes)) +
+  geom_bar(stat = "count") +
+  theme_classic() +
+  labs(x = "Num. of Genomes", y = "Num. of genes") +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(size = 14),
+  )
+```
+
+<br>
+
+*    Pangenome tree based on presence/absence of accesory genes
+
+```{r, echo=FALSE}
+#library(ape)
+Phylo_tree <- 
+  ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
+```
+
+```{r echo=FALSE, eval=FALSE, purl=FALSE}
+Phylo_tree
+```
+
+```{r echo=FALSE, eval=FALSE, purl=FALSE}
+# Run for verification only
+# str(Phylo_tree)
+```
+
+
+```{r echo=FALSE}
+# Function to work with both phylogenetic trees, ultra-metrics and non-ultrametrics
+heatmap.phylo <- function(x, Rowp, Colp, ...){
+  x <- x[Rowp$tip, Colp$tip]
+  xl <- c(0.5, ncol(x) + 0.5)
+  yl <- c(0.5, nrow(x) + 0.5)
+  layout(matrix(c(0,1,0,2,3,4,0,5,0),nrow = 3, byrow = TRUE),
+         width = c(1,3,1), height = c(1,3,1))
+  par(mar = rep(0,4))
+  plot(Colp, direction = "downwards", show.tip.label = FALSE,
+       xaxs = "i", x.lim = xl)
+  par(mar = rep(0,4))
+  plot(Rowp, direction = "rightwards", show.tip.label = FALSE, 
+       yaxs = "i", y.lim = yl)
+  par(mar = rep(0,4), xpd = TRUE)
+  image((1:nrow(x)) - 0.5, (1:ncol(x)) - 0.5, x, 
+        xaxs = "i", yaxs = "i", axes = FALSE, ...)
+  par(mar = rep(0,4))
+  plot(NA, axes = FALSE, ylab = "", xlab = "", yaxs = "i", xlim = c(0,2), ylim = yl)
+  text(rep(0, nrow(x)), 1:nrow(x), Rowp$tip, pos = 4)
+  par(mar = rep(0,4))
+  plot(NA, axes = FALSE, ylab = "", xlab = "", xaxs = "i", ylim = c(0,2), xlim = xl)
+  text(1:ncol(x), rep(2, ncol(x)), Colp$tip, srt = 90, pos = 2)
+}
+
+```
+
+
+```{r echo=FALSE, purl=FALSE}
+Mat_dimension <- length(Phylo_tree$tip.label)
+
+mat2 <- matrix(rnorm(Mat_dimension * Mat_dimension), nrow = Mat_dimension, dimnames = list(sample(Phylo_tree$tip.label, Mat_dimension), sample(Phylo_tree$tip.label, Mat_dimension)))
+ 
+# Run for verification only
+# mat2
+```
+
+```{r echo=FALSE}
+heatmap.phylo(mat2,Phylo_tree,Phylo_tree, xlab = "")
+```
+
+<br>
+
+*    Genes presence (color) or absence (blank) matrix between draft genomes
+
+<br>
+
+
+```{r, echo=FALSE}
+# __ATENCIÓN__ No tengo las columnas samples para hacer lo que se pedía en el documento pdf.
+# Se indicará en la matriz la
+# Sample y Clonal Complex a la que pertenece cada Sample. Para ello, la columna de unión entre ambos archivos es la columna Sample.
+# No tengo las columnas para hacer la unión con 
+# Pangenome_frequency %>% 
+#   mutate(across(where(is_character), as_factor)) %>% 
+#   pivot_longer(data = ., cols = !c("Protein", "Type"), names_to = "Sample", values_to = "P_A") %>% 
+#   relocate(Sample) %>% 
+#   left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+#   pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
+#   #select() %>% # Probably not all the columns are needed
+```
+
+
+```{r, echo=FALSE}
+Genomes_PA <- 
+  readr::read_csv("Roary_pangenome/gene_presence_absence.csv", 
+    col_types = cols(`Accessory Fragment` = col_double(), 
+        `Accessory Order with Fragment` = col_double(), 
+        `Non-unique Gene name` = col_character(), 
+        QC = col_character())) %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  select(c(1, 15:ncol(.))) %>% 
+  dplyr::mutate_at(vars(-Gene), as.numeric) %>%  
+  mutate_at(vars(-Gene), ~ +(. > 0)) %>% 
+  pivot_longer(data = ., cols = !c("Gene"), names_to = "Sample", values_to = "P_A") %>% 
+  left_join(x = ., y = Assembly_right, by = "Sample") %>% 
+  pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0) 
+  
+```
+
+```{r echo=FALSE, eval=FALSE, purl=FALSE}
+# Run for verification only
+# Genomes_PA
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+Genomes_PA %>% 
+  base::as.matrix() %>%
+  Heatmap()
+```
+
+<br>
+
+[Back to index](#index)
+
+## Genomic variants {#variants}
+
+Following table shows number of genomic structural variation identified in each draft genome using [Snippy](https://github.com/tseemann/snippy)
+
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+MLST_edited <- 
+  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  mutate(across(where(is_character), as_factor))
+```
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Genomic_variants <- 
+  read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv") %>% 
+  relocate(Sample) %>% 
+  mutate(across(where(is_character), as_factor)) %>% 
+  left_join(x = ., y = MLST_edited %>% select(Sample, ST, clonal_complex), by = "Sample")
+```
+
+
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Create_DT(x = Genomic_variants, filter = "top", caption = 'Table 11: Genomic variants')
+```
+
+<br>
+
+[Back to index](#index)
+
+## Summary report {#summary}
+
+Following table shows summary information for each draft genome:
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+summary_draft_genome <- 
+  read_tsv(file = "wombat_report.csv") %>% 
+  relocate(Sample) %>% 
+  mutate(across(where(is_character), as_factor))
+```
+
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+Create_DT(x = summary_draft_genome, filter = "top", caption = 'Table 10: virulence genes from blast')
+```
+
+
+<br>
+
+[Back to index](#index)
+
+## Citation {#citation}
+
+Jose A. Barbero, Antonio Canepa and Irene Ortega. Wombat (2021). Available at [GitHub](https://github.com/JoseBarbero/Wombat)
+
+***
+
+<br>
+
+Following tools (and reference) were used in Wombat:
+
+| Package/Tool      | Reference   | 
+|-------------------|-------------|
+| Trimmomatic       | [A.M. Bolger et al., 2014](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4103590/)   |
+| Prinseq           | [R. Schmieder and R. Edwards, 2011](https://www.ncbi.nlm.nih.gov/pubmed/21278185)   |
+| FLASH             | [T. Magoc and S. Salzberg, 2011](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3198573/) |
+| SPAdes            | [A. Bankevich et al., 2012](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519/) |
+| QUAST             | [A. Gurevich et al., 2013](https://www.ncbi.nlm.nih.gov/pubmed/23422339) |
+| progressiveMauve  | [A.E. Darling et al., 2010](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0011147) |
+| mlst              | [T. Seemann](https://github.com/tseemann/mlst) |
+| Abricate          | [T. Seemann](https://github.com/tseemann/abricate) |
+| BLAST             | [Z. Zhang et al., 2000](https://www.ncbi.nlm.nih.gov/pubmed/10890397)
+| AMRFinderPlus     | [M. Feldgarden et al., 2019](https://journals.asm.org/doi/10.1128/AAC.00483-19) |
+| Prokka            | [T. Seemann, 2014](https://www.ncbi.nlm.nih.gov/pubmed/24642063) |
+| DFAST             | [Y. Tanizawa et al., 2018](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5860143/) |
+| Roary             | [A.J. Page et al., 2015](https://www.ncbi.nlm.nih.gov/pubmed/26198102) |
+| snippy            | [T. Seemann](https://github.com/tseemann/snippy) |
+| rmarkdown         | [Allaire et al., 2021](https://cran.r-project.org/web/packages/rmarkdown/index.html) |
+| tidyverse         | [Wickham et al., 2019](https://tidyverse.tidyverse.org/) |
+| ComplexHeatmap    | [Gu, 2016](https://www.bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html) |
+| DT                | [Xie et al., 2021](https://cran.r-project.org/web/packages/DT/index.html) |
+| ggrepel           | [Slowikowski, 2021](https://cran.r-project.org/web/packages/ggrepel/) |
+| plotly            | [Sievert, 2020](https://cran.r-project.org/web/packages/plotly/index.html) |
+| rjson             | [Couture-Beil, 2018](https://cran.r-project.org/web/packages/rjson/index.html) |
+| scales            | [Wickham and Seidel, 2020](https://cran.r-project.org/web/packages/scales/index.html) |
+| viridis           | [Garnier et al., 2021](https://cran.r-project.org/web/packages/viridis/index.html) |
+
+
+***
+
+<br>
+
+[Back to index](#index)
