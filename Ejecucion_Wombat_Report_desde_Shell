@@ -1,0 +1,7 @@
+# Comando para ejecutar el RMarkdown desde la shell
+
+Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '~/path/to/data'))"
+
+Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '~/path/to/data'))"
+
+
