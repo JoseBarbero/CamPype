@@ -876,8 +876,9 @@ Following table shows number of genomic structural variation identified in each 
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-MLST_edited <- 
-  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+MLST_edited <-
+  read_tsv(file = "MLST/MLST_edited.txt", col_types = list(Sample = col_double())) %>%
+  slice(., 1:(n() - 1)) %>%
   mutate(across(where(is_character), as_factor))
 ```
 
