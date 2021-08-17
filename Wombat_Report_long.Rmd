@@ -928,7 +928,7 @@ Following table shows point mutations by screening the draft genomes against the
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 AntBioRes <-
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv") %>%
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
   slice(., 1:(n() - 1)) %>% 
   left_join(x = ., y = Assembly_right, by = "Sample")
 ```
