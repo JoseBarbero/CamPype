@@ -103,7 +103,6 @@ BeforeQC <-
 Create_DT(x = BeforeQC, caption = '')
 ```
 
-#### Graphical Overview of the Data
 
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Number of reads R1
@@ -228,7 +227,7 @@ Create_DT(x = AfterQC, caption = 'Table 2: After QC')
 
 <br>
 
-#### Graphical Overview of the Data
+
 
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Number of reads R1
@@ -354,8 +353,6 @@ FLASH_Reads <-
 Create_DT(x = FLASH_Reads, caption = 'Table 3: FLASH summary')
 ```
 
-
-#### Graphical Overview of the Data
 
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Percentage of joined reads
@@ -576,8 +573,6 @@ Assembly_full <-
 Create_DT(x = Assembly_full, caption = 'Table 4: Assembly analysis summary')
 ```
   
-#### Graphical Overview of the Data
-
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Number of contigs
 ```{r, echo=FALSE}
