@@ -618,7 +618,7 @@ Number_of_contigs
 ```
 
 
-##### Draft genome lengh
+##### Draft genome lenght
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 Draft_genome_lengh <- ggplotly(
