@@ -1346,7 +1346,7 @@ Genomic_variants <-
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Genomic_variants, filter = "top", caption = 'Table 11: Genomic variants')
+Create_DT(x = Genomic_variants, filter = "top", caption = '')
 ```
 
 <br>
