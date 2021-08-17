@@ -953,7 +953,7 @@ AntBioRes <-
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(AntBioRes, caption = 'Table 7: Point mutations conferring antibiotic resistance')
+Create_DT(AntBioRes, caption = '')
 ```
 
 
