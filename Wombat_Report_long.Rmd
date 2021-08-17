@@ -874,7 +874,7 @@ Create_DT(x = MLST, caption = '')
 [Back to index](#index)
 
 ## Antibiotic resistance genes {#resistance}
-Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity below `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))` was removed.
+Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity below `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`, was removed.
 
 Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Protein identifier`, `Contig id`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
 
@@ -896,7 +896,7 @@ Create_DT(x = AMR, filter = "top", caption = '')
 
 <br>
 
-Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))`.
+Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity ≥ `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`.
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
