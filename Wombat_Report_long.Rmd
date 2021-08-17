@@ -940,7 +940,7 @@ Create_DT(AntBioRes, caption = '')
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Anti_Res_Genes <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
   select(!c("COVERAGE", "COVERAGE_MAP", "DATABASE")) %>% 
   mutate(across(where(is_character), as_factor))
 ```
