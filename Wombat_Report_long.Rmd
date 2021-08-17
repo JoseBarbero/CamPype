@@ -974,7 +974,6 @@ Anti_Res_Genes_PA
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 DBs <- levels(factor(Anti_Res_Genes_PA$DATABASE))
 plot_list = list()
-#i <- 1
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
