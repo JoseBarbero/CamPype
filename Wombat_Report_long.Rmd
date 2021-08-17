@@ -221,7 +221,7 @@ AfterQC <-
   read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_afterQC.tsv") %>% 
   mutate(Sample = factor(Sample))
 
-Create_DT(x = AfterQC, caption = 'Table 2: After QC')
+Create_DT(x = AfterQC, caption = '')
 ```
   
 
