@@ -603,7 +603,7 @@ Number_of_contigs
 ##### Draft genome lenght
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-Draft_genome_lengh <- ggplotly(
+Draft_genome_lenght <- ggplotly(
 ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = `Clonal complex`)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
