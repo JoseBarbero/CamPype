@@ -966,9 +966,8 @@ Anti_Res_Genes <-
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Anti_Res_Genes, filter = "top", caption = 'Table 8: antibiotic resistance genes')
+Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
 ```
-
 
 
 <br>
