@@ -350,7 +350,7 @@ FLASH_Reads <-
   read_tsv(file = "Flash_read_extension/reads_statistics_FLASH.tsv") %>% 
   mutate(Sample = factor(Sample))
 
-Create_DT(x = FLASH_Reads, caption = 'Table 3: FLASH summary')
+Create_DT(x = FLASH_Reads, caption = '')
 ```
 
 
