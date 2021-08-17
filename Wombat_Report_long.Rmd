@@ -570,7 +570,7 @@ Assembly_right <-
 Assembly_full <-
   left_join(x = Assembly_left, y = Assembly_right, by = "Sample") 
 
-Create_DT(x = Assembly_full, caption = 'Table 4: Assembly analysis summary')
+Create_DT(x = Assembly_full, caption = '')
 ```
   
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
