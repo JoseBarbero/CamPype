@@ -604,7 +604,7 @@ Number_of_contigs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 Draft_genome_lengh <- ggplotly(
-ggplot(data = Assembly_full, aes(x = factor(ST), y = GenomeLen, fill = Sample)) +
+ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = `Clonal complex`)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
         panel.background = element_blank(),
@@ -613,8 +613,8 @@ ggplot(data = Assembly_full, aes(x = factor(ST), y = GenomeLen, fill = Sample)) 
         panel.grid.major.x = element_line(colour = "grey90"),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Clonal complex", y = "Genome lengh (bp)", title = "", fill = "Sample") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  labs(x = "Sample", y = "Genome lengh (bp)", title = "", fill = "Clonal complex") +
+  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
   lims(y = c(0, max(Assembly_full$GenomeLen) + 150000))
 )
 
