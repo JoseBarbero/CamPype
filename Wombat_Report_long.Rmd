@@ -580,7 +580,7 @@ Create_DT(x = Assembly_full, caption = '')
 options("scipen" = 100, "digits" = 0)
 Number_of_contigs <-
   ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = Contigs, fill = factor(ST))) +
+ggplot(data = Assembly_full, aes(x = factor(ST), y = Contigs, fill = Sample)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
         panel.background = element_blank(),
@@ -589,7 +589,7 @@ ggplot(data = Assembly_full, aes(x = Sample, y = Contigs, fill = factor(ST))) +
         panel.grid.major.x = element_line(colour = "grey90"),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST") +
+  labs(x = "Clonal complex", y = "Number of contigs", title = "", fill = "ST") +
   facet_grid(cols = vars(`Clonal complex`), margins = FALSE)
 )
 
