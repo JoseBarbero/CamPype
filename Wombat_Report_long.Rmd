@@ -118,7 +118,7 @@ ggplot(data = BeforeQC, aes(x = Sample, y = R1Reads)) +
         panel.grid.major.x = element_line(colour = "grey90"),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of Reads", title = "Before CQ - R1") +
+  labs(x = "Samples", y = "Number of Reads", title = "Before QC - R1") +
   lims(y = c(0, max(BeforeQC$R1Reads) + 250000))
 )
 ```
@@ -145,7 +145,7 @@ ggplot(data = BeforeQC, aes(x = Sample, y = R1LenMean)) +
         panel.grid.major.x = element_line(colour = "grey90"),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Average read length", title = "Before CQ - R1") + 
+  labs(x = "Samples", y = "Average read length", title = "Before QC - R1") + 
   lims(y = c(0, max(BeforeQC$R1LenMean + 150)))
 )
 ```
@@ -171,7 +171,7 @@ ggplot(data = BeforeQC, aes(x = Sample, y = R2Reads)) +
         panel.grid.major.x = element_line(colour = "grey90"),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of Reads", title = "Before CQ - R2") +
+  labs(x = "Samples", y = "Number of Reads", title = "Before QC - R2") +
   lims(y = c(0, max(BeforeQC$R2Reads) + 250000))
 )
 ```
@@ -199,7 +199,7 @@ ggplot(data = BeforeQC, aes(x = Sample, y = R2LenMean)) +
         panel.grid.major.x = element_line(colour = "grey90"),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Average read length", title = "Before CQ - R2") + 
+  labs(x = "Samples", y = "Average read length", title = "Before QC - R2") + 
   lims(y = c(0, max(BeforeQC$R2LenMean + 150)))
 )
 ```
