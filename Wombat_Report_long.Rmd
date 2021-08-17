@@ -1107,7 +1107,7 @@ Following charts show pangenome analysis using [Roary](https://pubmed.ncbi.nlm.n
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Pangenome_genes_summary <- 
-  read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   slice(., 1:(n() - 1))
 ```
