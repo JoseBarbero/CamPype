@@ -1035,7 +1035,7 @@ Virulence_Genes <-
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Virulence_Genes, filter = "top", caption = 'Table 9: virulence genes')
+Create_DT(x = Virulence_Genes, filter = "top", caption = '')
 ```
 
 ***
