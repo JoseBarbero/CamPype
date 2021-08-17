@@ -904,7 +904,7 @@ AMR <-
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = AMR, filter = "top", caption = 'Table 6: default caption')
+Create_DT(x = AMR, filter = "top", caption = '')
 ```
 
 
