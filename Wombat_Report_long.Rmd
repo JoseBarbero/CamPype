@@ -632,7 +632,7 @@ options("scipen" = 100, "digits" = 0)
 
 Contig_length <- 
 ggplotly(
-ggplot(data = Assembly_full, aes(x = factor(ST), y = ContigLen, fill = Sample)) +
+ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = `Clonal complex`)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
         panel.background = element_blank(),
@@ -641,8 +641,8 @@ ggplot(data = Assembly_full, aes(x = factor(ST), y = ContigLen, fill = Sample)) 
         panel.grid.major.x = element_line(colour = "grey90"),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "Sample") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "Clonal complex") +
+  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
   lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
 )
 
