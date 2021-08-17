@@ -100,7 +100,7 @@ BeforeQC <-
   read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_beforeQC.tsv") %>% 
   mutate(Sample = factor(Sample))
 
-Create_DT(x = BeforeQC, caption = 'Table 1: Before QC')
+Create_DT(x = BeforeQC, caption = '')
 ```
 
 #### Graphical Overview of the Data
