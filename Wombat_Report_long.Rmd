@@ -861,7 +861,7 @@ Following table shows the MLST, MLST allelic profile and clonal complex using [m
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 MLST <- 
-  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  read_tsv(file = "MLST/MLST_edited.txt", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   rename(ST = ST, `Clonal complex` = clonal_complex)
 
@@ -927,7 +927,7 @@ AMR_HeatMap %>%
 *    Point mutations conferring antibiotic resistance
 
 
-Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))`.
+Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity ≥ `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`.
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 AntBioRes <-
@@ -957,7 +957,7 @@ Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
 <br>
 
 
-Following figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$abricate$mincov), "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$abricate$minid), "%", sep = ""))`.
+Following figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r paste((wombat_config_json$abricate$mincov), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$abricate$minid), "%", sep = "")`.
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
@@ -1024,7 +1024,7 @@ Create_DT(x = Virulence_Genes, filter = "top", caption = '')
 
 ***
 
-Following figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$abricate$mincov), "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$abricate$minid), "%", sep = ""))`.
+Following figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r paste((wombat_config_json$abricate$mincov), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$abricate$minid), "%", sep = "")`.
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
@@ -1071,7 +1071,7 @@ Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = '')
 
 ***
 
-Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = ""))`.
+Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = "")`.
 
 
 
