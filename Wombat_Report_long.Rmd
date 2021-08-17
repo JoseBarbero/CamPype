@@ -1367,7 +1367,7 @@ summary_draft_genome <-
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = summary_draft_genome, filter = "top", caption = 'Table 10: virulence genes from blast')
+Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 ```
 
 
