@@ -959,7 +959,7 @@ Following figure represents presence/absence of antibiotic resistance genes in e
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Anti_Res_Genes_PA <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
   slice(-n()) %>% 
   pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
   left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
