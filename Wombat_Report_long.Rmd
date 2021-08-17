@@ -15,6 +15,7 @@ output:
     df_print: paged
     toc: yes  
     toc_float: yes
+    toc_depth: 6
   pdf_document:
     toc: yes
 params:
