@@ -913,7 +913,7 @@ AMR_HeatMap <-
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 AMR_HeatMap %>%
   pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
-  select(!c("-")) %>% 
+  #select(!c("-")) %>% 
   base::as.matrix() %>%
   Heatmap()
 ```
