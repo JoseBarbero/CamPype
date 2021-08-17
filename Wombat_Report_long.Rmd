@@ -71,7 +71,7 @@ Create_DT <- function(x, caption = caption, filter = "none"){
 
 
 ### Wombat's report sections {.sidebar #index}
-* #### [Sequencing summary before and after quality control (QC) with $Trimmomatic and PRINSEQ](#Sequencingsummary)
+* #### [Sequencing summary before and after quality control (QC) with Trimmomatic and PRINSEQ](#Sequencingsummary)
 * #### [Joined reads summary with FLASH](#Joinedreads)
 * #### [Assembly analysis and annotation](#annotation)
 * #### [Multi-Locus Sequence Typing (MLST)](#mlst)
