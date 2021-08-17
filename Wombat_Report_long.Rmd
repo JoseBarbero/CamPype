@@ -770,7 +770,7 @@ options("scipen" = 100, "digits" = 0)
 
 Number_CRISPRs <- 
 ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = factor(ST))) +
+ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = `Clonal complex`)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
         panel.background = element_blank(),
@@ -779,8 +779,8 @@ ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = factor(ST))) +
         panel.grid.major.x = element_line(colour = "grey90"),
         axis.text = element_text(size = 10),
         axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
+  labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "Clonal complex") +
+  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
   lims(y = c(0, max(Assembly_full$CRISPRs) + 1))
 )
 
