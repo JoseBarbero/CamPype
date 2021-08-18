@@ -539,7 +539,7 @@ plot_grid(plotlist = plot_list)
 
 ## Virulence genes {#virulence}
 
-Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __??80%__ and identity below __??80%__ was removed.
+Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __80%__ and identity below __80%__ was removed.
 
 
 Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
