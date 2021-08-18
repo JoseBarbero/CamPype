@@ -1274,10 +1274,10 @@ heatmap.phylo(mat2,Phylo_tree,Phylo_tree, xlab = "")
 ```{r, echo=FALSE}
 Genomes_PA <- 
   readr::read_csv("Roary_pangenome/gene_presence_absence.csv", 
-    col_types = cols(`Accessory Fragment` = col_double(), 
-        `Accessory Order with Fragment` = col_double(), 
-        `Non-unique Gene name` = col_character(), 
-        QC = col_character())) %>% 
+                  col_types = cols(`Accessory Fragment` = col_double(), 
+                                   `Accessory Order with Fragment` = col_double(), 
+                                   `Non-unique Gene name` = col_character(), 
+                                   QC = col_character())) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   select(c(1, 15:ncol(.))) %>% 
   dplyr::mutate_at(vars(-Gene), as.numeric) %>%  
