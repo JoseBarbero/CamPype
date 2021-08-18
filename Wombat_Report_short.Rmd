@@ -401,7 +401,7 @@ MLST <-
   mutate(across(where(is_character), as_factor)) %>% 
   rename(ST = ST, `Clonal complex` = clonal_complex)
 
-Create_DT(x = MLST, caption = 'Table 5: Multi-Locus Sequence Typing (MLST)')
+Create_DT(x = MLST, caption = '')
 ```
 ***
 
