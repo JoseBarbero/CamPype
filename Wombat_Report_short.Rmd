@@ -647,7 +647,7 @@ Following charts show pangenome analysis using [Roary](https://pubmed.ncbi.nlm.n
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Pangenome_genes_summary <- 
-  read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   slice(., 1:(n() - 1))
 ```
@@ -655,7 +655,7 @@ Pangenome_genes_summary <-
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 Pangenome_genes_summary %>% 
-ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
+  ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
   geom_bar(width = 1, stat = "identity") +
   labs(fill = "Core genes") +
   coord_polar("y", start = 0) + 
@@ -670,10 +670,9 @@ ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
     axis.text.x = element_blank(),
     plot.title = element_text(size = 14, face = "bold")
   ) +
-  geom_text(aes(y = Pangenome_genes_summary[[3]]/3 + c(0, cumsum(Pangenome_genes_summary[[3]])[-length(Pangenome_genes_summary[[3]])]), label = percent(Pangenome_genes_summary[[3]]/100)),
-            size = 4,
-            position = position_jitter(width = 0.5, height = 0.8)
-     )
+  geom_text(aes(y = Pangenome_genes_summary[[3]]/sum(Pangenome_genes_summary[[3]])),
+            label = scales::percent(Pangenome_genes_summary[[3]]/sum(Pangenome_genes_summary[[3]]), accuracy = 0.1),
+            size = 4, position = position_jitter(width = 0.5, height = 0.8))
 ```
 
 
