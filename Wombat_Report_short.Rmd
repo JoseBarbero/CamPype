@@ -593,7 +593,7 @@ Below the variables' heading (columns' name) you will find a *filter box* that c
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes_Screening <- 
-  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
+  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_processed.tsv", show_col_types = FALSE) %>%
   relocate(Sample) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   select(!tail(names(.), 1))
@@ -601,7 +601,7 @@ Virulence_Genes_Screening <-
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = 'Table 10: virulence genes from blast')
+Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = '')
 ```
 
 ***
