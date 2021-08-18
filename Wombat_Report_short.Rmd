@@ -465,26 +465,26 @@ Following table shows point mutations by screening the draft genomes against the
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 AntBioRes <-
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv") %>%
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
   slice(., 1:(n() - 1)) %>% 
   left_join(x = ., y = Assembly_right, by = "Sample")
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(AntBioRes, caption = 'Table 7: Point mutations conferring antibiotic resistance')
+Create_DT(AntBioRes, caption = '')
 ```
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Anti_Res_Genes <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
   select(!c("COVERAGE", "COVERAGE_MAP", "DATABASE")) %>% 
   mutate(across(where(is_character), as_factor))
 ```
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Anti_Res_Genes, filter = "top", caption = 'Table 8: antibiotic resistance genes')
+Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
 ```
 
 
@@ -497,7 +497,7 @@ Following figure represents presence/absence of antibiotic resistance genes in e
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Anti_Res_Genes_PA <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
   slice(-n()) %>% 
   pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
   left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
@@ -546,14 +546,14 @@ Below the variables' heading (columns' name) you will find a *filter box* that c
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes <- 
-  read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv") %>% 
+  read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
   select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
   mutate(across(where(is_character), as_factor))
 ```
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Virulence_Genes, filter = "top", caption = 'Table 9: virulence genes')
+Create_DT(x = Virulence_Genes, filter = "top", caption = '')
 ```
 
 ***
