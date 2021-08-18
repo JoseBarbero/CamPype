@@ -108,8 +108,6 @@ Assembly_full <-
 Create_DT(x = Assembly_full, caption = '')
 ```
   
-#### Graphical Overview of the Data
-
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Number of contigs
 ```{r, echo=FALSE}
