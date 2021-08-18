@@ -363,20 +363,20 @@ Number_rRNAs
 options("scipen" = 100, "digits" = 0)
 
 Number_tRNAs <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$tRNAs) + 10))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$tRNAs) + 10))
+  )
 
 # Move the label further to the left
 Number_tRNAs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.045
