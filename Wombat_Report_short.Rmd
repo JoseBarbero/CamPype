@@ -606,7 +606,7 @@ Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = '')
 
 ***
 
-Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = ""))`.
+Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = "")`.
 
 
 
