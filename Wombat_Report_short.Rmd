@@ -110,24 +110,6 @@ Create_DT(x = Assembly_full, caption = '')
   
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Number of contigs
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = Contigs)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of contigs", title = "") +
-  facet_grid(rows = vars(ST), cols = vars(`Clonal complex`), margins = FALSE)
-)
-```
-
-
 
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
