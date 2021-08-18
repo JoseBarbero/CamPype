@@ -397,7 +397,7 @@ Following table shows the MLST, MLST allelic profile and clonal complex using [m
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 MLST <- 
-  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  read_tsv(file = "MLST/MLST_edited.txt", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   rename(ST = ST, `Clonal complex` = clonal_complex)
 
