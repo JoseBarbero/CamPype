@@ -89,8 +89,7 @@ Following table shows the number of contigs (> 500 bp), genome length, average c
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Assembly_left <- 
   read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
-  mutate(across(where(is_character), as_factor)) #%>% 
-  #dplyr::select(1,2, 8:13, 16:19)
+  mutate(across(where(is_character), as_factor))
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
