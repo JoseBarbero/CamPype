@@ -695,7 +695,7 @@ Pangenome_genes_summary %>%
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Pangenome_frequency <- 
-  readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv") %>% 
+  readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv", show_col_types = FALSE) %>% 
   dplyr::mutate(across(where(is_character), as_factor)) %>% 
   dplyr::select(.data = ., c(1, 15:last_col())) 
 
@@ -734,7 +734,7 @@ Pangenome_frequency %>%
 
 <br>
 
-*    Pangenome tree based on presence/absence of accesory genes
+*    Pangenome tree based on presence/absence of accessory genes
 
 ```{r, echo=FALSE}
 #library(ape)
