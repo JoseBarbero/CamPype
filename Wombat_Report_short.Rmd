@@ -168,20 +168,20 @@ Draft_genome_length
 options("scipen" = 100, "digits" = 0)
 
 Contig_length <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
+  )
 
 # Move the label further to the left
 Contig_length[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
@@ -196,20 +196,20 @@ Contig_length
 options("scipen" = 100, "digits" = 0)
 
 N50 <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = N50, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "N50", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$N50) + 35000))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = N50, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "N50", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$N50) + 35000))
+  )
 
 # Move the label further to the left
 N50[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
