@@ -105,7 +105,7 @@ Assembly_right <-
 Assembly_full <-
   left_join(x = Assembly_left, y = Assembly_right, by = c("Sample", "ST")) 
 
-Create_DT(x = Assembly_full, caption = 'Table 4: Assembly analysis summary')
+Create_DT(x = Assembly_full, caption = '')
 ```
   
 #### Graphical Overview of the Data
