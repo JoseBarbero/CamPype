@@ -95,7 +95,7 @@ Assembly_left <-
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Assembly_right <- 
-  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  read_tsv(file = "MLST/MLST_edited.txt", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   #select_at(c(1, 3, ncol(.))) %>% 
   rename(ST = ST, `Clonal complex` = clonal_complex)
