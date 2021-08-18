@@ -437,7 +437,7 @@ Following figure represents presence/absence of antibiotic resistance genes in e
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 AMR_HeatMap <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
   slice(., 1:(n() - 1)) %>% 
   pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
   mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
