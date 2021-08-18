@@ -862,7 +862,7 @@ MLST_edited <-
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Genomic_variants <- 
-  read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv") %>% 
+  read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
   relocate(Sample) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   left_join(x = ., y = MLST_edited %>% select(Sample, ST, clonal_complex), by = "Sample")
