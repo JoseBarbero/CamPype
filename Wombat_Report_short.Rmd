@@ -136,11 +136,11 @@ Number_of_contigs
 ```
 
 
-##### Draft genome lenght
+##### Draft genome length
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 
-Draft_genome_lenght <- ggplotly(
+Draft_genome_length <- ggplotly(
   ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = `Clonal complex`)) +
     geom_bar(stat = "identity") +
     theme(panel.border = element_blank(),
@@ -156,9 +156,9 @@ Draft_genome_lenght <- ggplotly(
 )
 
 # Move the label further to the left
-Draft_genome_lenght[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
+Draft_genome_length[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
 
-Draft_genome_lenght 
+Draft_genome_length 
 
 ```
 
