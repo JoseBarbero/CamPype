@@ -1,0 +1,41 @@
+# Acciones para mejorar el report#
+
+# Correo del 17/07/2021
+
+1) En el primer punto de Wombat’s report sections aparece el símbolo dólar: $Trimmomatic and PRINSEQ El título es igual que el apartado en sí.
+
+2) No es necesario el título para cada tabla porque se entiende lo que representa, incluso en algunos casos está mal. En ese caso haría falta lo mismo para los gráficos. Tampoco es necesario Graphical Overview of the Data.
+
+3) En los dos primeros gráficos: Before CQ – R1. Es QC.
+
+4) En Assembly analysis and annotation, using Prokka o DFAST. Debe ser using Prokka, o using DFAST, según especifique el usuario en wombat_config.py o en el propio nombre la carpeta generada.
+
+5) En el primer gráfico de Assembly analysis and annotation, la representación de ST debe ser junto a la representación de Clonal complex ya que es una característica individual para cada Sample y en ese eje donde está no se puede diferenciar.
+
+6) El segundo gráfico de Assembly analysis and annotation no es necesario en ese apartado.
+
+7) En el apartado Multi-Locus Sequence Typing (MLST) podría incluir un árbol filogenético haciendo un clustering y resaltando el ST y Clonal complex de cada Sample.
+
+8) Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using AMRFinderPlus. Presence is represented as coverage ≥ and identity ≥ . Faltan los valores de coverage e identity.
+
+9) Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using AMRFinderPlus. Presence is represented as coverage ≥ and identity ≥ . Faltan los valores de coverage e identity (lo mismo en el resto de sitios).  El código de después no debe aparecer. El heatmap debe mostrar las Samples en horizontal (filas) con los genes de resistencia en vertical (columna 2 hasta -2), es decir, solo los valores 1/0, además de resaltar las Samples por ST y Clonal complex.
+
+10) El punto Point mutations conferring antibiotic resistance sobra.
+
+11) La tabla para Point mutations no sé de qué archivo la has cogido pero hay columnas que faltan y otras aparecen con otro encabezado.
+
+
+12) En los heatmaps de ABRicate, debe mostrar las Samples en horizontal (columna 2 hasta -3) con los genes de resistencia en vertical (filas), es decir, solo los valores 1/0, además de resaltar las Samples por ST y Clonal complex. Además, antes de los heatmaps debe aparecer la tabla.
+
+13)  Si pones filtros para filtrar las tablas, que aparezca en todas.
+
+14) ¿Por qué está resaltado esto Any hit with coverage below ??80% and identity below ??80% was removed? En esta tabla, sobra la columna DATABSE. El heatmap debe indicar las Samples en horizontal con los genes en vertical, es decir, presencia/ausencia para cada registro de la columna GENE en cada fila Sample, además de resaltar las Samples por ST y Clonal complex. Lo mismo para el heatmap de BLAST (columa Sample con Protein). Aquí habrá que resaltar además las Protein con la columna Protein type.
+
+15) Los gráficos de Pangenome genes summary están mal representados. No reflejan %, sino valores absolutos.
+
+16) La tabla de Pangenome frequency sobra.
+
+17) La tabla de Pangenome tree based on presence/absence of accesory genes. ¿Que representa el gráfico? No hay explicación de los colores.
+
+18) En Genes presence (color) or absence (blank) matrix between draft genomes, la Samples están son las últimas columnas y cada columna representa los genes de esa Sample.
+

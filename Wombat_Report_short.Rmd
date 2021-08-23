@@ -88,16 +88,14 @@ Following table shows the number of contigs (> 500 bp), genome length, average c
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Assembly_left <- 
-  read_tsv(file = "wombat_report.csv") %>% 
-  mutate(across(where(is_character), as_factor)) #%>% 
-  #dplyr::select(1,2, 8:13, 16:19)
+  read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
+  mutate(across(where(is_character), as_factor))
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Assembly_right <- 
-  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  read_tsv(file = "MLST/MLST_edited.txt", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
-  #select_at(c(1, 3, ncol(.))) %>% 
   rename(ST = ST, `Clonal complex` = clonal_complex)
 ```
 
@@ -107,48 +105,29 @@ Assembly_right <-
 Assembly_full <-
   left_join(x = Assembly_left, y = Assembly_right, by = c("Sample", "ST")) 
 
-Create_DT(x = Assembly_full, caption = 'Table 4: Assembly analysis summary')
+Create_DT(x = Assembly_full, caption = '')
 ```
   
-#### Graphical Overview of the Data
-
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Number of contigs
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = Contigs)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of contigs", title = "") +
-  facet_grid(rows = vars(ST), cols = vars(`Clonal complex`), margins = FALSE)
-)
-```
-
-
 
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
+
 Number_of_contigs <-
   ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = Contigs, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE)
-)
+    ggplot(data = Assembly_full, aes(x = Sample, y = Contigs, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Number of contigs", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE)
+  )
 
 # Move the label further to the left
 Number_of_contigs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.05
@@ -157,28 +136,29 @@ Number_of_contigs
 ```
 
 
-##### Draft genome lengh
+##### Draft genome length
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-Draft_genome_lengh <- ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$GenomeLen) + 150000))
+
+Draft_genome_length <- ggplotly(
+  ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = `Clonal complex`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "Clonal complex") +
+    facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+    lims(y = c(0, max(Assembly_full$GenomeLen) + 150000))
 )
 
 # Move the label further to the left
-Draft_genome_lengh[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
+Draft_genome_length[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
 
-Draft_genome_lengh 
+Draft_genome_length 
 
 ```
 
@@ -188,20 +168,20 @@ Draft_genome_lengh
 options("scipen" = 100, "digits" = 0)
 
 Contig_length <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
+  )
 
 # Move the label further to the left
 Contig_length[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
@@ -216,20 +196,20 @@ Contig_length
 options("scipen" = 100, "digits" = 0)
 
 N50 <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = N50, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "N50", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$N50) + 35000))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = N50, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "N50", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$N50) + 35000))
+  )
 
 # Move the label further to the left
 N50[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
@@ -244,20 +224,20 @@ N50
 options("scipen" = 100, "digits" = 0)
 
 GC_Content <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = GC, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "GC Content", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$GC) + 1000))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = GC, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "GC Content", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$GC) + 1000))
+  )
 
 # Move the label further to the left
 GC_Content[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
@@ -269,28 +249,28 @@ GC_Content
 
 ##### Sequencing depth
 ```{r, echo=FALSE, eval=FALSE}
-options("scipen" = 100, "digits" = 0)
-
-Sequencing_depth <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = `DepthCov (X)`, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Sequencing depth", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$`DepthCov (X)`) + 100))
-)
-
-# Move the label further to the left
-Sequencing_depth[['x']][['layout']][['annotations']][[2]][['x']] <- -0.055
-
-Sequencing_depth
+# options("scipen" = 100, "digits" = 0)
+# 
+# Sequencing_depth <- 
+#   ggplotly(
+#     ggplot(data = Assembly_full, aes(x = Sample, y = `DepthCov (X)`, fill = `Clonal complex`)) +
+#       geom_bar(stat = "identity") +
+#       theme(panel.border = element_blank(),
+#             panel.background = element_blank(),
+#             panel.grid.minor = element_line(colour = "grey90"),
+#             panel.grid.major = element_line(colour = "grey90"),
+#             panel.grid.major.x = element_line(colour = "grey90"),
+#             axis.text = element_text(size = 10),
+#             axis.title = element_text(size = 12, face = "bold")) +
+#       labs(x = "Samples", y = "Sequencing depth", title = "", fill = "Clonal complex") +
+#       facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+#       lims(y = c(0, max(Assembly_full$`DepthCov (X)`) + 100))
+#   )
+# 
+# # Move the label further to the left
+# Sequencing_depth[['x']][['layout']][['annotations']][[2]][['x']] <- -0.055
+# 
+# Sequencing_depth
 
 ```
 
@@ -299,20 +279,20 @@ Sequencing_depth
 options("scipen" = 100, "digits" = 0)
 
 Number_CDS <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = CDS, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$CDS) + 100))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = CDS, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Number of CDS", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$CDS) + 100))
+  )
 
 # Move the label further to the left
 Number_CDS[['x']][['layout']][['annotations']][[2]][['x']] <- -0.06
@@ -321,25 +301,26 @@ Number_CDS
 
 ```
 
+
 ##### Number of CRISPRs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 
 Number_CRISPRs <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$CRISPRs) + 1))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$CRISPRs) + 1))
+  )
 
 # Move the label further to the left
 Number_CRISPRs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.03
@@ -354,20 +335,20 @@ Number_CRISPRs
 options("scipen" = 100, "digits" = 0)
 
 Number_rRNAs <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = rRNAs, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$rRNAs) + 1))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = rRNAs, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$rRNAs) + 1))
+  )
 
 # Move the label further to the left
 Number_rRNAs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.03
@@ -382,20 +363,20 @@ Number_rRNAs
 options("scipen" = 100, "digits" = 0)
 
 Number_tRNAs <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs, fill = factor(ST))) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST") +
-  facet_grid(cols = vars(`Clonal complex`), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$tRNAs) + 10))
-)
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs, fill = `Clonal complex`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "Clonal complex") +
+      facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+      lims(y = c(0, max(Assembly_full$tRNAs) + 10))
+  )
 
 # Move the label further to the left
 Number_tRNAs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.045
@@ -416,11 +397,11 @@ Following table shows the MLST, MLST allelic profile and clonal complex using [m
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 MLST <- 
-  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  read_tsv(file = "MLST/MLST_edited.txt", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   rename(ST = ST, `Clonal complex` = clonal_complex)
 
-Create_DT(x = MLST, caption = 'Table 5: Multi-Locus Sequence Typing (MLST)')
+Create_DT(x = MLST, caption = '')
 ```
 ***
 
@@ -436,14 +417,14 @@ Below the variables' heading (columns' name) you will find a *filter box* that c
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 AMR <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   filter(`Element subtype` != "POINT" ) %>% 
   select(-c("Scope", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = AMR, filter = "top", caption = 'Table 6: default caption')
+Create_DT(x = AMR, filter = "top", caption = '')
 ```
 
 
@@ -456,7 +437,7 @@ Following figure represents presence/absence of antibiotic resistance genes in e
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 AMR_HeatMap <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
   slice(., 1:(n() - 1)) %>% 
   pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
   mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
@@ -479,33 +460,31 @@ AMR_HeatMap %>%
 
 <br>
 
-*    Point mutations conferring antibiotic resistance
-
 
 Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))`.
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 AntBioRes <-
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv") %>%
+  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
   slice(., 1:(n() - 1)) %>% 
   left_join(x = ., y = Assembly_right, by = "Sample")
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(AntBioRes, caption = 'Table 7: Point mutations conferring antibiotic resistance')
+Create_DT(AntBioRes, caption = '')
 ```
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Anti_Res_Genes <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
   select(!c("COVERAGE", "COVERAGE_MAP", "DATABASE")) %>% 
   mutate(across(where(is_character), as_factor))
 ```
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Anti_Res_Genes, filter = "top", caption = 'Table 8: antibiotic resistance genes')
+Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
 ```
 
 
@@ -518,7 +497,7 @@ Following figure represents presence/absence of antibiotic resistance genes in e
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Anti_Res_Genes_PA <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv") %>% 
+  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
   slice(-n()) %>% 
   pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
   left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
@@ -560,21 +539,21 @@ plot_grid(plotlist = plot_list)
 
 ## Virulence genes {#virulence}
 
-Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __??80%__ and identity below __??80%__ was removed.
+Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __80%__ and identity below __80%__ was removed.
 
 
 Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes <- 
-  read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv") %>% 
+  read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
   select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
   mutate(across(where(is_character), as_factor))
 ```
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Virulence_Genes, filter = "top", caption = 'Table 9: virulence genes')
+Create_DT(x = Virulence_Genes, filter = "top", caption = '')
 ```
 
 ***
@@ -614,7 +593,7 @@ Below the variables' heading (columns' name) you will find a *filter box* that c
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes_Screening <- 
-  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
+  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_processed.tsv", show_col_types = FALSE) %>%
   relocate(Sample) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   select(!tail(names(.), 1))
@@ -622,18 +601,18 @@ Virulence_Genes_Screening <-
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = 'Table 10: virulence genes from blast')
+Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = '')
 ```
 
 ***
 
-Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = ""))`.
+Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = "")`.
 
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes_Blast <- 
-  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_matrix.tsv") %>% 
+  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   slice(-n()) %>% 
   pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
@@ -668,7 +647,7 @@ Following charts show pangenome analysis using [Roary](https://pubmed.ncbi.nlm.n
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Pangenome_genes_summary <- 
-  read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE) %>% 
+  read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   slice(., 1:(n() - 1))
 ```
@@ -676,7 +655,7 @@ Pangenome_genes_summary <-
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 Pangenome_genes_summary %>% 
-ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
+  ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
   geom_bar(width = 1, stat = "identity") +
   labs(fill = "Core genes") +
   coord_polar("y", start = 0) + 
@@ -691,10 +670,9 @@ ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
     axis.text.x = element_blank(),
     plot.title = element_text(size = 14, face = "bold")
   ) +
-  geom_text(aes(y = Pangenome_genes_summary[[3]]/3 + c(0, cumsum(Pangenome_genes_summary[[3]])[-length(Pangenome_genes_summary[[3]])]), label = percent(Pangenome_genes_summary[[3]]/100)),
-            size = 4,
-            position = position_jitter(width = 0.5, height = 0.8)
-     )
+  geom_text(aes(y = Pangenome_genes_summary[[3]]/sum(Pangenome_genes_summary[[3]])),
+            label = scales::percent(Pangenome_genes_summary[[3]]/sum(Pangenome_genes_summary[[3]]), accuracy = 0.1),
+            size = 4, position = position_jitter(width = 0.5, height = 0.8))
 ```
 
 
@@ -717,7 +695,7 @@ Pangenome_genes_summary %>%
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Pangenome_frequency <- 
-  readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv") %>% 
+  readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv", show_col_types = FALSE) %>% 
   dplyr::mutate(across(where(is_character), as_factor)) %>% 
   dplyr::select(.data = ., c(1, 15:last_col())) 
 
@@ -756,7 +734,7 @@ Pangenome_frequency %>%
 
 <br>
 
-*    Pangenome tree based on presence/absence of accesory genes
+*    Pangenome tree based on presence/absence of accessory genes
 
 ```{r, echo=FALSE}
 #library(ape)
@@ -817,7 +795,7 @@ heatmap.phylo(mat2,Phylo_tree,Phylo_tree, xlab = "")
 
 <br>
 
-*    Genes presence (color) or absence (blank) matrix between draft genomes
+*    Genes presence (colour) or absence (blank) matrix between draft genomes
 
 <br>
 
@@ -840,10 +818,10 @@ heatmap.phylo(mat2,Phylo_tree,Phylo_tree, xlab = "")
 ```{r, echo=FALSE}
 Genomes_PA <- 
   readr::read_csv("Roary_pangenome/gene_presence_absence.csv", 
-    col_types = cols(`Accessory Fragment` = col_double(), 
-        `Accessory Order with Fragment` = col_double(), 
-        `Non-unique Gene name` = col_character(), 
-        QC = col_character())) %>% 
+                  col_types = cols(`Accessory Fragment` = col_double(), 
+                                   `Accessory Order with Fragment` = col_double(), 
+                                   `Non-unique Gene name` = col_character(), 
+                                   QC = col_character())) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   select(c(1, 15:ncol(.))) %>% 
   dplyr::mutate_at(vars(-Gene), as.numeric) %>%  
@@ -876,25 +854,23 @@ Following table shows number of genomic structural variation identified in each 
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-MLST_edited <- 
-  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+MLST_edited <-
+  read_tsv(file = "MLST/MLST_edited.txt", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor))
 ```
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Genomic_variants <- 
-  read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv") %>% 
+  read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
   relocate(Sample) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   left_join(x = ., y = MLST_edited %>% select(Sample, ST, clonal_complex), by = "Sample")
 ```
 
 
-
-
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Genomic_variants, filter = "top", caption = 'Table 11: Genomic variants')
+Create_DT(x = Genomic_variants, filter = "top", caption = '')
 ```
 
 <br>
@@ -908,14 +884,14 @@ Following table shows summary information for each draft genome:
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 summary_draft_genome <- 
-  read_tsv(file = "wombat_report.csv") %>% 
+  read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
   relocate(Sample) %>% 
   mutate(across(where(is_character), as_factor))
 ```
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = summary_draft_genome, filter = "top", caption = 'Table 10: virulence genes from blast')
+Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 ```
 
 
