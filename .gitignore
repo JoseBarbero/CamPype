@@ -118,4 +118,7 @@ Util*
 Test*
 TEST*
 test*
+
+# R 
+*.Rproj
 .Rproj.user
