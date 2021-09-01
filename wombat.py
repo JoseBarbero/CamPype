@@ -1729,7 +1729,7 @@ if __name__ == "__main__":
             output_filename=mlst_out_file)
     
     # MLST postprocessing
-    mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_edited.txt")
+    # mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_edited.txt")
 
     # ABRicate call (virulence genes)
     
