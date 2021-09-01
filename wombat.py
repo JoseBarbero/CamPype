@@ -383,7 +383,8 @@ def mlst_postprocessing(mlst_file, output_file):
 
 
         output_data = output_data.append(pd.DataFrame([new_row], columns=col_names), ignore_index=True)
-
+        print('MLST post processing:')
+        print(output_data)
     output_data.to_csv(output_file, index=False, sep="\t")
 
 
@@ -1346,6 +1347,14 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     csv_report = csv_report.reindex(columns=new_colums_order)
     csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)
 
+def generate_markdown_report(output_dir, fasta_mode):
+    if fasta_mode:
+        rcode = "Rscript -e \"rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '/"+output_dir+"'))\""
+    else:
+        rcode = "Rscript -e \"rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '/"+output_dir+"'))\""
+
+    return call(rcode, shell=True)
+
 
 if __name__ == "__main__":
 
@@ -1937,7 +1946,8 @@ if __name__ == "__main__":
                         custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
                         amrfinder_matrix_file=amrfinder_matrix_file)
 
-    
+    generate_markdown_report(output_folder, fasta_mode)
+
     # Remove temporal folders
     if cfg.config["run_trimmomatic"]:
         shutil.rmtree(trimmomatic_dir)
