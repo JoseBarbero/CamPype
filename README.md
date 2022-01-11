@@ -38,6 +38,11 @@ Wombat is a pipeline for the analysis of Illumina paired-end sequencing data and
     $ ./updatewombat
     ```
 
+IMPORTANT. After installing or updating Wombat, you need to download the AMRFinder database by running in the Wombat environment:
+ ```conda activate wombat
+ amrfinder -u
+ ```
+
 ## How to uninstall Wombat (Linux)
 
 1. Make sure you are not in Wombat conda environment
