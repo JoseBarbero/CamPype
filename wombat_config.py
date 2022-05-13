@@ -39,8 +39,8 @@ config = {
     },
     "abricate": {
         "run_amr": True,  # Run antimicrobial resistance gene search using ABRicate and blastn. If you want to omit this step, set it to False. Default: False
-        "antimicrobial_resistance_databases": ["card", "ncbi"], # Select as many databases as desired from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn. Default: card
-        "virulence_factors_databases": ["vfdb", "ecoli_vf"], # Select as many databases as desired from ABRicate to identify cirulence factors: argannot, card, ecoh, ecoli_vf, megares, ncbi or resfinder. Remember, ABRicate uses blastn. Default: vfdb
+        "antimicrobial_resistance_databases": ["card", "ncbi"], # Select as many databases as desired from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi and resfinder. Remember, ABRicate uses blastn. Default: card
+        "virulence_factors_databases": ["vfdb", "ecoli_vf"], # Select as many databases as desired from ABRicate to identify virulence factors: vfdb and ecoli_vf. Remember, ABRicate uses blastn. Default: vfdb
         "find_plasmids": True,  # Runs ABRicate using plasmidfinder db
         "mincov": 90, # Minimum DNA % coverage for considering an antimicrobial resistance gene as present. Default: 90
         "minid": 90 # Minimum DNA % identity for considering an antimicrobial resistance gene as present. Default: 90      
