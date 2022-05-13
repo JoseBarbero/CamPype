@@ -104,6 +104,10 @@ Could not run command: cat \/home\/Wombat_OUTPUT_20220511_131550\/Prokka_annotat
 
 Run ```prokka --setupdb``` first and execute Wombat again.
 
+2.  ABRicate can't find any gen and this message appears: ```BLAST Database error: Error pre-fetching sequence data```
+
+Run ```abricate --setupdb``` first and execute Wombat again.
+
 ## Contact:
 For questions, bugs and suggestions, please contact to iortega@ubu.es or jabarbero@ubu.es.
 
