@@ -155,8 +155,8 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir, merged_sample=N
         arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"]]
 
     if cfg.config["spades"]["k"]:
-            arguments.extend(["-k", str(cfg.config["spades"]["k"])])
-        arguments.extend(["-o", out_dir+"/"+sample])
+        arguments.extend(["-k", str(cfg.config["spades"]["k"])])
+    arguments.extend(["-o", out_dir+"/"+sample])
     return call(arguments)
 
 
@@ -1376,7 +1376,7 @@ if __name__ == "__main__":
         json.dump(cfg.config, json_file)
 
     trimmomatic_dir = output_folder+"/tmp_Trimmomatic_filtering"
-    if cfg.config["run_trimmomatic"]:
+    if cfg.config["trim_adaptors"]:
         prinseq_dir = output_folder+"/Trimmomatic_and_Prinseq_filtering"
     else:
         prinseq_dir = output_folder+"/Prinseq_filtering"
@@ -1407,7 +1407,7 @@ if __name__ == "__main__":
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
     
-    if cfg.config["run_trimmomatic"]:
+    if cfg.config["trim_adaptors"]:
         os.mkdir(trimmomatic_dir)
 
     if cfg.config["abricate"]["find_plasmids"]:
@@ -1539,7 +1539,7 @@ if __name__ == "__main__":
         
         if not fasta_mode:
             # Run trimmomatic or not
-            if cfg.config["run_trimmomatic"]:
+            if cfg.config["trim_adaptors"]:
                 
                 print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Trimmomatic\n"), flush=True)
                 trimmomatic_call(input_file1=sample_fw,
@@ -1946,7 +1946,7 @@ if __name__ == "__main__":
     generate_markdown_report(output_folder, fasta_mode)
 
     # Remove temporal folders
-    if cfg.config["run_trimmomatic"]:
+    if cfg.config["trim_adaptors"]:
         shutil.rmtree(trimmomatic_dir)
     if cfg.config["reference_genome"]["file"]:
         shutil.rmtree(contigs_dir)
