@@ -87,7 +87,7 @@ def prinseq_call(input_file1, input_file2, output_folder, sample, log_name=None)
     """
     arguments = ["prinseq-lite.pl", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["prinseq"]["min_len"]), \
                 "-min_qual_mean", str(cfg.config["prinseq"]["min_qual_mean"]), "-trim_qual_right", str(cfg.config["prinseq"]["trim_qual_right"]), "-trim_qual_window", \
-                str(cfg.config["prinseq"]["trim_qual_window"]), "-trim_qual_type", cfg.config["prinseq"]["trim_qual_type"], "-out_format", "3", "-out_good", output_folder+"/"+sample, "-out_bad", "null", log_name]
+                str(cfg.config["prinseq"]["trim_qual_window"]), "-trim_qual_type", "mean", "-out_format", "3", "-out_good", output_folder+"/"+sample, "-out_bad", "null", log_name]
     return call(arguments)
 
 
@@ -135,7 +135,7 @@ def flash_call(input_file_1, input_file_2, output_filename, output_dir):
     return call(arguments)
 
 
-def spades_call(merged_sample, forward_sample, reverse_sample, sample, out_dir):
+def spades_call(forward_sample, reverse_sample, sample, out_dir, merged_sample=None):
     """
     Spades call
     
@@ -149,10 +149,14 @@ def spades_call(merged_sample, forward_sample, reverse_sample, sample, out_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"], "--cov-cutoff", cfg.config["spades"]["cov_cutoff"]]
+    if merged_sample:
+        arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"]]
+    else:
+        arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"]]
+
     if cfg.config["spades"]["k"]:
-        arguments.extend(["-k", str(cfg.config["spades"]["k"])])
-    arguments.extend(["-o", out_dir+"/"+sample])
+            arguments.extend(["-k", str(cfg.config["spades"]["k"])])
+        arguments.extend(["-o", out_dir+"/"+sample])
     return call(arguments)
 
 
@@ -302,7 +306,7 @@ def quast_call(input_file, output_dir, min_contig_len):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig_len), cfg.config["quast"]["icarus"], "--silent"]
+    arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig_len), "--no-icarus", "--silent"]
     return call(arguments)
 
 
@@ -489,10 +493,6 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
 def amrfinder_call(samples_basenames, ref_genome_basename, annotation_dir, gff_dir, genus, db_name, output_dir):
     amrfinder_out_file = output_dir+"/AMR_AMRFinder.tsv"
     resume_file = output_dir+"/AMR_genes_AMRFinder_matrix.tsv"
-    
-    # Update amrfinder database before running (it doesn't take too long)
-    if cfg.config["amrfinder"]["update_db"]:
-        call(["amrfinder", "-u"])
 
     has_header = False
 
@@ -762,7 +762,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
                             str(cfg.config["presence_absence_matrix"]["protein_cover"]) + 
                             ") % on each sample for considering a virulence gene as present.")
 
-def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", metagenome=False, rawproduct=False):
+def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", rawproduct=False):
     """
     Prokka call.
     
@@ -775,7 +775,6 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
         species {string} -- TODO
         strain {string} -- TODO
         proteins {string} -- TODO
-        metagenome {string} -- TODO
         rawproduct {string} -- TODO
     
     Returns:
@@ -793,8 +792,6 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
                 "--gcode", "11"]
     if cfg.config["prokka"]["reference_annotation"]:
         arguments.extend(["--proteins", proteins])
-    if metagenome:
-        arguments.append("--metagenome")
     if rawproduct:
         arguments.append("--rawproduct")
     return call(arguments)
@@ -836,9 +833,9 @@ def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
     """
     arguments = ["dfast", 
                 "--genome", contigs_file,
-                "--sort_sequence", cfg.config["dfast"]["sort"],
+                "--sort_sequence", "false",
                 "--minimum_length", str(cfg.config["min_contig_len"]),
-                "--use_original_name", str(cfg.config["dfast"]["use_original_name"]),
+                "--use_original_name", "true",
                 "--step", "1",
                 "--organism", organism, 
                 "--strain", sample_basename,
@@ -1513,7 +1510,6 @@ if __name__ == "__main__":
                         species=cfg.config["reference_genome"]["species"],
                         strain=cfg.config["reference_genome"]["strain"],
                         proteins=cfg.config["reference_genome"]["proteins"],
-                        metagenome=False, # False in reference file
                         rawproduct=cfg.config["prokka"]["rawproduct"]
                         )
             # Set roary input files (renaming to get reference file first)
@@ -1607,12 +1603,17 @@ if __name__ == "__main__":
 
             # SPAdes call
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SPAdes\n"), flush=True)
-            
-            spades_call(merged_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq",
-                        forward_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
-                        reverse_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
-                        sample=sample_basename,
-                        out_dir=spades_dir)
+            if cfg.config["spades"]["merge_reads"]:        
+                spades_call(forward_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
+                            reverse_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
+                            sample=sample_basename,
+                            out_dir=spades_dir,
+                            merged_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq",)
+            else:
+                spades_call(forward_sample=prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R1.fastq",
+                            reverse_sample=prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R2.fastq",
+                            sample=sample_basename,
+                            out_dir=spades_dir)
             step_counter += 1
 
             # Get minimum contig length
@@ -1696,7 +1697,6 @@ if __name__ == "__main__":
                         species=species,
                         strain=sample_basename,
                         proteins=cfg.config["reference_genome"]["proteins"],
-                        metagenome=cfg.config["prokka"]["metagenome"],
                         rawproduct=cfg.config["prokka"]["rawproduct"])
             step_counter += 1
             if cfg.config["amrfinder"]["run"]:
@@ -1881,9 +1881,6 @@ if __name__ == "__main__":
         amrfinder_db_name = "NDARO"
         print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: {amrfinder_db_name})\n"), flush=True)
         step_counter += 1
-        # Update amrfinder database before running (it doesn't take too long)
-        if cfg.config["amrfinder"]["update_db"]:
-            call(["amrfinder", "-u"])
         if annotator == "prokka":
             gff_dir = prokka_refactor_dir
         elif annotator == "dfast":
