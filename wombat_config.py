@@ -8,34 +8,24 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
-    "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
-    "run_trimmomatic": True, # Set to True or False if you want to run Trimmomatic or not to filter sequenced reads
+    "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
+    "trim_adaptors": True, #Remove adapter sequences from reads if set to True. Otherwise, set to False. Default: True
     "prinseq": {
         "min_len": 50, # Minimum read length. Default: 50
         "min_qual_mean": 30, # Minimum read quality. Default: 30
         "trim_qual_right": 25,  # Trim sequence by quality score from the 3'-end with this threshold score. Default: 25
-        "trim_qual_window": 20,     # The sliding window size used to calculate quality score by type. To stop at the first base that fails the rule defined, use a window size of 1. Default: 20
-        "trim_qual_type": "mean",   # Type of quality score calculation to use. Default: 20
+        "trim_qual_window": 20     # The sliding window size used to calculate quality score by type. To stop at the first base that fails the rule defined, use a window size of 1. Default: 20
     },  
     "spades": {
         "mode": "--isolate",    # Assembly modes: --isolate (highly recommended for high-coverage isolate and multi-cell Illumina data), --careful (reduce the number of mismatches and short indels, recommended only for assembly of small genomes) or --sc (required for MDA (single-cell) data). Default: --isolate
-        "cov_cutoff": "auto",    # Read coverage cutoff value. Must be a positive float value, or 'auto', or 'off'. Default value is 'auto', when SPAdes automatically computes coverage threshold using conservative strategy
-        "k": False     # k-mer sizes to be used. Set this to a number or comma-separated list of numbers (all values must be odd, less than 128 and listed in ascending order). Example: 55,77,121. If set to False, values are automatically selected using maximum read length. If mode --sc is set, the default values are 21, 33 and 55. Default: False 
+        "k": False,     # k-mer sizes to be used. Set this to a number or comma-separated list of numbers (all values must be odd, less than 128 and listed in ascending order). Example: 55,77,121. If set to False, values are automatically selected using maximum read length. If mode --sc is set, the default values are 21, 33 and 55. Default: False 
+        "merge_reads": True # Merge pairs of reads before assembly to improve the quality of assembly when paired reads overlap if set to True. Otherwise, set to False. Default: True
     },
     "min_contig_len": 500,
-    "quast": {
-        "icarus": "--no-icarus"    # Do not build Icarusviewers
-    },
-    "annotator": "dfast",  # Set this to "prokka" or "dfast"
+    "annotator": "prokka",  # Set this to "prokka" or "dfast"
     "prokka": {
-        "metagenome": True, # Improve gene predictions for highly fragmented genomes if set to True (not for reference genome). Otherwise, set to False. Default: True
         "rawproduct": True, # Do not clean up product annotation if set to True. Otherwise, set to False. Default: True
         "reference_annotation": True    # Use reference genome annotation GenBank file to first annotate from if set to True. Otherwise, set to False. Default: True
-    },
-    "dfast": {
-        "min_length": 1,    # Minimum sequence length (bp) to annotate. Default: 1
-        "use_original_name": "true",    # Use original sequence names in a query FASTA file (true or false). Default: True
-        "sort": "false"    # Sort sequences by length (true or false). Default: False
     },
     "abricate": {
         "run_amr": True,  # Run antimicrobial resistance gene search using ABRicate and blastn. If you want to omit this step, set it to False. Default: False
@@ -44,11 +34,9 @@ config = {
         "find_plasmids": True,  # Runs ABRicate using plasmidfinder db
         "mincov": 90, # Minimum DNA % coverage for considering an antimicrobial resistance gene as present. Default: 90
         "minid": 90 # Minimum DNA % identity for considering an antimicrobial resistance gene as present. Default: 90      
-        
     },
     "amrfinder": {
         "run": True,  # Run antimicrobial resistance gene search using AMRFinder and blastp (database: NDARO). If you want to omit this step, set it to False. Default: True
-        "update_db": False,  # Updates the database before running AMRFinder (Internet connection is required) if set to True. Otherwise, set to False. Default: False
         "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
     },
