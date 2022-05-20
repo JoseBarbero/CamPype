@@ -116,6 +116,12 @@ def refactor_prinseq_output(input_dir, sample):
                     new_filename = os.path.join(root, sample+"_R2.fastq")
                     os.rename(os.path.join(root, filename), new_filename)
                     filenames["R2"] = new_filename
+    
+    # If we are in compressed mode we need to compress the outputs
+    if compressed_mode:
+        for key, value in filenames.items():
+            arguments = ["gzip", value, "-c"]
+            call(arguments, stdout=open(value+".gz", 'w'))
     return filenames
 
 
@@ -501,26 +507,15 @@ def amrfinder_call(samples_basenames, ref_genome_basename, annotation_dir, gff_d
 
     with open(amrfinder_out_file, "w") as global_file:
         for sample in samples:
-            if sample == ref_genome_basename:
-                call([  "amrfinder",
-                        "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
-                        "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
-                        "-g", gff_dir+"/+"+sample+".gff", 
-                        "--organism", genus, 
-                        "--plus", 
-                        "-i", str(cfg.config["amrfinder"]["minid"]),
-                        "-c", str(cfg.config["amrfinder"]["mincov"]),
-                        "-o", output_dir+"/"+sample+".txt"])
-            else:
-                call([  "amrfinder",
-                        "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
-                        "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
-                        "-g", gff_dir+"/"+sample+".gff", 
-                        "--organism", genus, 
-                        "--plus", 
-                        "-i", str(cfg.config["amrfinder"]["minid"]),
-                        "-c", str(cfg.config["amrfinder"]["mincov"]),
-                        "-o", output_dir+"/"+sample+".txt"])
+            call([  "amrfinder",
+                    "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
+                    "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
+                    "-g", gff_dir+"/"+sample+".gff", 
+                    "--organism", genus, 
+                    "--plus", 
+                    "-i", str(cfg.config["amrfinder"]["minid"]),
+                    "-c", str(cfg.config["amrfinder"]["mincov"]),
+                    "-o", output_dir+"/"+sample+".txt"])
 
             # Group all the results in a single file        
             with open(output_dir+"/"+sample+".txt") as in_file:
@@ -1399,7 +1394,7 @@ if __name__ == "__main__":
     roary_plots_dir = roary_dir+"/Roary_plots"
     dfast_refactor_dir = dfast_dir+"/refactored_gff"
     prokka_refactor_dir = prokka_dir+"/AMR_format_files"
-    blast_proteins_dir = vir_dir+"/BLAST_custom_virulence_genes"
+    blast_proteins_dir = vir_dir+"/BLAST_inhouse_virulence_genes"
     dna_database_blast = blast_proteins_dir+"/DNA_database"
 
     # Create directories
@@ -1448,14 +1443,40 @@ if __name__ == "__main__":
 
     fasta_mode = cfg.config["assembled_genomes"]
 
+    compressed_mode = False
+    decompressed_samples_fw = dict()
+    decompressed_samples_rv = dict()
     # Checking correct input files format in fasta mode
     for sample_basename, data in read_input_files("input_files.csv"):
         sample_fw = data["FW"]
         sample_rv = data["RV"]
-        if fasta_mode:
-            if not sample_fw.split(".")[-1] in ["fasta", "fa", "fna"]:
-                print("WRONG INPUT FORMAT:", sample_fw)
-                print("Input must be a valid fasta format file.")
+        
+        # Compressed mode
+        decompressed_samples_fw[sample_basename] = sample_fw
+        decompressed_samples_rv[sample_basename] = sample_rv
+        
+        if sample_fw.split(".")[-1] == "gz":
+            compressed_mode = True
+            if sample_fw.split(".")[-2] == "tar":
+                # Unzip from .tar.gz
+                call("tar -xzf " + sample_fw + " -C " + output_folder, shell=True)
+                call("tar -xzf " + sample_rv + " -C " + output_folder, shell=True)
+                # Get file basename from path
+                decompressed_samples_fw[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq"
+                decompressed_samples_rv[sample_basename] = output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq"
+            else:
+                # Unzip from .gz
+                with open(output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq", "w") as fw_file:
+                    call("gunzip -c " + sample_fw, stdout=fw_file, shell=True)
+                with open(output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq", "w") as rv_file:
+                    call("gunzip -c " + sample_rv, stdout=rv_file, shell=True)
+                decompressed_samples_fw[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq"
+                decompressed_samples_rv[sample_basename] = output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq"
+        else:
+            if fasta_mode:
+                if not sample_fw.split(".")[-1] in ["fasta", "fa", "fna"]:
+                    print("WRONG INPUT FORMAT:", sample_fw)
+                    print("Input must be a valid fasta format file.")
     
 
     if reference_genome_file:
@@ -1554,8 +1575,8 @@ if __name__ == "__main__":
                 prinseq_input1 = trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq"
                 prinseq_input2 = trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq"
             else:
-                prinseq_input1 = sample_fw
-                prinseq_input2 = sample_rv
+                prinseq_input1 = decompressed_samples_fw[sample_basename]
+                prinseq_input2 = decompressed_samples_rv[sample_basename]
 
 
             # Create prinseq output directories
@@ -1571,8 +1592,8 @@ if __name__ == "__main__":
             step_counter += 1
             
             # Prinseq output files refactor
+            print("\nRefactoring prinseq output files\n", flush=True)
             prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
-            
 
             # Flash call
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Flash\n"), flush=True)
@@ -1585,7 +1606,8 @@ if __name__ == "__main__":
             # Quality reports
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Read statistics\n"), flush=True)
             step_counter += 1
-            report_pre_qc = get_reads_table(sample_fw, sample_rv, sample_basename, prinseq_dir+"/reads_statistics_beforeQC.tsv", False)
+            
+            report_pre_qc = get_reads_table(decompressed_samples_fw[sample_basename], decompressed_samples_rv[sample_basename], sample_basename, prinseq_dir+"/reads_statistics_beforeQC.tsv", False)
 
             report_post_qc = get_reads_table(prinseq_files["R1"], prinseq_files["R2"], sample_basename, prinseq_dir+"/reads_statistics_afterQC.tsv", True)
 
@@ -1738,7 +1760,7 @@ if __name__ == "__main__":
             output_filename=mlst_out_file)
     
     # MLST postprocessing
-    mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_edited.txt")
+    mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
 
     # ABRicate call (virulence genes)
     
@@ -1804,15 +1826,15 @@ if __name__ == "__main__":
 
     # Blast call
     if cfg.config["run_blast"]:
-        print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against custom database)\n"), flush=True)
+        print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against inhouse database)\n"), flush=True)
         step_counter += 1
         contig_files = ([os.path.join(draft_contigs_dir, f) for f in os.listdir(draft_contigs_dir)])
         contig_files.append(cfg.config["reference_genome"]["file"])
 
-        blast_output_name = "BLAST_custom_VFDB.txt"
+        blast_output_name = "BLAST_inhouse_VFDB.txt"
         proteins_file = cfg.config["proteins_reference_file"]
         dna_database_blast = blast_proteins_dir+"/DNA_database"
-        proteins_database_name = "custom_VFDB.txt"    # This is an output file name
+        proteins_database_name = "inhouse_VFDB.txt"    # This is an output file name
         if not os.path.exists(blast_proteins_dir):
             os.mkdir(blast_proteins_dir)
         if not os.path.exists(dna_database_blast):
@@ -1921,7 +1943,7 @@ if __name__ == "__main__":
                         summary_pre_qc, 
                         summary_post_qc, 
                         summary_post_flash,
-                        mlst_dir+"/MLST_edited.txt",
+                        mlst_dir+"/MLST_and_CC.txt",
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
                         snippy_summary=snippy_summary_outfile,
                         custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
@@ -1937,7 +1959,7 @@ if __name__ == "__main__":
                         summary_pre_qc, 
                         summary_post_qc, 
                         summary_post_flash,
-                        mlst_dir+"/MLST_edited.txt",
+                        mlst_dir+"/MLST_and_CC.txt",
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
                         snippy_summary=snippy_summary_outfile,
                         custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
@@ -1952,7 +1974,12 @@ if __name__ == "__main__":
         shutil.rmtree(contigs_dir)
     if annotator == "prokka" and cfg.config["amrfinder"]["run"]:
         shutil.rmtree(prokka_refactor_dir)
-    
+
+    # Remove temporal files
+    if compressed_mode:
+        for key, value in decompressed_samples_fw.items():
+            os.remove(value)
+
     # Remove empty folders
     for root, dirnames, filenames in os.walk(output_folder, topdown=False):
         for dirname in dirnames:
