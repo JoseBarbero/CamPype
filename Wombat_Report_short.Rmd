@@ -598,7 +598,7 @@ Below the variables' heading (columns' name) you will find a *filter box* that c
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes_Screening <- 
-  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_processed.tsv", show_col_types = FALSE) %>%
+  read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_processed.tsv", show_col_types = FALSE) %>%
   relocate(Sample) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   select(!tail(names(.), 1))
@@ -617,7 +617,7 @@ Following figure represents presence/absence of virulence genes in each draft ge
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes_Blast <- 
-  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
+  read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   slice(-n()) %>% 
   pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
