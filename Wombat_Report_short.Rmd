@@ -861,7 +861,7 @@ Following table shows number of genomic structural variation identified in each 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 MLST_edited <-
   read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
-  mutate(across(where(is_character), as_factor))
+  mutate(across(where(is_character), as.numeric))
 ```
 
 
@@ -869,7 +869,7 @@ MLST_edited <-
 Genomic_variants <- 
   read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
   relocate(Sample) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
+  mutate(across(where(is_character), as.numeric)) %>% 
   left_join(x = ., y = MLST_edited %>% select(Sample, ST, clonal_complex), by = "Sample")
 ```
 
