@@ -1,8 +1,6 @@
 name: wombat
 channels:
-  - anaconda
   - conda-forge
-  - bioconda
 dependencies:
   - python=3.7
   - numpy=1.18.4

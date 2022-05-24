@@ -9,7 +9,7 @@ config = {
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
     "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
-    "trim_adaptors": True, #Remove adapter sequences from reads if set to True. Otherwise, set to False. Default: True
+    "trim_adaptors": False, #Remove adapter sequences from reads if set to True. Otherwise, set to False. Default: True
     "prinseq": {
         "min_len": 50, # Minimum read length. Default: 50
         "min_qual_mean": 30, # Minimum read quality. Default: 30

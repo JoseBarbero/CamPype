@@ -1,7 +1,25 @@
 #!/bin/bash
+conda init bash
+
+conda activate wombat
+
 OUTDIR=$(python -c "import wombat_config as cfg; print(cfg.config['output_directory'])")
 OUTDIR=$OUTDIR/Wombat_OUTPUT_`date "+%Y%m%d_%H%M%S"`
 mkdir -p $OUTDIR
 cp input_files.csv $OUTDIR/
 cp wombat_config.py $OUTDIR/
+
 python wombat.py $OUTDIR "$@" 2>&1 | tee $OUTDIR/wombat.log
+python -c "from terminal_banner import Banner; print(Banner('\nGenerating HTML report.\n'), flush=True)"
+conda deactivate
+conda activate wombatR
+
+FASTAMODE=$(python -c "import wombat_config as cfg; print(cfg.config['assembled_genomes'])")
+echo $OUTDIR
+if [ "$FASTAMODE" == "True" ]; then
+    Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '/$OUTDIR'))"
+else
+    Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '/$OUTDIR'))"
+fi
+conda activate wombat
+python -c "from terminal_banner import Banner; print(Banner('\nDONE\n'), flush=True)"

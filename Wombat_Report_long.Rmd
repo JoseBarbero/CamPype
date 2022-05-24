@@ -21,31 +21,36 @@ output:
 params:
   directory: directory
 ---
-```{r echo=FALSE, purl=FALSE, warning=FALSE, message=FALSE, purl=FALSE}
-```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, dev='pdf'}
 knitr::opts_chunk$set(dpi = 120, fig.align = "center")
 ```
 
-```{r, setup, include=FALSE}
+```{r, setup, include=FALSE, dev='pdf'}
 knitr::opts_knit$set(root.dir = paste(getwd(), params$directory, sep = ""))
 ```
 
 <br>
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-if (!require("pacman")) install.packages("pacman")
-pacman::p_load(tidyverse, DT, ape, plotly, rjson, viridis, scales, ggrepel, rmarkdown, cowplot)
-```
+``` {r, echo=FALSE, message=FALSE, warning=FALSE}
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
+if (!require('DT')) install.packages('DT', repos = "http://cran.us.r-project.org"); library('DT')
+if (!require('ape')) install.packages('ape', repos = "http://cran.us.r-project.org"); library('ape')
+if (!require('plotly')) install.packages('plotly', repos = "http://cran.us.r-project.org"); library('plotly')
+if (!require('rjson')) install.packages('rjson', repos = "http://cran.us.r-project.org"); library('rjson')
+if (!require('viridis')) install.packages('viridis', repos = "http://cran.us.r-project.org"); library('viridis')
+if (!require('scales')) install.packages('scales', repos = "http://cran.us.r-project.org"); library('scales')
+if (!require('ggrepel')) install.packages('ggrepel', repos = "http://cran.us.r-project.org"); library('ggrepel')
+if (!require('rmarkdown')) install.packages('rmarkdown', repos = "http://cran.us.r-project.org"); library('rmarkdown')
+if (!require('cowplot')) install.packages('cowplot', repos = "http://cran.us.r-project.org"); library('cowplot')
+if (!require('BiocManager')) install.packages('BiocManager', repos = "http://cran.us.r-project.org"); library('BiocManager')
+if (!require('tidyverse')) install.packages('tidyverse', repos = "http://cran.us.r-project.org"); library('tidyverse')
 
 BiocManager::install("ComplexHeatmap", force = FALSE)
 library(ComplexHeatmap)
 ```
+
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 # Loading the configuration file to extract parameters into the report text
@@ -96,9 +101,16 @@ and R2 reads.
 #### Before QC
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-BeforeQC <- 
+if(wombat_config_json$trim_adaptors == "true") {
+  BeforeQC <- 
   read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_beforeQC.tsv") %>% 
   mutate(Sample = factor(Sample))
+} else {
+  BeforeQC <- 
+  read_tsv(file = "Prinseq_filtering/reads_statistics_beforeQC.tsv") %>% 
+  mutate(Sample = factor(Sample))
+}
+
 
 Create_DT(x = BeforeQC, caption = '')
 ```
@@ -217,9 +229,15 @@ cat("Average read length = ", mean(BeforeQC$R2LenMean, na.rm = TRUE), 'bp', sep 
 #### After QC
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-AfterQC <- 
+if(wombat_config_json$trim_adaptors == "true") {
+  AfterQC <- 
   read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_afterQC.tsv") %>% 
   mutate(Sample = factor(Sample))
+} else {
+  AfterQC <- 
+  read_tsv(file = "Prinseq_filtering/reads_statistics_afterQC.tsv") %>% 
+  mutate(Sample = factor(Sample))
+}
 
 Create_DT(x = AfterQC, caption = '')
 ```
@@ -553,12 +571,12 @@ Following table shows the number of contigs (> 500 bp), genome length, average c
 Assembly_left <- 
   read_tsv(file = "wombat_report.csv") %>% 
   mutate(across(where(is_character), as_factor)) %>% 
-  dplyr::select(1, 8:13, 16:19)
+  dplyr::select(1, 8:13, 16:20)
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Assembly_right <- 
-  read_tsv(file = "MLST/MLST_edited.txt") %>% 
+  read_tsv(file = "MLST/MLST_and_CC.txt") %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   select_at(c(1, 3, ncol(.))) %>% 
   rename(ST = ST, `Clonal complex` = clonal_complex)
@@ -821,7 +839,6 @@ Number_rRNAs
 
 ```
 
-
 ##### Number of tRNAs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
@@ -861,7 +878,7 @@ Following table shows the MLST, MLST allelic profile and clonal complex using [m
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 MLST <- 
-  read_tsv(file = "MLST/MLST_edited.txt", show_col_types = FALSE) %>% 
+  read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   rename(ST = ST, `Clonal complex` = clonal_complex)
 
@@ -1054,7 +1071,7 @@ Below the variables' heading (columns' name) you will find a *filter box* that c
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes_Screening <- 
-  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
+  read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
   relocate(Sample) %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   select(!tail(names(.), 1))
@@ -1073,7 +1090,7 @@ Following figure represents presence/absence of virulence genes in each draft ge
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 Virulence_Genes_Blast <- 
-  read_tsv(file = "Virulence_genes/BLAST_custom_virulence_genes/Virulence_genes_BLAST_matrix.tsv") %>% 
+  read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv") %>% 
   mutate(across(where(is_character), as_factor)) %>% 
   slice(-n()) %>% 
   pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
@@ -1308,7 +1325,7 @@ Following table shows number of genomic structural variation identified in each 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 MLST_edited <-
-  read_tsv(file = "MLST/MLST_edited.txt", col_types = list(Sample = col_double())) %>%
+  read_tsv(file = "MLST/MLST_and_CC.txt", col_types = list(Sample = col_double())) %>%
   slice(., 1:(n() - 1)) %>%
   mutate(across(where(is_character), as_factor))
 ```
