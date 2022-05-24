@@ -86,7 +86,7 @@ Make sure you have the AMRFinder database downloaded after updating Wombat.
     ```
 1. Run the workflow
     ```bash
-    $ ./wombat
+    $ bash -i wombat
     ```
 1. \(*) You can deactivate the environment when you are finished
     ```bash
