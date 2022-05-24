@@ -19,6 +19,7 @@ Wombat is a pipeline for the analysis of Illumina paired-end sequencing data and
     $ conda config --append channels conda-forge
     $ conda config --append channels bioconda
     $ conda env create -f wombatenv.yml 
+    $ conda env create -f wombatenv_aux.yml 
     ```
 1. *(On Ubuntu systems you may find missing font problems running Mauve. We recommend you to install the required fonts just in case.)
     ```bash
