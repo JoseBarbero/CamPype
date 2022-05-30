@@ -8,7 +8,7 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
-    "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
+    "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
     "trim_adaptors": False, #Remove adapter sequences from reads if set to True. Otherwise, set to False. Default: True
     "prinseq": {
         "min_len": 50, # Minimum read length. Default: 50
@@ -18,9 +18,9 @@ config = {
     },  
     "spades": {
         "mode": "--isolate",    # Assembly modes: --isolate (highly recommended for high-coverage isolate and multi-cell Illumina data), --careful (reduce the number of mismatches and short indels, recommended only for assembly of small genomes) or --sc (required for MDA (single-cell) data). Default: --isolate
-        "k": False,     # k-mer sizes to be used. Set this to a number or comma-separated list of numbers (all values must be odd, less than 128 and listed in ascending order). Example: 55,77,121. If set to False, values are automatically selected using maximum read length. If mode --sc is set, the default values are 21, 33 and 55. Default: False 
-        "merge_reads": True # Merge pairs of reads before assembly to improve the quality of assembly when paired reads overlap if set to True. Otherwise, set to False. Default: True
+        "k": False     # k-mer sizes to be used. Set this to a number or comma-separated list of numbers (all values must be odd, less than 128 and listed in ascending order). Example: 55,77,121. If set to False, values are automatically selected using maximum read length. If mode --sc is set, the default values are 21, 33 and 55. Default: False 
     },
+    "merge_reads": True, # Merge pairs of reads before assembly to improve the quality of assembly when paired reads overlap if set to True. Otherwise, set to False. Default: True
     "min_contig_len": 500,
     "annotator": "prokka",  # Set this to "prokka" or "dfast"
     "prokka": {
