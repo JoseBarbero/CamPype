@@ -40,16 +40,16 @@ config = {
         "minid": 0.9,       # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         "mincov": 0.9       # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
     },
-    "run_blast": True,     # Run tBLASTn to scan specific virulence genes from the custom_VFDB.txt. Remember that you can edit that database with your own sequences. If you want to omit this step, set it to False. Default: True
-    "proteins_reference_file": "reference_files/custom_VFDB.txt", # OPTIONAL (mandatory if "run_blast" is set to True). You can edit this file with any sequence you want to scan
-    "blast": {
-        "evalue": 10e-4,    # Maximum evalue for a hit. Default: 10e-4
-        "soft_masking": True    # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
+    "blast":{}
+        "run_blast": True,     # Run tBLASTn to scan specific virulence genes from the custom_VFDB.txt. Remember that you can edit that database with your own sequences. If you want to omit this step, set it to False. Default: True
+        "proteins_reference_file": "reference_files/custom_VFDB.txt", # OPTIONAL (mandatory if "run_blast" is set to True). You can edit this file with any sequence you want to scan
+        "soft_masking": True,    # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
+        "presence_absence_matrix": {    # Parameters for blast matrix construction
+            "protein_cover": 90,    # Minimum % protein cover for considering a virulence gene as present. Default: 90
+            "protein_identity": 90  # Minimum % protein identity for considering a virulence gene as present. Default: 90
+        },
     },
-    "presence_absence_matrix": {    # Parameters for blast matrix construction
-        "protein_cover": 90,    # Minimum % protein cover for considering a virulence gene as present. Default: 90
-        "protein_identity": 90  # Minimum % protein identity for considering a virulence gene as present. Default: 90
-    },
+    
     "roary":{
         "split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
         "min_identity": 95  # Minimum percentage identity for blastp (1-100). Default: 95
