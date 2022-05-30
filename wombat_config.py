@@ -15,12 +15,12 @@ config = {
         "min_qual_mean": 30, # Minimum read quality. Default: 30
         "trim_qual_right": 25,  # Trim sequence by quality score from the 3'-end with this threshold score. Default: 25
         "trim_qual_window": 20     # The sliding window size used to calculate quality score by type. To stop at the first base that fails the rule defined, use a window size of 1. Default: 20
-    },  
+    },
+    "merge_reads": True, # Merge pairs of reads before assembly to improve the quality of assembly when paired reads overlap if set to True. Otherwise, set to False. Default: True  
     "spades": {
         "mode": "--isolate",    # Assembly modes: --isolate (highly recommended for high-coverage isolate and multi-cell Illumina data), --careful (reduce the number of mismatches and short indels, recommended only for assembly of small genomes) or --sc (required for MDA (single-cell) data). Default: --isolate
         "k": False     # k-mer sizes to be used. Set this to a number or comma-separated list of numbers (all values must be odd, less than 128 and listed in ascending order). Example: 55,77,121. If set to False, values are automatically selected using maximum read length. If mode --sc is set, the default values are 21, 33 and 55. Default: False 
     },
-    "merge_reads": True, # Merge pairs of reads before assembly to improve the quality of assembly when paired reads overlap if set to True. Otherwise, set to False. Default: True
     "min_contig_len": 500,
     "annotator": "prokka",  # Set this to "prokka" or "dfast"
     "prokka": {
