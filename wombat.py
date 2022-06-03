@@ -1980,6 +1980,3 @@ if __name__ == "__main__":
                 os.rmdir(os.path.join(root, dirname))
             except OSError:
                 pass
-            
-
-    print(Banner("\nDONE\n"), flush=True)

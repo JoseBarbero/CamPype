@@ -3,8 +3,7 @@ conda activate wombat
 
 OUTDIR=$(python -c "import wombat_config as cfg; print(cfg.config['output_directory'])")
 OUTDIR=$(pwd OUTDIR)/Wombat_OUTPUT_`date "+%Y%m%d_%H%M%S"`
-# Debug
-echo $OUTDIR
+
 mkdir -p $OUTDIR
 cp input_files.csv $OUTDIR/
 cp wombat_config.py $OUTDIR/
@@ -16,15 +15,10 @@ conda activate wombatR
 
 FASTAMODE=$(python -c "import wombat_config as cfg; print(cfg.config['assembled_genomes'])")
 
-# Debug
-echo $OUTDIR
-
 if [ "$FASTAMODE" == "True" ]; then
-    echo "Short report"
-    Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '$OUTDIR'))" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
+    Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
 else
-    echo "Long report"
-    Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '$OUTDIR'))" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
+    Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
 fi
 conda activate wombat
 python -c "from terminal_banner import Banner; print(Banner('\nDONE\n'), flush=True)"
