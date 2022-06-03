@@ -588,7 +588,7 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
           "-out", blast_db_path, "-title", "DNA_Database"])
 
     # Call tblastn
-    tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest, "-evalue", str(cfg.config["blast"]["evalue"]), 
+    tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest,
                         "-soft_masking", str(cfg.config["blast"]["soft_masking"]).lower(),
                         "-outfmt", "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq",
                         "-out", blast_output_folder+"/"+blast_output_name])
@@ -721,7 +721,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
         for sample in samples:
             sample_content = gene_content[gene_content["Sample"] == sample]
             if len(sample_content) > 0:
-                if sample_content["% protein cover"].max() >= cfg.config["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() >= cfg.config["presence_absence_matrix"]["protein_cover"]:
+                if sample_content["% protein cover"].max() >= cfg.config["blast"]["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() >= cfg.config["blast"]["presence_absence_matrix"]["protein_cover"]:
                     new_row[sample] = 1
                 else:
                     new_row[sample] = 0
@@ -752,9 +752,9 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
     with open(p_a_matrix_file, "a") as matrix_file:
         matrix_file.write("Coverage >= (" + 
-                            str(cfg.config["presence_absence_matrix"]["protein_cover"]) +
+                            str(cfg.config["blast"]["presence_absence_matrix"]["protein_cover"]) +
                             ") % and identity >= (" +
-                            str(cfg.config["presence_absence_matrix"]["protein_cover"]) + 
+                            str(cfg.config["blast"]["presence_absence_matrix"]["protein_cover"]) + 
                             ") % on each sample for considering a virulence gene as present.")
 
 def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", rawproduct=False):
@@ -1354,7 +1354,7 @@ if __name__ == "__main__":
     # Get reference files from wombat_config.py
     adapters_file =  cfg.config["adapters_reference_file"]
     reference_genome_file = cfg.config["reference_genome"]["file"]
-    proteins_file = cfg.config["proteins_reference_file"]
+    proteins_file = cfg.config["blast"]["proteins_reference_file"]
     
     output_folder = sys.argv[1]
 
@@ -1588,12 +1588,13 @@ if __name__ == "__main__":
             prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
 
             # Flash call
-            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Flash\n"), flush=True)
-            flash_call(input_file_1=prinseq_files["R1"],
-                    input_file_2=prinseq_files["R2"],
-                    output_filename=sample_basename,
-                    output_dir=flash_dir+"/"+sample_basename)
-            step_counter += 1
+            if cfg.config["merge_reads"]:
+                print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Flash\n"), flush=True)
+                flash_call(input_file_1=prinseq_files["R1"],
+                        input_file_2=prinseq_files["R2"],
+                        output_filename=sample_basename,
+                        output_dir=flash_dir+"/"+sample_basename)
+                step_counter += 1
 
             # Quality reports
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Read statistics\n"), flush=True)
@@ -1602,22 +1603,23 @@ if __name__ == "__main__":
             report_pre_qc = get_reads_table(decompressed_samples_fw[sample_basename], decompressed_samples_rv[sample_basename], sample_basename, prinseq_dir+"/reads_statistics_beforeQC.tsv", False)
 
             report_post_qc = get_reads_table(prinseq_files["R1"], prinseq_files["R2"], sample_basename, prinseq_dir+"/reads_statistics_afterQC.tsv", True)
-
-            report_post_flash = get_flash_reads_table(flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq", 
+            if cfg.config["merge_reads"]:
+                report_post_flash = get_flash_reads_table(flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq", 
                                     flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
                                     flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
                                     sample_basename, flash_dir+"/reads_statistics_FLASH.tsv", report_post_qc)
 
             summary_pre_qc[sample_basename] = report_pre_qc
             summary_post_qc[sample_basename] = report_post_qc
-            summary_post_flash[sample_basename] = report_post_flash
+            if cfg.config["merge_reads"]:
+                summary_post_flash[sample_basename] = report_post_flash
 
             # Create SPAdes output directories
             os.mkdir(spades_dir+"/"+sample_basename)
 
             # SPAdes call
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SPAdes\n"), flush=True)
-            if cfg.config["spades"]["merge_reads"]:        
+            if cfg.config["merge_reads"]:        
                 spades_call(forward_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_1.fastq",
                             reverse_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
                             sample=sample_basename,
@@ -1817,14 +1819,14 @@ if __name__ == "__main__":
 
 
     # Blast call
-    if cfg.config["run_blast"]:
+    if cfg.config["blast"]["run_blast"]:
         print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against inhouse database)\n"), flush=True)
         step_counter += 1
         contig_files = ([os.path.join(draft_contigs_dir, f) for f in os.listdir(draft_contigs_dir)])
         contig_files.append(cfg.config["reference_genome"]["file"])
 
         blast_output_name = "BLAST_inhouse_VFDB.txt"
-        proteins_file = cfg.config["proteins_reference_file"]
+        proteins_file = cfg.config["blast"]["proteins_reference_file"]
         dna_database_blast = blast_proteins_dir+"/DNA_database"
         proteins_database_name = "inhouse_VFDB.txt"    # This is an output file name
         if not os.path.exists(blast_proteins_dir):

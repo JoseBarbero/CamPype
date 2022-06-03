@@ -20,12 +20,13 @@ output:
 params:
   directory: directory
 ---
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, dev='pdf'}
 knitr::opts_chunk$set(dpi = 120, fig.align = "center")
 ```
 
-```{r, setup, include=FALSE}
-knitr::opts_knit$set(root.dir = paste(getwd(), params$directory, sep = ""))
+```{r, setup, include=FALSE, dev='pdf'}
+knitr::opts_knit$set(root.dir = params$directory)
 ```
 
 <br>

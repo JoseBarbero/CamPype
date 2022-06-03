@@ -28,7 +28,7 @@ knitr::opts_chunk$set(dpi = 120, fig.align = "center")
 ```
 
 ```{r, setup, include=FALSE, dev='pdf'}
-knitr::opts_knit$set(root.dir = paste(getwd(), params$directory, sep = ""))
+knitr::opts_knit$set(root.dir = params$directory)
 ```
 
 <br>
