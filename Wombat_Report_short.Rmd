@@ -99,10 +99,14 @@ Assembly_left <-
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Assembly_right <- 
-  read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  rename(ST = ST, `Clonal complex` = clonal_complex)
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Assembly_right <- 
+    read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    rename(ST = ST, `Clonal complex` = clonal_complex)
+} else {
+  Assembly_right <- NULL
+}
 ```
 
 
@@ -402,12 +406,16 @@ Number_tRNAs
 Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst).
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-MLST <- 
-  read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  rename(ST = ST, `Clonal complex` = clonal_complex)
+if(wombat_config_json$MLST$run_mlst == "true") {
+  MLST <- 
+    read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    rename(ST = ST, `Clonal complex` = clonal_complex)
 
-Create_DT(x = MLST, caption = '')
+  Create_DT(x = MLST, caption = '')
+} else {
+  MLST <- NULL
+}
 ```
 ***
 
@@ -860,9 +868,13 @@ Following table shows number of genomic structural variation identified in each 
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-MLST_edited <-
-  read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
-  mutate(across(where(is_character), as.numeric))
+if(wombat_config_json$MLST$run_mlst == "true") {
+  MLST_edited <-
+    read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
+    mutate(across(where(is_character), as.numeric))
+} else {
+  MLST_edited <- NULL
+}
 ```
 
 

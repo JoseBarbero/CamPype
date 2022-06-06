@@ -85,9 +85,9 @@ def prinseq_call(input_file1, input_file2, output_folder, sample, log_name=None)
     Returns:
         int -- Execution state (0 if everything is all right)
     """
-    arguments = ["prinseq-lite.pl", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["prinseq"]["min_len"]), \
-                "-min_qual_mean", str(cfg.config["prinseq"]["min_qual_mean"]), "-trim_qual_right", str(cfg.config["prinseq"]["trim_qual_right"]), "-trim_qual_window", \
-                str(cfg.config["prinseq"]["trim_qual_window"]), "-trim_qual_type", "mean", "-out_format", "3", "-out_good", output_folder+"/"+sample, "-out_bad", "null", log_name]
+    arguments = ["prinseq-lite.pl", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["read_qc_filtering"]["min_len"]), \
+                "-min_qual_mean", str(cfg.config["read_qc_filtering"]["min_qual_mean"]), "-trim_qual_right", str(cfg.config["read_qc_filtering"]["trim_qual_right"]), "-trim_qual_window", \
+                str(cfg.config["read_qc_filtering"]["trim_qual_window"]), "-trim_qual_type", "mean", "-out_format", "3", "-out_good", output_folder+"/"+sample, "-out_bad", "null", log_name]
     return call(arguments)
 
 
@@ -156,12 +156,12 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir, merged_sample=N
         {int} -- Execution state (0 if everything is all right)
     """
     if merged_sample:
-        arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"]]
+        arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["assembly"]["mode"]]
     else:
-        arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"]]
+        arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, cfg.config["assembly"]["mode"]]
 
-    if cfg.config["spades"]["k"]:
-        arguments.extend(["-k", str(cfg.config["spades"]["k"])])
+    if cfg.config["assembly"]["k"]:
+        arguments.extend(["-k", str(cfg.config["assembly"]["k"])])
     arguments.extend(["-o", out_dir+"/"+sample])
     return call(arguments)
 
@@ -785,7 +785,7 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
                 "--species", species,
                 "--strain", strain,
                 "--gcode", "11"]
-    if cfg.config["prokka"]["reference_annotation"]:
+    if cfg.config["annotation"]["prokka"]["reference_annotation"]:
         arguments.extend(["--proteins", proteins])
     if rawproduct:
         arguments.append("--rawproduct")
@@ -897,10 +897,10 @@ def roary_call(input_files, output_dir, wombat_output_folder):
         {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["roary", "-f", output_dir, "-s", "-v"]
-    if cfg.config["roary"]["split_paralogs"]:
+    if cfg.config["pangenome"]["split_paralogs"]:
         arguments.append("-s")
-    if cfg.config["roary"]["min_identity"]:
-        arguments.extend(["-i", str(cfg.config["roary"]["min_identity"])])
+    if cfg.config["pangenome"]["min_identity"]:
+        arguments.extend(["-i", str(cfg.config["pangenome"]["min_identity"])])
     arguments.extend(input_files)
     ex_state = call(arguments)
     # Set Roary output directory name
@@ -1219,7 +1219,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             rrnas = "0"
             trnas = "0"
             
-            if cfg.config["annotator"] == "prokka":
+            if cfg.config["annotation"]["annotator"] == "prokka":
                 
                 with open(annotation_dir+"/"+sample+"/"+sample+".txt") as stats_file:
                     for line in stats_file:
@@ -1244,7 +1244,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     hy_prot = faa_file.read().count("hypothetical protein")
 
 
-            elif cfg.config["annotator"] == "dfast":
+            elif cfg.config["annotation"]["annotator"] == "dfast":
                 with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
                     for line in stats_file:
                         # Column 'CDS'.
@@ -1346,7 +1346,7 @@ if __name__ == "__main__":
     welcome("resources/wombat_ascii.txt")
 
     # Get config file parameters
-    annotator = cfg.config["annotator"]
+    annotator = cfg.config["annotation"]["annotator"]
 
     # Create output directories
     now = datetime.datetime.now()
@@ -1494,43 +1494,43 @@ if __name__ == "__main__":
                     output_dir=assembly_dir+"/"+reference_genome_basename+"/"+quast_sample_dir,
                     min_contig_len=cfg.config["min_contig_len"])
 
-
-        # Annotate reference fasta file 
-        if annotator.lower() == "dfast":
-            # Dfast call
-            annotation_dir = dfast_dir
-            print(Banner(f"\nAnnotating reference sequence: Dfast\n"), flush=True)
-            dfast_call( locus_tag=reference_genome_file+"_L",
-                        contigs_file=reference_genome_file,
-                        output_dir=dfast_dir+"/"+reference_genome_basename,
-                        sample_basename=reference_genome_basename,
-                        organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
-            refactor_gff_from_dfast(dfast_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
-                                    dfast_refactor_dir+"/"+reference_genome_basename+".gff",
-                                    roary_input_dir+"/+"+reference_genome_basename+".gff")
-            # Set roary input files (renaming to get reference file first)
-            os.rename(dfast_refactor_dir+"/"+reference_genome_basename+".gff", dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
-            roary_input_files.append(roary_input_dir+"/+"+reference_genome_basename+".gff")
-        else:
-            # Prokka call
-            annotation_dir = prokka_dir
-            print(Banner(f"\nAnnotating reference sequence: Prokka\n"), flush=True)
-            prokka_call(locus_tag=reference_genome_basename+"_L",
-                        output_dir=prokka_dir+"/"+reference_genome_basename,
-                        prefix=reference_genome_basename,
-                        input_file=reference_genome_file,
-                        genus=cfg.config["reference_genome"]["genus"],
-                        species=cfg.config["reference_genome"]["species"],
-                        strain=cfg.config["reference_genome"]["strain"],
-                        proteins=cfg.config["reference_genome"]["proteins"],
-                        rawproduct=cfg.config["prokka"]["rawproduct"]
-                        )
-            # Set roary input files (renaming to get reference file first)
-            os.rename(annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
-                      annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
-            if cfg.config["amrfinder"]["run"]: 
-                refactor_gff_from_prokka(prokka_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff", prokka_refactor_dir+"/"+reference_genome_basename+".gff")
-            roary_input_files.append(annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
+        if cfg.config["annotation"]["run_annotation"]:    
+            # Annotate reference fasta file 
+            if annotator.lower() == "dfast":
+                # Dfast call
+                annotation_dir = dfast_dir
+                print(Banner(f"\nAnnotating reference sequence: Dfast\n"), flush=True)
+                dfast_call( locus_tag=reference_genome_file+"_L",
+                            contigs_file=reference_genome_file,
+                            output_dir=dfast_dir+"/"+reference_genome_basename,
+                            sample_basename=reference_genome_basename,
+                            organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
+                refactor_gff_from_dfast(dfast_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
+                                        dfast_refactor_dir+"/"+reference_genome_basename+".gff",
+                                        roary_input_dir+"/+"+reference_genome_basename+".gff")
+                # Set roary input files (renaming to get reference file first)
+                os.rename(dfast_refactor_dir+"/"+reference_genome_basename+".gff", dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
+                roary_input_files.append(roary_input_dir+"/+"+reference_genome_basename+".gff")
+            else:
+                # Prokka call
+                annotation_dir = prokka_dir
+                print(Banner(f"\nAnnotating reference sequence: Prokka\n"), flush=True)
+                prokka_call(locus_tag=reference_genome_basename+"_L",
+                            output_dir=prokka_dir+"/"+reference_genome_basename,
+                            prefix=reference_genome_basename,
+                            input_file=reference_genome_file,
+                            genus=cfg.config["reference_genome"]["genus"],
+                            species=cfg.config["reference_genome"]["species"],
+                            strain=cfg.config["reference_genome"]["strain"],
+                            proteins=cfg.config["reference_genome"]["proteins"],
+                            rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"]
+                            )
+                # Set roary input files (renaming to get reference file first)
+                os.rename(annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
+                        annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
+                if cfg.config["amrfinder"]["run"]: 
+                    refactor_gff_from_prokka(prokka_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff", prokka_refactor_dir+"/"+reference_genome_basename+".gff")
+                roary_input_files.append(annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
 
     
     # Workflow Starts (for standard samples)
@@ -1682,43 +1682,43 @@ if __name__ == "__main__":
                     min_contig_len=min_contig_threshold)
         step_counter += 1
 
+        if cfg.config["annotation"]["run_annotation"]:
+            # Annotation (Prokka or dfast)
+            if annotator.lower() == "dfast":
+                # Dfast call
+                annotation_dir = dfast_dir
+                print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
+                dfast_call(locus_tag=sample_basename+"_L",
+                        contigs_file=draft_contigs,
+                        output_dir=dfast_dir+"/"+sample_basename,
+                        sample_basename=sample_basename,
+                        organism=organism)
+                step_counter += 1
 
-        # Annotation (Prokka or dfast)
-        if annotator.lower() == "dfast":
-            # Dfast call
-            annotation_dir = dfast_dir
-            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
-            dfast_call(locus_tag=sample_basename+"_L",
-                       contigs_file=draft_contigs,
-                       output_dir=dfast_dir+"/"+sample_basename,
-                       sample_basename=sample_basename,
-                       organism=organism)
-            step_counter += 1
+                refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", 
+                                        dfast_refactor_dir+"/"+sample_basename+".gff",
+                                        roary_input_dir+"/"+sample_basename+".gff")
+                # Set roary input files
+                roary_input_files.append(roary_input_dir+"/"+sample_basename+".gff")
 
-            refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", 
-                                    dfast_refactor_dir+"/"+sample_basename+".gff",
-                                    roary_input_dir+"/"+sample_basename+".gff")
-            # Set roary input files
-            roary_input_files.append(roary_input_dir+"/"+sample_basename+".gff")
-
-        else:
-            # Prokka call
-            annotation_dir = prokka_dir
-            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Prokka\n"), flush=True)
-            prokka_call(locus_tag=sample_basename+"_L",
-                        output_dir=prokka_dir+"/"+sample_basename,
-                        prefix=sample_basename,
-                        input_file=draft_contigs,
-                        genus=genus,
-                        species=species,
-                        strain=sample_basename,
-                        proteins=cfg.config["reference_genome"]["proteins"],
-                        rawproduct=cfg.config["prokka"]["rawproduct"])
-            step_counter += 1
-            if cfg.config["amrfinder"]["run"]:
-                refactor_gff_from_prokka(prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff", prokka_refactor_dir+"/"+sample_basename+".gff")
-            # Set roary input files
-            roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
+            else:
+                # Prokka call
+                annotation_dir = prokka_dir
+                print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Prokka\n"), flush=True)
+                prokka_call(locus_tag=sample_basename+"_L",
+                            output_dir=prokka_dir+"/"+sample_basename,
+                            prefix=sample_basename,
+                            input_file=draft_contigs,
+                            genus=genus,
+                            species=species,
+                            strain=sample_basename,
+                            proteins=cfg.config["reference_genome"]["proteins"],
+                            rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"])
+                step_counter += 1
+                if cfg.config["amrfinder"]["run"]:
+                    refactor_gff_from_prokka(prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff", prokka_refactor_dir+"/"+sample_basename+".gff")
+                # Set roary input files
+                roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
         
 
 
@@ -1745,19 +1745,19 @@ if __name__ == "__main__":
     quast_report_unification(assembly_dir, samples_basenames, assembly_dir)
 
     # MLST call
-    mlst_out_file = "MLST.txt"
-    print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
-    step_counter += 1
-    mlst_call(input_dir=draft_contigs_dir,  
-            reference_file=reference_genome_file,
-            output_dir=mlst_dir,
-            output_filename=mlst_out_file)
-    
-    # MLST postprocessing
-    mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
+    if cfg.config["MLST"]["run_mlst"]:
+        mlst_out_file = "MLST.txt"
+        print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
+        step_counter += 1
+        mlst_call(input_dir=draft_contigs_dir,  
+                reference_file=reference_genome_file,
+                output_dir=mlst_dir,
+                output_filename=mlst_out_file)
+        if cfg.config["include_cc"]:
+            # MLST postprocessing
+            mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
 
     # ABRicate call (virulence genes)
-    
     global_vf_output_file = "Virulence_genes_ABRicate.tsv"
     global_vf_matrix_file = "Virulence_genes_ABRicate_matrix.tsv"
     for vf_database in cfg.config["abricate"]["virulence_factors_databases"]:
@@ -1912,19 +1912,19 @@ if __name__ == "__main__":
         amrfinder_call(samples_basenames, reference_genome_basename, annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
 
     # Roary call
-    print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
-    print("Roary input files:", roary_input_files)
-    step_counter += 1
-    roary_call(input_files=roary_input_files, output_dir=roary_dir, wombat_output_folder=output_folder)
+    if cfg.config["pangenome"]["run_pangenome"]:
+        print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
+        print("Roary input files:", roary_input_files)
+        step_counter += 1
+        roary_call(input_files=roary_input_files, output_dir=roary_dir, wombat_output_folder=output_folder)
 
-
-    # Roary plots call
-    os.mkdir(roary_plots_dir)
-    print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
-    step_counter += 1
-    roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
-                    input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
-                    output_dir=roary_plots_dir)
+        # Roary plots call
+        os.mkdir(roary_plots_dir)
+        print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
+        step_counter += 1
+        roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
+                        input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
+                        output_dir=roary_plots_dir)
 
     # Final report
     print(Banner(f"\nStep {step_counter}: Generate final report\n"), flush=True)

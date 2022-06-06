@@ -575,11 +575,15 @@ Assembly_left <-
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Assembly_right <- 
-  read_tsv(file = "MLST/MLST_and_CC.txt") %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  select_at(c(1, 3, ncol(.))) %>% 
-  rename(ST = ST, `Clonal complex` = clonal_complex)
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Assembly_right <- 
+    read_tsv(file = "MLST/MLST_and_CC.txt") %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    select_at(c(1, 3, ncol(.))) %>% 
+    rename(ST = ST, `Clonal complex` = clonal_complex)
+} else {
+  Assembly_right <- NULL
+}
 ```
 
 
@@ -873,16 +877,19 @@ Number_tRNAs
 
 [Back to index](#index)
 
-## Multi-Locus Sequence Typing (MLST) {#mlst}
-Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst).
-
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-MLST <- 
-  read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  rename(ST = ST, `Clonal complex` = clonal_complex)
+if(wombat_config_json$MLST$run_mlst == "true") {
+  ## Multi-Locus Sequence Typing (MLST) {#mlst}
+  Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst).
+  MLST <- 
+    read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    rename(ST = ST, `Clonal complex` = clonal_complex)
 
-Create_DT(x = MLST, caption = '')
+  Create_DT(x = MLST, caption = '')
+} else {
+  MLST <- NULL
+}
 ```
 ***
 
@@ -1324,10 +1331,14 @@ Genomes_PA %>%
 Following table shows number of genomic structural variation identified in each draft genome using [Snippy](https://github.com/tseemann/snippy)
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-MLST_edited <-
-  read_tsv(file = "MLST/MLST_and_CC.txt", col_types = list(Sample = col_double())) %>%
-  slice(., 1:(n() - 1)) %>%
-  mutate(across(where(is_character), as_factor))
+if(wombat_config_json$MLST$run_mlst == "true") {
+  MLST_edited <-
+    read_tsv(file = "MLST/MLST_and_CC.txt", col_types = list(Sample = col_double())) %>%
+    slice(., 1:(n() - 1)) %>%
+    mutate(across(where(is_character), as_factor))
+} else {
+  MLST_edited <- NULL
+}
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
