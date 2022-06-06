@@ -1813,7 +1813,7 @@ if __name__ == "__main__":
         with open(plasmid_dir+"/"+plasmids_matrix_file, 'r') as f:
             if len(f.readlines()) == 1:
                 os.remove(plasmid_dir+"/"+plasmids_matrix_file)
-            print(f"\nINFO: {plasmids_matrix_file} is empty so it has been removed.\n", flush=True)
+            print(f"\nINFO: No plasmids were found.\n", flush=True)
 
     # End line
     with open(vir_dir+"/"+global_vf_matrix_file, "a") as matrix_file:

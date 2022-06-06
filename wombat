@@ -21,4 +21,8 @@ else
     Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
 fi
 conda activate wombat
+
+rm $OUTDIR/wombat_config.json
+
 python -c "from terminal_banner import Banner; print(Banner('\nDONE\n'), flush=True)"
+
