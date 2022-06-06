@@ -1809,6 +1809,12 @@ if __name__ == "__main__":
                     gene_matrix_file=plasmids_matrix_file,
                     samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
 
+        # Delete plasmids_matrix_file if it contains only one line
+        with open(plasmid_dir+"/"+plasmids_matrix_file, 'r') as f:
+            if len(f.readlines()) == 1:
+                os.remove(plasmid_dir+"/"+plasmids_matrix_file)
+            print(f"\nINFO: {plasmids_matrix_file} is empty so it has been removed.\n", flush=True)
+
     # End line
     with open(vir_dir+"/"+global_vf_matrix_file, "a") as matrix_file:
         matrix_file.write("Coverage >= (" + 
