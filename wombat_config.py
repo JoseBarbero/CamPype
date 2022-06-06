@@ -49,7 +49,7 @@ config = {
             "protein_identity": 90  # Minimum % protein identity for considering a virulence gene as present. Default: 90
         },
     },
-    "pan":{
+    "roary":{
         "split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
         "min_identity": 95  # Minimum percentage identity for blastp (1-100). Default: 95
     },
