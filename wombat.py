@@ -1122,7 +1122,8 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     if reference_genome_basename:
         ref_assembly_report = pd.read_csv(assembly_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+"_assembly_statistics/"+"report.tsv", sep="\t")
 
-    mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
+    if cfg.config["MLST"]["run_mlst"]:
+        mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
     vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
     vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
     vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
@@ -1136,6 +1137,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
                     "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
                     "rRNAs", "tRNAs"]
+
     if amrfinder_matrix_file:
         amr_data = pd.read_csv(amrfinder_matrix_file, sep="\t", skipfooter=1, engine="python")
         amr_data["Sample"] = amr_data["Sample"].astype(str)
@@ -1144,8 +1146,6 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         
 
     csv_report = pd.DataFrame(columns=df_columns)
-
-    # TODO es posible que no haga falta usar blast en la referencia. Igual se puede dejar vacío.
 
     for sample in samples+[reference_genome_basename]:
         if sample is not None:
@@ -1209,10 +1209,15 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     reads = readlen = readsqc = readsqclen = joinreads = joinreadslen = depthcov = 0
 
             # Column ST (MLST)
-            st = mlst_data.loc[sample]["ST"]
+            if cfg.config["MLST"]["run_mlst"]:
+                st = mlst_data.loc[sample]["ST"]
+                # Column clonal_complex (MLST)
+                clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+            else:
+                st = None
+                clonal_complex = None
 
-            # Column clonal_complex (MLST)
-            clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+            
             
             cds = "0"
             crisprs = "0"
@@ -1273,7 +1278,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "ContigLen": round(avg_contig_len, 2), 
                             "N50": round(n50, 0),
                             "GC": round(gc, 2),
-                            "ST": st,
+                            "ST": st,       # TODO remove if MLST is not run
                             "clonal_complex": clonal_complex,
                             "CDS": cds,
                             "Hypotetical proteins": round(hy_prot, 0),
@@ -1294,7 +1299,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "N50": round(n50, 0),
                             "GC": round(gc, 2),
                             "DepthCov (X)": round(depthcov, 2),
-                            "ST": st,
+                            "ST": st,       # TODO remove if MLST is not run
                             "clonal_complex": clonal_complex,
                             "CDS": cds,
                             "Hypotetical proteins": round(hy_prot, 0),
@@ -1474,6 +1479,8 @@ if __name__ == "__main__":
     if reference_genome_file:
         reference_genome_filename = reference_genome_file.split("/")[-1]
         reference_genome_basename = reference_genome_filename.split(".")[-2]
+        
+        print(Banner(f"\nProcessing reference sequence ({reference_genome_basename}) before your genomes of interest  \n"), flush=True)
 
         # Quast call for reference file
 
@@ -1488,6 +1495,7 @@ if __name__ == "__main__":
             quast_dir = assembly_dir+"/"+reference_genome_basename+"/"
             os.mkdir(quast_dir)
             os.mkdir(quast_dir+quast_sample_dir)
+
 
         print(Banner(f"\nQuast on reference sequence ({reference_genome_basename})\n"), flush=True)
         quast_call( input_file=reference_genome_file,
@@ -1918,13 +1926,14 @@ if __name__ == "__main__":
         step_counter += 1
         roary_call(input_files=roary_input_files, output_dir=roary_dir, wombat_output_folder=output_folder)
 
-        # Roary plots call
-        os.mkdir(roary_plots_dir)
-        print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
-        step_counter += 1
-        roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
-                        input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
-                        output_dir=roary_plots_dir)
+        if cfg.config["MLST"]["run_mlst"]:
+            # Roary plots call
+            os.mkdir(roary_plots_dir)
+            print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
+            step_counter += 1
+            roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
+                            input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
+                            output_dir=roary_plots_dir)
 
     # Final report
     print(Banner(f"\nStep {step_counter}: Generate final report\n"), flush=True)

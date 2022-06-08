@@ -15,7 +15,7 @@ conda activate wombatR
 
 FASTAMODE=$(python -c "import wombat_config as cfg; print(cfg.config['assembled_genomes'])")
 
-if [ "$FASTAMODE" == "True" ]; then
+if [ $FASTAMODE == True ]; then
     Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
 else
     Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/wombat.log

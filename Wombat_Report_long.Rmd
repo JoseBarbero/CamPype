@@ -581,40 +581,53 @@ if(wombat_config_json$MLST$run_mlst == "true") {
     mutate(across(where(is_character), as_factor)) %>% 
     select_at(c(1, 3, ncol(.))) %>% 
     rename(ST = ST, `Clonal complex` = clonal_complex)
+
+  Assembly_full <-
+    left_join(x = Assembly_left, y = Assembly_right, by = "Sample") 
+
+  Create_DT(x = Assembly_full, caption = '')
+
 } else {
-  Assembly_right <- NULL
+  Assembly_full <- Assembly_left
 }
 ```
 
-
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-# Joining both datasets
-Assembly_full <-
-  left_join(x = Assembly_left, y = Assembly_right, by = "Sample") 
-
-Create_DT(x = Assembly_full, caption = '')
-```
   
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Number of contigs
 
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-Number_of_contigs <-
-  ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = Contigs, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Sample", y = "Number of contigs", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE)
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Number_of_contigs <-
+    ggplotly(
+  ggplot(data = Assembly_full, aes(x = Sample, y = Contigs, fill = `Clonal complex`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Sample", y = "Number of contigs", title = "", fill = "Clonal complex") +
+    facet_grid(cols = vars(factor(ST)), margins = FALSE)
+  )
+} else {
+  Number_of_contigs <-
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = Contigs)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of contigs", title = "")
+    )
+}
 # Move the label further to the left
 Number_of_contigs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.05
 
@@ -625,27 +638,42 @@ Number_of_contigs
 ##### Draft genome lenght
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-Draft_genome_lenght <-
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Sample", y = "Genome lengh (bp)", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$GenomeLen) + 150000))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Draft_genome_length <-
+  ggplotly(
+  ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = `Clonal complex`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Sample", y = "Genome lengh (bp)", title = "", fill = "Clonal complex") +
+    facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+    lims(y = c(0, max(Assembly_full$GenomeLen) + 150000))
+  )
+} else {
+  Draft_genome_length <- 
+  ggplotly(
+    ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Genome lengh (bp)", title = "") +
+      lims(y = c(0, max(Assembly_full$GenomeLen) + 150000))
+  )
+}
 # Move the label further to the left
-Draft_genome_lenght[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
+Draft_genome_length[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
 
-Draft_genome_lenght 
+Draft_genome_length 
 
 ```
 
@@ -653,23 +681,38 @@ Draft_genome_lenght
 
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-Contig_length <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Contig_length <- 
+  ggplotly(
+  ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = `Clonal complex`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "Clonal complex") +
+    facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+    lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
+  )
+} else {
+  Contig_length <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Average contig length (bp)", title = "") +
+        lims(y = c(0, max(Assembly_full$ContigLen) + 150000))
+    )
+}
 # Move the label further to the left
 Contig_length[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
 
@@ -681,23 +724,38 @@ Contig_length
 ##### N50
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-N50 <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = N50, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "N50", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$N50) + 35000))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  N50 <- 
+  ggplotly(
+  ggplot(data = Assembly_full, aes(x = Sample, y = N50, fill = `Clonal complex`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "N50", title = "", fill = "Clonal complex") +
+    facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+    lims(y = c(0, max(Assembly_full$N50) + 35000))
+  )
+} else {
+  N50 <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = N50)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "N50", title = "") +
+        lims(y = c(0, max(Assembly_full$N50) + 35000))
+    )
+}
 # Move the label further to the left
 N50[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
 
@@ -709,23 +767,38 @@ N50
 ##### GC Content
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-GC_Content <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = GC, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "GC Content", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$GC) + 1000))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  GC_Content <- 
+  ggplotly(
+  ggplot(data = Assembly_full, aes(x = Sample, y = GC, fill = `Clonal complex`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "GC Content", title = "", fill = "Clonal complex") +
+    facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+    lims(y = c(0, max(Assembly_full$GC) + 1000))
+  )
+} else {
+  GC_Content <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = GC)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "GC Content", title = "") +
+        lims(y = c(0, max(Assembly_full$GC) + 1000))
+    )
+}
 # Move the label further to the left
 GC_Content[['x']][['layout']][['annotations']][[2]][['x']] <- -0.11
 
@@ -737,23 +810,38 @@ GC_Content
 ##### Sequencing depth
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-Sequencing_depth <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = `DepthCov (X)`, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Sequencing depth", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$`DepthCov (X)`) + 100))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Sequencing_depth <- 
+  ggplotly(
+  ggplot(data = Assembly_full, aes(x = Sample, y = `DepthCov (X)`, fill = `Clonal complex`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "Sequencing depth", title = "", fill = "Clonal complex") +
+    facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+    lims(y = c(0, max(Assembly_full$`DepthCov (X)`) + 100))
+  )
+} else {
+  Sequencing_depth <- 
+  ggplotly(
+  ggplot(data = Assembly_full, aes(x = Sample, y = `DepthCov (X)`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "Sequencing depth", title = "") +
+    lims(y = c(0, max(Assembly_full$`DepthCov (X)`) + 100))
+  )
+}
 # Move the label further to the left
 Sequencing_depth[['x']][['layout']][['annotations']][[2]][['x']] <- -0.055
 
@@ -764,23 +852,38 @@ Sequencing_depth
 ##### Number of CDS
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-Number_CDS <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = CDS, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of CDS", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$CDS) + 100))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Number_CDS <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = CDS, fill = `Clonal complex`)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of CDS", title = "", fill = "Clonal complex") +
+        facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+        lims(y = c(0, max(Assembly_full$CDS) + 100))
+    )
+} else {
+  Number_CDS <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = CDS)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of CDS", title = "") +
+        lims(y = c(0, max(Assembly_full$CDS) + 100))
+    )
+}
 # Move the label further to the left
 Number_CDS[['x']][['layout']][['annotations']][[2]][['x']] <- -0.06
 
@@ -791,23 +894,38 @@ Number_CDS
 ##### Number of CRISPRs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-Number_CRISPRs <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$CRISPRs) + 1))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Number_CRISPRs <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = `Clonal complex`)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "Clonal complex") +
+        facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+        lims(y = c(0, max(Assembly_full$CRISPRs) + 1))
+    )
+} else {
+  Number_CRISPRs <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of CRISPRs", title = "") +
+        lims(y = c(0, max(Assembly_full$CRISPRs) + 1))
+    )
+}
 # Move the label further to the left
 Number_CRISPRs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.03
 
@@ -819,23 +937,39 @@ Number_CRISPRs
 ##### Number of rRNAs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-Number_rRNAs <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = rRNAs, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$rRNAs) + 1))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+    
+  Number_rRNAs <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = rRNAs, fill = `Clonal complex`)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "Clonal complex") +
+        facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+        lims(y = c(0, max(Assembly_full$rRNAs) + 1))
+    )
+} else {
+  Number_rRNAs <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = rRNAs)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of rRNAs", title = "") +
+        lims(y = c(0, max(Assembly_full$rRNAs) + 1))
+    )
+}
 # Move the label further to the left
 Number_rRNAs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.03
 
@@ -846,23 +980,38 @@ Number_rRNAs
 ##### Number of tRNAs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-
-Number_tRNAs <- 
-ggplotly(
-ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs, fill = `Clonal complex`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "Clonal complex") +
-  facet_grid(cols = vars(factor(ST)), margins = FALSE) +
-  lims(y = c(0, max(Assembly_full$tRNAs) + 10))
-)
-
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Number_tRNAs <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs, fill = `Clonal complex`)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "Clonal complex") +
+        facet_grid(cols = vars(factor(ST)), margins = FALSE) +
+        lims(y = c(0, max(Assembly_full$tRNAs) + 10))
+    )
+} else {
+  Number_tRNAs <- 
+    ggplotly(
+      ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_blank(),
+              panel.grid.minor = element_line(colour = "grey90"),
+              panel.grid.major = element_line(colour = "grey90"),
+              panel.grid.major.x = element_line(colour = "grey90"),
+              axis.text = element_text(size = 10),
+              axis.title = element_text(size = 12, face = "bold")) +
+        labs(x = "Samples", y = "Number of tRNAs", title = "") +
+        lims(y = c(0, max(Assembly_full$tRNAs) + 10))
+    )
+}
 # Move the label further to the left
 Number_tRNAs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.045
 
@@ -879,8 +1028,8 @@ Number_tRNAs
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == "true") {
-  ## Multi-Locus Sequence Typing (MLST) {#mlst}
-  Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst).
+  "## Multi-Locus Sequence Typing (MLST) {#mlst}"
+  "Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst)."
   MLST <- 
     read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
     mutate(across(where(is_character), as_factor)) %>% 
@@ -924,13 +1073,22 @@ Following figure represents presence/absence of antibiotic resistance genes in e
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-AMR_HeatMap <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
-  slice(., 1:(n() - 1)) %>% 
-  pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
-  mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample")
+if(wombat_config_json$MLST$run_mlst == "true") {
+  AMR_HeatMap <- 
+    read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
+    slice(., 1:(n() - 1)) %>% 
+    pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
+    mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample")
+} else {
+  AMR_HeatMap <- 
+    read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
+    slice(., 1:(n() - 1)) %>% 
+    pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
+    mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
+    mutate(across(where(is_character), as_factor))
+}
 ```
 
 
@@ -951,10 +1109,16 @@ AMR_HeatMap %>%
 Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity ≥ `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`.
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-AntBioRes <-
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
-  slice(., 1:(n() - 1)) %>% 
-  left_join(x = ., y = Assembly_right, by = "Sample")
+if(wombat_config_json$MLST$run_mlst == "true") {
+  AntBioRes <-
+    read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
+    slice(., 1:(n() - 1)) %>% 
+    left_join(x = ., y = Assembly_right, by = "Sample")
+} else {
+  AntBioRes <-
+    read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
+    slice(., 1:(n() - 1))
+}
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
@@ -982,12 +1146,20 @@ Following figure represents presence/absence of antibiotic resistance genes in e
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Anti_Res_Genes_PA <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
-  slice(-n()) %>% 
-  pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
-  left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
-  pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0)
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Anti_Res_Genes_PA <- 
+    read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
+    slice(-n()) %>% 
+    pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
+    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+    pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0)
+} else {
+  Anti_Res_Genes_PA <- 
+    read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
+    slice(-n()) %>% 
+    pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
+    pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0)
+}
 ```
 
 ```{r echo=FALSE, eval=FALSE, purl=FALSE}
@@ -1001,15 +1173,26 @@ plot_list = list()
 ```
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
-for (i in seq_along(DBs)) {
-Anti_Res_Genes_PA.i <- NULL
-Anti_Res_Genes_PA.i <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
-Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i, select = -c(RESISTANCE, `Clonal complex`, DATABASE))
+if(wombat_config_json$MLST$run_mlst == "true") {
+  for (i in seq_along(DBs)) {
+    Anti_Res_Genes_PA.i <- NULL
+    Anti_Res_Genes_PA.i <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
+    Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i, select = -c(RESISTANCE, `Clonal complex`, DATABASE))
 
-Anti_Res_Genes_matrix <- as.matrix(Anti_Res_Genes_PA.i)
-  
-plot_list[[i]] = grid.grabExpr(draw(Heatmap(Anti_Res_Genes_matrix, column_title = paste("Database = ", DBs[i], sep = ""))))
+    Anti_Res_Genes_matrix <- as.matrix(Anti_Res_Genes_PA.i)
+      
+    plot_list[[i]] = grid.grabExpr(draw(Heatmap(Anti_Res_Genes_matrix, column_title = paste("Database = ", DBs[i], sep = ""))))
+  }
+} else {
+  for (i in seq_along(DBs)) {
+    Anti_Res_Genes_PA.i <- NULL
+    Anti_Res_Genes_PA.i <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
+    Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i, select = -c(RESISTANCE, DATABASE))
 
+    Anti_Res_Genes_matrix <- as.matrix(Anti_Res_Genes_PA.i)
+      
+    plot_list[[i]] = grid.grabExpr(draw(Heatmap(Anti_Res_Genes_matrix, column_title = paste("Database = ", DBs[i], sep = ""))))
+  }
 }
 ```
 
@@ -1048,13 +1231,22 @@ Following figure represents presence/absence of virulence genes in each draft ge
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Virulence_Genes_PA <- 
-  Virulence_Genes %>%  
-  rename(.data = ., Sample = SAMPLE) %>% 
-  left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
-  mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`GENE`, "^-$"))) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  pivot_wider(data = ., names_from = "GENE", values_from = "Presence / Absence", values_fill = 0) 
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Virulence_Genes_PA <- 
+    Virulence_Genes %>%  
+    rename(.data = ., Sample = SAMPLE) %>% 
+    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+    mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`GENE`, "^-$"))) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    pivot_wider(data = ., names_from = "GENE", values_from = "Presence / Absence", values_fill = 0) 
+} else {
+  Virulence_Genes_PA <- 
+    Virulence_Genes %>%  
+    rename(.data = ., Sample = SAMPLE) %>% 
+    mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`GENE`, "^-$"))) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    pivot_wider(data = ., names_from = "GENE", values_from = "Presence / Absence", values_fill = 0) 
+}
 ```
 
 ```{r echo=FALSE, eval=FALSE, purl=FALSE}
@@ -1096,14 +1288,24 @@ Following figure represents presence/absence of virulence genes in each draft ge
 
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Virulence_Genes_Blast <- 
-  read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv") %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  slice(-n()) %>% 
-  pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
-  relocate(Sample) %>% 
-  left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
-  pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Virulence_Genes_Blast <- 
+    read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    slice(-n()) %>% 
+    pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
+    relocate(Sample) %>% 
+    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+    pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
+} else {
+  Virulence_Genes_Blast <- 
+    read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    slice(-n()) %>% 
+    pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
+    relocate(Sample) %>% 
+    pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
+}
 ```
 
 ```{r echo=FALSE, eval=FALSE, purl=FALSE}
@@ -1111,166 +1313,145 @@ Virulence_Genes_Blast
 ```
 
 ```{r fig.width= 10, echo=FALSE}
-Virulence_Genes_Blast %>% 
-  select(!c(DATABASE, ST, `Clonal complex`)) %>% 
-  base::as.matrix() %>%
-  Heatmap()
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Virulence_Genes_Blast %>% 
+    select(!c(DATABASE, ST, `Clonal complex`)) %>% 
+    base::as.matrix() %>%
+    Heatmap()
+}
 ```
 
 
 <br>
 
 [Back to index](#index)
-
-## Pangenome analysis {#pangenome}
-
-Following charts show pangenome analysis using [Roary](https://pubmed.ncbi.nlm.nih.gov/26198102):
-
-
-*     Pangenome genes summary
-
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Pangenome_genes_summary <- 
-  read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  slice(., 1:(n() - 1))
-```
+if(wombat_config_json$pangenome$run_pangenome == "true") {
+
+  "## Pangenome analysis {#pangenome}"
+
+  "Following charts show pangenome analysis using [Roary](https://pubmed.ncbi.nlm.nih.gov/26198102):"
 
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-Pangenome_genes_summary %>% 
-ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
-  geom_bar(width = 1, stat = "identity") +
-  labs(fill = "Core genes") +
-  coord_polar("y", start = 0) + 
-  scale_fill_brewer(palette = "Blues") +
-  theme_minimal() +
-  theme(
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank(),
-    panel.border = element_blank(),
-    panel.grid = element_blank(),
-    axis.ticks = element_blank(),
-    axis.text.x = element_blank(),
-    plot.title = element_text(size = 14, face = "bold")
-  ) +
-geom_text(aes(y = Pangenome_genes_summary[[3]]/sum(Pangenome_genes_summary[[3]])),
-          label = scales::percent(Pangenome_genes_summary[[3]]/sum(Pangenome_genes_summary[[3]]), accuracy = 0.1),
-          size = 4, position = position_jitter(width = 0.5, height = 0.8))
-```
+    "*     Pangenome genes summary"
 
 
-```{r, warning=FALSE, message=FALSE, echo=FALSE}
-Pangenome_genes_summary %>% 
-  ggplot(data = ., aes(x = reorder(.[[1]], -.[[3]]), y = .[[3]], fill = .[[1]])) +
-  geom_bar( stat = "identity") +
-  scale_fill_viridis(discrete = TRUE, direction = -1) + 
-  theme_classic() +
-  labs(x = "", y = "Value??") +
-  theme(
-    legend.position = "right",
-    plot.title = element_text(size = 14),
-  )
-```
+    Pangenome_genes_summary <- 
+      read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE) %>% 
+      mutate(across(where(is_character), as_factor)) %>% 
+      slice(., 1:(n() - 1))
 
-<br>
+  Pangenome_genes_summary %>% 
+  ggplot(data = ., aes(x = "", y = .[[3]], fill = .[[1]])) +
+    geom_bar(width = 1, stat = "identity") +
+    labs(fill = "Core genes") +
+    coord_polar("y", start = 0) + 
+    scale_fill_brewer(palette = "Blues") +
+    theme_minimal() +
+    theme(
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      panel.border = element_blank(),
+      panel.grid = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.x = element_blank(),
+      plot.title = element_text(size = 14, face = "bold")
+    ) +
+  geom_text(aes(y = Pangenome_genes_summary[[3]]/sum(Pangenome_genes_summary[[3]])),
+            label = scales::percent(Pangenome_genes_summary[[3]]/sum(Pangenome_genes_summary[[3]]), accuracy = 0.1),
+            size = 4, position = position_jitter(width = 0.5, height = 0.8))
 
-*     Pangenome frequency
+  Pangenome_genes_summary %>% 
+    ggplot(data = ., aes(x = reorder(.[[1]], -.[[3]]), y = .[[3]], fill = .[[1]])) +
+    geom_bar( stat = "identity") +
+    scale_fill_viridis(discrete = TRUE, direction = -1) + 
+    theme_classic() +
+    labs(x = "", y = "Value??") +
+    theme(
+      legend.position = "right",
+      plot.title = element_text(size = 14),
+    )
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-Pangenome_frequency <- 
-  readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv") %>% 
-  dplyr::mutate(across(where(is_character), as_factor)) %>% 
-  dplyr::select(.data = ., c(1, 15:last_col())) 
+  "<br>"
 
-Pangenome_frequency
-```
+  "*     Pangenome frequency"
 
-```{r echo=FALSE}
-Pangenome_frequency_Genomes <-
+  Pangenome_frequency <- 
+    readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv") %>% 
+    dplyr::mutate(across(where(is_character), as_factor)) %>% 
+    dplyr::select(.data = ., c(1, 15:last_col())) 
+
+  Pangenome_frequency
+
+  Pangenome_frequency_Genomes <-
+    Pangenome_frequency %>% 
+    select(-1) %>% 
+    dplyr::mutate(across(where(is_character), as_factor)) %>% 
+    dplyr::mutate(across(where(is.factor), as.numeric)) %>% 
+    mutate_all(~ +(. > 0)) %>% 
+    dplyr::transmute(Genomes = rowSums(., na.rm = TRUE))
+
+  Pangenome_frequency$Genomes <- Pangenome_frequency_Genomes$Genomes
+
   Pangenome_frequency %>% 
-  select(-1) %>% 
-  dplyr::mutate(across(where(is_character), as_factor)) %>% 
-  dplyr::mutate(across(where(is.factor), as.numeric)) %>% 
-  mutate_all(~ +(. > 0)) %>% 
-  dplyr::transmute(Genomes = rowSums(., na.rm = TRUE))
-```
-
-```{r, echo=FALSE}
-Pangenome_frequency$Genomes <- Pangenome_frequency_Genomes$Genomes
-#Pangenome_frequency # To check if everything was OK
-```
-
-
-```{r message=FALSE, warning=FALSE, echo=FALSE}
-Pangenome_frequency %>% 
-  ggplot(data = ., aes(x = Genomes)) +
-  geom_bar(stat = "count") +
-  theme_classic() +
-  labs(x = "Num. of Genomes", y = "Num. of genes") +
-  theme(
-    legend.position = "right",
-    plot.title = element_text(size = 14),
-  )
+    ggplot(data = ., aes(x = Genomes)) +
+    geom_bar(stat = "count") +
+    theme_classic() +
+    labs(x = "Num. of Genomes", y = "Num. of genes") +
+    theme(
+      legend.position = "right",
+      plot.title = element_text(size = 14),
+    )
+}
 ```
 
 <br>
 
-*    Pangenome tree based on presence/absence of accesory genes
-
 ```{r, echo=FALSE}
-#library(ape)
-Phylo_tree <- 
-  ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
-```
+if(wombat_config_json$pangenome$run_pangenome == "true") {
+  "*    Pangenome tree based on presence/absence of accesory genes"
 
-```{r echo=FALSE, eval=FALSE, purl=FALSE}
-Phylo_tree
-```
+  #library(ape)
+  Phylo_tree <- 
+    ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
 
-```{r echo=FALSE, eval=FALSE, purl=FALSE}
-str(Phylo_tree)
-```
+  Phylo_tree
+
+  str(Phylo_tree)
 
 
-```{r echo=FALSE}
-# Function to work with both phylogenetic trees, ultra-metrics and non-ultrametrics
-heatmap.phylo <- function(x, Rowp, Colp, ...){
-  x <- x[Rowp$tip, Colp$tip]
-  xl <- c(0.5, ncol(x) + 0.5)
-  yl <- c(0.5, nrow(x) + 0.5)
-  layout(matrix(c(0,1,0,2,3,4,0,5,0),nrow = 3, byrow = TRUE),
-         width = c(1,3,1), height = c(1,3,1))
-  par(mar = rep(0,4))
-  plot(Colp, direction = "downwards", show.tip.label = FALSE,
-       xaxs = "i", x.lim = xl)
-  par(mar = rep(0,4))
-  plot(Rowp, direction = "rightwards", show.tip.label = FALSE, 
-       yaxs = "i", y.lim = yl)
-  par(mar = rep(0,4), xpd = TRUE)
-  image((1:nrow(x)) - 0.5, (1:ncol(x)) - 0.5, x, 
-        xaxs = "i", yaxs = "i", axes = FALSE, ...)
-  par(mar = rep(0,4))
-  plot(NA, axes = FALSE, ylab = "", xlab = "", yaxs = "i", xlim = c(0,2), ylim = yl)
-  text(rep(0, nrow(x)), 1:nrow(x), Rowp$tip, pos = 4)
-  par(mar = rep(0,4))
-  plot(NA, axes = FALSE, ylab = "", xlab = "", xaxs = "i", ylim = c(0,2), xlim = xl)
-  text(1:ncol(x), rep(2, ncol(x)), Colp$tip, srt = 90, pos = 2)
+  # Function to work with both phylogenetic trees, ultra-metrics and non-ultrametrics
+  heatmap.phylo <- function(x, Rowp, Colp, ...){
+    x <- x[Rowp$tip, Colp$tip]
+    xl <- c(0.5, ncol(x) + 0.5)
+    yl <- c(0.5, nrow(x) + 0.5)
+    layout(matrix(c(0,1,0,2,3,4,0,5,0),nrow = 3, byrow = TRUE),
+          width = c(1,3,1), height = c(1,3,1))
+    par(mar = rep(0,4))
+    plot(Colp, direction = "downwards", show.tip.label = FALSE,
+        xaxs = "i", x.lim = xl)
+    par(mar = rep(0,4))
+    plot(Rowp, direction = "rightwards", show.tip.label = FALSE, 
+        yaxs = "i", y.lim = yl)
+    par(mar = rep(0,4), xpd = TRUE)
+    image((1:nrow(x)) - 0.5, (1:ncol(x)) - 0.5, x, 
+          xaxs = "i", yaxs = "i", axes = FALSE, ...)
+    par(mar = rep(0,4))
+    plot(NA, axes = FALSE, ylab = "", xlab = "", yaxs = "i", xlim = c(0,2), ylim = yl)
+    text(rep(0, nrow(x)), 1:nrow(x), Rowp$tip, pos = 4)
+    par(mar = rep(0,4))
+    plot(NA, axes = FALSE, ylab = "", xlab = "", xaxs = "i", ylim = c(0,2), xlim = xl)
+    text(1:ncol(x), rep(2, ncol(x)), Colp$tip, srt = 90, pos = 2)
+  }
+
+  Mat_dimension <- length(Phylo_tree$tip.label)
+
+  mat2 <- matrix(rnorm(Mat_dimension * Mat_dimension), nrow = Mat_dimension, dimnames = list(sample(Phylo_tree$tip.label, Mat_dimension), sample(Phylo_tree$tip.label, Mat_dimension)))
+  
+  mat2
+
+  heatmap.phylo(mat2,Phylo_tree,Phylo_tree, xlab = "")
 }
-
-```
-
-
-```{r echo=FALSE, purl=FALSE}
-Mat_dimension <- length(Phylo_tree$tip.label)
-
-mat2 <- matrix(rnorm(Mat_dimension * Mat_dimension), nrow = Mat_dimension, dimnames = list(sample(Phylo_tree$tip.label, Mat_dimension), sample(Phylo_tree$tip.label, Mat_dimension)))
- 
-mat2
-```
-
-```{r echo=FALSE}
-heatmap.phylo(mat2,Phylo_tree,Phylo_tree, xlab = "")
 ```
 
 <br>
@@ -1296,30 +1477,27 @@ heatmap.phylo(mat2,Phylo_tree,Phylo_tree, xlab = "")
 
 
 ```{r, echo=FALSE}
-Genomes_PA <- 
-  readr::read_csv("Roary_pangenome/gene_presence_absence.csv", 
-                  col_types = cols(`Accessory Fragment` = col_double(), 
-                                   `Accessory Order with Fragment` = col_double(), 
-                                   `Non-unique Gene name` = col_character(), 
-                                   QC = col_character())) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  select(c(1, 15:ncol(.))) %>% 
-  dplyr::mutate_at(vars(-Gene), as.numeric) %>%  
-  mutate_at(vars(-Gene), ~ +(. > 0)) %>% 
-  pivot_longer(data = ., cols = !c("Gene"), names_to = "Sample", values_to = "P_A") %>% 
-  left_join(x = ., y = Assembly_right, by = "Sample") %>% 
-  pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0) 
+if(wombat_config_json$pangenome$run_pangenome == "true") {
+  Genomes_PA <- 
+    readr::read_csv("Roary_pangenome/gene_presence_absence.csv", 
+                    col_types = cols(`Accessory Fragment` = col_double(), 
+                                    `Accessory Order with Fragment` = col_double(), 
+                                    `Non-unique Gene name` = col_character(), 
+                                    QC = col_character())) %>% 
+    mutate(across(where(is_character), as_factor)) %>% 
+    select(c(1, 15:ncol(.))) %>% 
+    dplyr::mutate_at(vars(-Gene), as.numeric) %>%  
+    mutate_at(vars(-Gene), ~ +(. > 0)) %>% 
+    pivot_longer(data = ., cols = !c("Gene"), names_to = "Sample", values_to = "P_A") %>% 
+    left_join(x = ., y = Assembly_right, by = "Sample") %>% 
+    pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0) 
   
-```
-
-```{r echo=FALSE, eval=FALSE, purl=FALSE}
 Genomes_PA
-```
 
-```{r, echo=FALSE}
 Genomes_PA %>% 
   base::as.matrix() %>%
   Heatmap()
+}
 ```
 
 <br>
@@ -1342,11 +1520,18 @@ if(wombat_config_json$MLST$run_mlst == "true") {
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Genomic_variants <- 
-  read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv") %>% 
-  relocate(Sample) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  left_join(x = ., y = MLST_edited %>% select(Sample, ST, clonal_complex), by = "Sample")
+if(wombat_config_json$MLST$run_mlst == "true") {
+  Genomic_variants <- 
+    read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
+    relocate(Sample) %>% 
+    mutate(across(where(is_character), as.numeric)) %>% 
+    left_join(x = ., y = MLST_edited %>% select(Sample, ST, clonal_complex), by = "Sample")
+} else {
+  Genomic_variants <- 
+    read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
+    relocate(Sample) %>% 
+    mutate(across(where(is_character), as.numeric))
+}
 ```
 
 
