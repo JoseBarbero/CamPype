@@ -792,40 +792,36 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
     return call(arguments)
 
 
-def prokka_summary(snippy_files, output_file):
+def prokka_summary(prokka_files, output_file):
     """
     Generates a summary table from prokka data.
 
     Args:
-        snippy_files {list}: List of snippy files.
+        prokka_file {list}: Prokka results files.
         output_file {str}: Summary output file.
     """
-    summary_df = pd.DataFrame(columns=["Sample", "Variant-COMPLEX", "Variant-DEL", "Variant-INS", "Variant-SNP", "VariantTotal"])
-    for snippy_file in snippy_files:
-        snippy_data = {}
+    
+    # Get columns (because some files can have different columns)
+    columns = set()
+    for prokka_file in prokka_files:
+        with open(prokka_file, "r") as prokka_f:
+            file_columns = [line[:-1].split(":")[0] for line in prokka_f.readlines()]
+            columns.update(file_columns)
+    columns = ["Sample"] + list(columns)
 
-        # Get snippy data into a dictionary
-        with open(snippy_file) as f:
-            for line in f:
-                snippy_data[line.split("\t")[0]] = line.split("\t")[1].replace("\n", "")
-        
-        new_row = {}
-        new_row["Sample"] = os.path.splitext(os.path.basename(snippy_file))[0]  # We get the file basename to get the sample name
-        if 'Variant-COMPLEX' in snippy_data:
-            new_row["Variant-COMPLEX"] = snippy_data["Variant-COMPLEX"]
-        if 'Variant-DEL' in snippy_data:
-            new_row["Variant-DEL"] = snippy_data["Variant-DEL"]
-        if 'Variant-INS' in snippy_data:
-            new_row["Variant-INS"] = snippy_data["Variant-INS"]
-        if 'Variant-SNP' in snippy_data:
-            new_row["Variant-SNP"] = snippy_data["Variant-SNP"]
-        if 'VariantTotal' in snippy_data:
-            new_row["VariantTotal"] = snippy_data["VariantTotal"]
+    # Get data
+    summary_df = pd.DataFrame(columns = columns)
 
-        summary_df = summary_df.append(new_row, ignore_index=True)
+    for prokka_file in prokka_files:
+        with open(prokka_file, "r") as prokka_f:
+            row = {'Sample': prokka_file.split("/")[-1].split(".")[0]}
+            for line in prokka_f.readlines():
+                row[line.split(":")[0]] = line[:-1].split(":")[1][1:]
+            print(row)
+        summary_df = summary_df.append(row, ignore_index = True)
 
-        # Export to tsv
-        summary_df.to_csv(output_file, sep="\t",index=False)
+    # Export to tsv
+    summary_df.to_csv(output_file, sep="\t",index=False)
 
 
 def refactor_gff_from_prokka(gff_input, gff_output):
@@ -1790,6 +1786,12 @@ if __name__ == "__main__":
                     prefix=sample_basename)
         snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
 
+    # Prokka summary
+    if cfg.config["annotation"]["run_annotation"] and cfg.config["annotation"]["annotator"] == "prokka":
+        prokka_summary_outfile = prokka_dir+"/Prokka_summary.tsv"
+        prokka_summary_input_files = [prokka_dir+"/"+sample+"/"+sample+".txt" for sample in samples_basenames]
+        prokka_summary(prokka_summary_input_files, prokka_summary_outfile)
+
     # Snippy summary
     snippy_summary_outfile = snps_dir+"/Genomic_variants_summary.tsv"
     snippy_summary(snippy_output_files, snippy_summary_outfile)
@@ -1806,7 +1808,7 @@ if __name__ == "__main__":
                 reference_file=reference_genome_file,
                 output_dir=mlst_dir,
                 output_filename=mlst_out_file)
-        if cfg.config["include_cc"]:
+        if cfg.config["MLST"]["include_cc"]:
             # MLST postprocessing
             mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
 

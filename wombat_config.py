@@ -74,9 +74,5 @@ config = {
     },
     "report":{
         "include_reference": True, # Set this to True to include the reference genome in the final report.
-    },
-
-
-
-    
+    }
 }
