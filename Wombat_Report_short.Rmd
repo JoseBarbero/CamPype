@@ -557,7 +557,7 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 [Back to index](#index)
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('amrfinder' in wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     "## Antibiotic resistance genes {#resistance}"
     "Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity below `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))` was removed."
 
@@ -629,7 +629,7 @@ if(wombat_config_json$MLST$antimicrobial_resistance_genes$run_antimicrobial_resi
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('abricate' in wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+  if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     Anti_Res_Genes <- 
       read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
       select(!c("COVERAGE", "COVERAGE_MAP", "DATABASE")) %>% 
@@ -668,7 +668,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 
 ```{r message=FALSE, warning=FALSE, echo=FALSE}
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('abricate' in wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+  if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       for (i in seq_along(DBs)) {
         Anti_Res_Genes_PA.i <- NULL
@@ -700,7 +700,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
-  if('abricate' in wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+  if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     "## Virulence genes {#virulence}"
 
     "Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __80%__ and identity below __80%__ was removed."
@@ -747,7 +747,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
-  if('blast' in wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+  if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
 
     "***"
 
