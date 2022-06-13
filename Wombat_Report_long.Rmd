@@ -101,7 +101,7 @@ and R2 reads.
 #### Before QC
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$trim_adaptors == "true") {
+if(wombat_config_json$trim_adaptors == TRUE) {
   BeforeQC <- 
   read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_beforeQC.tsv") %>% 
   mutate(Sample = factor(Sample))
@@ -229,7 +229,7 @@ cat("Average read length = ", mean(BeforeQC$R2LenMean, na.rm = TRUE), 'bp', sep 
 #### After QC
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$trim_adaptors == "true") {
+if(wombat_config_json$trim_adaptors == TRUE) {
   AfterQC <- 
   read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_afterQC.tsv") %>% 
   mutate(Sample = factor(Sample))
@@ -355,139 +355,32 @@ cat("Average read length = ", mean(AfterQC$R2LenMeanQC, na.rm = TRUE), 'bp', sep
 
 
 
-<br>
-
-[Back to index](#index)
-
-## Joined reads summary with FLASH {#Joinedreads}
-Following table shows the number of reads, average length and standard deviation for joined and unjoined reads using [FLASH](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3198573).
-
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-FLASH_Reads <- 
-  read_tsv(file = "Flash_read_extension/reads_statistics_FLASH.tsv") %>% 
-  mutate(Sample = factor(Sample))
 
-Create_DT(x = FLASH_Reads, caption = '')
-```
+if(wombat_config_json$merge_reads == TRUE) {
 
+  "<br>"
 
-#### Select the parameter {.tabset .tabset-fade .tabset-pills}
-##### Percentage of joined reads
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = FLASH_Reads, aes(x = Sample, y = `JoinReads (%)`)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Percentage of joined reads", title = "") 
-)
-```
-```{r echo=FALSE}
-cat("Average percentage of joined reads = ", mean(FLASH_Reads$`JoinReads (%)`, na.rm = TRUE), sep = "")
-```
+  "[Back to index](#index)"
 
+  "## Joined reads summary with FLASH {#Joinedreads}"
+  "Following table shows the number of reads, average length and standard deviation for joined and unjoined reads using [FLASH](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3198573)."
 
-***
+  FLASH_Reads <- 
+    read_tsv(file = "Flash_read_extension/reads_statistics_FLASH.tsv") %>% 
+    mutate(Sample = factor(Sample))
+ 
 
-<br>
+  Create_DT(x = FLASH_Reads, caption = '')
 
+  "#### Select the parameter {.tabset .tabset-fade .tabset-pills}"
+  "##### Percentage of joined reads"
 
-##### Number of joined reads
-
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinReads)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of joined reads", title = "") +
-  lims(y = c(0, max(FLASH_Reads$JoinReads) + 300000))
-)
-```
-```{r echo=FALSE}
-cat("Average number of joined reads = ", mean(FLASH_Reads$JoinReads, na.rm = TRUE), sep = "")
-```
-
-
-***
-
-<br>
-
-##### Average joined reads length
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinLenMeanReads)) +
-  geom_bar(stat = "identity") +
-  geom_errorbar(aes(ymin = JoinLenMeanReads - JoinLenSdReads, ymax = JoinLenMeanReads + JoinLenSdReads), width = 0.18) +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Average joined reads length", title = "") + 
-  coord_cartesian(ylim = c(0 , max(FLASH_Reads$JoinLenMeanReads + 150)))
-)
-```
-
-```{r echo=FALSE}
-cat("Average joined reads length = ", mean(FLASH_Reads$JoinLenMeanReads, na.rm = TRUE), 'bp', sep = "")
-```
-
-***
-
-<br>
-
-##### Number of unjoined R1 reads
-
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1Reads)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of unjoined reads", title = "Unjoined reads - R1") +
-  lims(y = c(0, max(FLASH_Reads$UnjoinR1Reads) + 10000))
-)
-```
-
-```{r echo=FALSE}
-cat("Average number of unjoined reads (R1) = ", mean(FLASH_Reads$UnjoinR1Reads, na.rm = TRUE), sep = "")
-```
-
-
-***
-
-<br>
-
-##### Average unjoined R1 reads length
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-  ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1LenMeanReads)) +
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = `JoinReads (%)`)) +
     geom_bar(stat = "identity") +
-    geom_errorbar(aes(ymin = UnjoinR1LenMeanReads - UnjoinR1LenSdReads, ymax = UnjoinR1LenMeanReads + UnjoinR1LenSdReads), width = 0.18) +
     theme(panel.border = element_blank(),
           panel.background = element_blank(),
           panel.grid.minor = element_line(colour = "grey90"),
@@ -495,53 +388,26 @@ ggplotly(
           panel.grid.major.x = element_line(colour = "grey90"),
           axis.text = element_text(size = 10),
           axis.title = element_text(size = 12, face = "bold")) +
-    labs(x = "Samples", y = "Average unjoined reads length", title = "Unjoined reads length - R1") + 
-    coord_cartesian(ylim = c(0 , max(FLASH_Reads$UnjoinR1LenMeanReads + 150)))
-)
-```
-
-```{r echo=FALSE}
-cat("Average unjoined reads length (R1) = ", mean(FLASH_Reads$UnjoinR1LenMeanReads, na.rm = TRUE), 'bp', sep = "")
-```
-
-***
-
-<br>
-
-
-##### Number of unjoined R2 reads
-
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2Reads)) +
-  geom_bar(stat = "identity") +
-  theme(panel.border = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.minor = element_line(colour = "grey90"),
-        panel.grid.major = element_line(colour = "grey90"),
-        panel.grid.major.x = element_line(colour = "grey90"),
-        axis.text = element_text(size = 10),
-        axis.title = element_text(size = 12, face = "bold")) +
-  labs(x = "Samples", y = "Number of unjoined reads", title = "Unjoined reads - R2") +
-  lims(y = c(0, max(FLASH_Reads$UnjoinR2Reads) + 10000))
-)
+    labs(x = "Samples", y = "Percentage of joined reads", title = "") 
+  )
+}
 ```
 ```{r echo=FALSE}
-cat("Average number of unjoined reads (R2) = ", mean(FLASH_Reads$UnjoinR2Reads, na.rm = TRUE), sep = "")
-```
+if(wombat_config_json$merge_reads == TRUE) {
+  cat("Average percentage of joined reads = ", mean(FLASH_Reads$`JoinReads (%)`, na.rm = TRUE), sep = "")
 
-***
 
-<br>
+  "***"
 
-##### Average unjoined R2 reads length
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-ggplotly(
-  ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2LenMeanReads)) +
+  "<br>"
+
+
+  "##### Number of joined reads"
+
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinReads)) +
     geom_bar(stat = "identity") +
-    geom_errorbar(aes(ymin = UnjoinR2LenMeanReads - UnjoinR2LenSdReads, ymax = UnjoinR2LenMeanReads + UnjoinR2LenSdReads), width = 0.18) +
     theme(panel.border = element_blank(),
           panel.background = element_blank(),
           panel.grid.minor = element_line(colour = "grey90"),
@@ -549,12 +415,178 @@ ggplotly(
           panel.grid.major.x = element_line(colour = "grey90"),
           axis.text = element_text(size = 10),
           axis.title = element_text(size = 12, face = "bold")) +
-    labs(x = "Samples", y = "Average unjoined reads length", title = "Unjoined reads length - R2") + 
-    coord_cartesian(ylim = c(0 , max(FLASH_Reads$UnjoinR2LenMeanReads + 150))) 
-)
+    labs(x = "Samples", y = "Number of joined reads", title = "") +
+    lims(y = c(0, max(FLASH_Reads$JoinReads) + 300000))
+  )
+
+  cat("Average number of joined reads = ", mean(FLASH_Reads$JoinReads, na.rm = TRUE), sep = "")
+
+
+  "***"
+
+  "<br>"
+
+  "##### Average joined reads length"
+
+}
+
+```{r, echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinLenMeanReads)) +
+    geom_bar(stat = "identity") +
+    geom_errorbar(aes(ymin = JoinLenMeanReads - JoinLenSdReads, ymax = JoinLenMeanReads + JoinLenSdReads), width = 0.18) +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "Average joined reads length", title = "") + 
+    coord_cartesian(ylim = c(0 , max(FLASH_Reads$JoinLenMeanReads + 150)))
+  )
+}
+```
+
+```{r echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  cat("Average joined reads length = ", mean(FLASH_Reads$JoinLenMeanReads, na.rm = TRUE), 'bp', sep = "")
+  
+  "***"
+
+  "<br>"
+
+  "##### Number of unjoined R1 reads"
+}
+```
+
+
+
+```{r, echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1Reads)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "Number of unjoined reads", title = "Unjoined reads - R1") +
+    lims(y = c(0, max(FLASH_Reads$UnjoinR1Reads) + 10000))
+  )
+}
+```
+
+```{r echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  cat("Average number of unjoined reads (R1) = ", mean(FLASH_Reads$UnjoinR1Reads, na.rm = TRUE), sep = "")
+
+  "***"
+
+  "<br>"
+
+  "##### Average unjoined R1 reads length"
+}
+
+```
+
+
+
+```{r, echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+    ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1LenMeanReads)) +
+      geom_bar(stat = "identity") +
+      geom_errorbar(aes(ymin = UnjoinR1LenMeanReads - UnjoinR1LenSdReads, ymax = UnjoinR1LenMeanReads + UnjoinR1LenSdReads), width = 0.18) +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Average unjoined reads length", title = "Unjoined reads length - R1") + 
+      coord_cartesian(ylim = c(0 , max(FLASH_Reads$UnjoinR1LenMeanReads + 150)))
+  )
+}
+```
+
+```{r echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  cat("Average unjoined reads length (R1) = ", mean(FLASH_Reads$UnjoinR1LenMeanReads, na.rm = TRUE), 'bp', sep = "")
+  
+  "***"
+
+  "<br>"
+
+  "##### Number of unjoined R2 reads"
+}
+```
+
+
+
+```{r, echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2Reads)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.minor = element_line(colour = "grey90"),
+          panel.grid.major = element_line(colour = "grey90"),
+          panel.grid.major.x = element_line(colour = "grey90"),
+          axis.text = element_text(size = 10),
+          axis.title = element_text(size = 12, face = "bold")) +
+    labs(x = "Samples", y = "Number of unjoined reads", title = "Unjoined reads - R2") +
+    lims(y = c(0, max(FLASH_Reads$UnjoinR2Reads) + 10000))
+  )
+}
 ```
 ```{r echo=FALSE}
-cat("Average unjoined reads length (R2) = ", mean(FLASH_Reads$UnjoinR2LenMeanReads, na.rm = TRUE), 'bp', sep = "")
+if(wombat_config_json$merge_reads == TRUE) {
+  cat("Average number of unjoined reads (R2) = ", mean(FLASH_Reads$UnjoinR2Reads, na.rm = TRUE), sep = "")
+
+  "***"
+
+  "<br>"
+
+  "##### Average unjoined R2 reads length"
+}
+```
+
+
+```{r, echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+    ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2LenMeanReads)) +
+      geom_bar(stat = "identity") +
+      geom_errorbar(aes(ymin = UnjoinR2LenMeanReads - UnjoinR2LenSdReads, ymax = UnjoinR2LenMeanReads + UnjoinR2LenSdReads), width = 0.18) +
+      theme(panel.border = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.minor = element_line(colour = "grey90"),
+            panel.grid.major = element_line(colour = "grey90"),
+            panel.grid.major.x = element_line(colour = "grey90"),
+            axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12, face = "bold")) +
+      labs(x = "Samples", y = "Average unjoined reads length", title = "Unjoined reads length - R2") + 
+      coord_cartesian(ylim = c(0 , max(FLASH_Reads$UnjoinR2LenMeanReads + 150))) 
+  )
+}
+```
+```{r echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  cat("Average unjoined reads length (R2) = ", mean(FLASH_Reads$UnjoinR2LenMeanReads, na.rm = TRUE), 'bp', sep = "")
+  
+}
 ```
 
 ***
@@ -575,7 +607,7 @@ Assembly_left <-
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Assembly_right <- 
     read_tsv(file = "MLST/MLST_and_CC.txt") %>% 
     mutate(across(where(is_character), as_factor)) %>% 
@@ -598,7 +630,7 @@ if(wombat_config_json$MLST$run_mlst == "true") {
 
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_of_contigs <-
     ggplotly(
   ggplot(data = Assembly_full, aes(x = Sample, y = Contigs, fill = `Clonal complex`)) +
@@ -638,7 +670,7 @@ Number_of_contigs
 ##### Draft genome lenght
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Draft_genome_length <-
   ggplotly(
   ggplot(data = Assembly_full, aes(x = Sample, y = GenomeLen, fill = `Clonal complex`)) +
@@ -681,7 +713,7 @@ Draft_genome_length
 
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Contig_length <- 
   ggplotly(
   ggplot(data = Assembly_full, aes(x = Sample, y = ContigLen, fill = `Clonal complex`)) +
@@ -724,7 +756,7 @@ Contig_length
 ##### N50
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   N50 <- 
   ggplotly(
   ggplot(data = Assembly_full, aes(x = Sample, y = N50, fill = `Clonal complex`)) +
@@ -767,7 +799,7 @@ N50
 ##### GC Content
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   GC_Content <- 
   ggplotly(
   ggplot(data = Assembly_full, aes(x = Sample, y = GC, fill = `Clonal complex`)) +
@@ -810,7 +842,7 @@ GC_Content
 ##### Sequencing depth
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Sequencing_depth <- 
   ggplotly(
   ggplot(data = Assembly_full, aes(x = Sample, y = `DepthCov (X)`, fill = `Clonal complex`)) +
@@ -852,7 +884,7 @@ Sequencing_depth
 ##### Number of CDS
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_CDS <- 
     ggplotly(
       ggplot(data = Assembly_full, aes(x = Sample, y = CDS, fill = `Clonal complex`)) +
@@ -894,7 +926,7 @@ Number_CDS
 ##### Number of CRISPRs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_CRISPRs <- 
     ggplotly(
       ggplot(data = Assembly_full, aes(x = Sample, y = CRISPRs, fill = `Clonal complex`)) +
@@ -937,7 +969,7 @@ Number_CRISPRs
 ##### Number of rRNAs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
     
   Number_rRNAs <- 
     ggplotly(
@@ -980,7 +1012,7 @@ Number_rRNAs
 ##### Number of tRNAs
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_tRNAs <- 
     ggplotly(
       ggplot(data = Assembly_full, aes(x = Sample, y = tRNAs, fill = `Clonal complex`)) +
@@ -1027,7 +1059,7 @@ Number_tRNAs
 [Back to index](#index)
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   "## Multi-Locus Sequence Typing (MLST) {#mlst}"
   "Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst)."
   MLST <- 
@@ -1040,293 +1072,269 @@ if(wombat_config_json$MLST$run_mlst == "true") {
   MLST <- NULL
 }
 ```
-***
-
-<br>
-
-[Back to index](#index)
-
-## Antibiotic resistance genes {#resistance}
-Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity below `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`, was removed.
-
-Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Protein identifier`, `Contig id`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
-
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-AMR <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  filter(`Element subtype` != "POINT" ) %>% 
-  select(-c("Scope", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
-```
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' in wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = AMR, filter = "top", caption = '')
-```
+    "***"
 
+    "<br>"
 
-***
+    "[Back to index](#index)"
 
-<br>
+    "## Antibiotic resistance genes {#resistance}"
+    "Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity below `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`, was removed."
 
-Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity ≥ `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`.
-
-
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
-  AMR_HeatMap <- 
-    read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
-    slice(., 1:(n() - 1)) %>% 
-    pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
-    mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
-    mutate(across(where(is_character), as_factor)) %>% 
-    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample")
-} else {
-  AMR_HeatMap <- 
-    read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
-    slice(., 1:(n() - 1)) %>% 
-    pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
-    mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
-    mutate(across(where(is_character), as_factor))
-}
-```
-
-
-```{r message=FALSE, warning=FALSE, echo=FALSE}
-AMR_HeatMap %>%
-  pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
-  #select(!c("-")) %>% 
-  base::as.matrix() %>%
-  Heatmap()
-```
-
-***
+    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Protein identifier`, `Contig id`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available)."
 
 
 
-<br>
+    AMR <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
+      mutate(across(where(is_character), as_factor)) %>% 
+      filter(`Element subtype` != "POINT" ) %>% 
+      select(-c("Scope", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
 
-Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity ≥ `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`.
-
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
-  AntBioRes <-
-    read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
-    slice(., 1:(n() - 1)) %>% 
-    left_join(x = ., y = Assembly_right, by = "Sample")
-} else {
-  AntBioRes <-
-    read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
-    slice(., 1:(n() - 1))
-}
-```
-
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(AntBioRes, caption = '')
-```
+    Create_DT(x = AMR, filter = "top", caption = '')
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-Anti_Res_Genes <- 
-  read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
-  select(!c("COVERAGE", "COVERAGE_MAP", "DATABASE")) %>% 
-  mutate(across(where(is_character), as_factor))
-```
+    "***"
+
+    "<br>"
+
+    "Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity ≥ `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`."
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
-```
+
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      AMR_HeatMap <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
+        slice(., 1:(n() - 1)) %>% 
+        pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
+        mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
+        mutate(across(where(is_character), as_factor)) %>% 
+        left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample")
+    } else {
+      AMR_HeatMap <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
+        slice(., 1:(n() - 1)) %>% 
+        pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Genes", values_to = "Gene symbol") %>% 
+        mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>% 
+        mutate(across(where(is_character), as_factor))
+    }
+
+    AMR_HeatMap %>%
+      pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
+      #select(!c("-")) %>% 
+      base::as.matrix() %>%
+      Heatmap()
 
 
-<br>
+    "***"
 
 
-Following figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r paste((wombat_config_json$abricate$mincov), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$abricate$minid), "%", sep = "")`.
+
+    "<br>"
+
+    "Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = "")` and identity ≥ `r paste((wombat_config_json$amrfinder$minid)*100, "%", sep = "")`."
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
-  Anti_Res_Genes_PA <- 
-    read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
-    slice(-n()) %>% 
-    pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
-    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
-    pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0)
-} else {
-  Anti_Res_Genes_PA <- 
-    read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
-    slice(-n()) %>% 
-    pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
-    pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0)
-}
-```
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      AntBioRes <-
+        read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
+        slice(., 1:(n() - 1)) %>% 
+        left_join(x = ., y = Assembly_right, by = "Sample")
+    } else {
+      AntBioRes <-
+        read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
+        slice(., 1:(n() - 1))
+    }
 
-```{r echo=FALSE, eval=FALSE, purl=FALSE}
-Anti_Res_Genes_PA
-```
-
-
-```{r message=FALSE, warning=FALSE, echo=FALSE}
-DBs <- levels(factor(Anti_Res_Genes_PA$DATABASE))
-plot_list = list()
-```
-
-```{r message=FALSE, warning=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
-  for (i in seq_along(DBs)) {
-    Anti_Res_Genes_PA.i <- NULL
-    Anti_Res_Genes_PA.i <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
-    Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i, select = -c(RESISTANCE, `Clonal complex`, DATABASE))
-
-    Anti_Res_Genes_matrix <- as.matrix(Anti_Res_Genes_PA.i)
-      
-    plot_list[[i]] = grid.grabExpr(draw(Heatmap(Anti_Res_Genes_matrix, column_title = paste("Database = ", DBs[i], sep = ""))))
-  }
-} else {
-  for (i in seq_along(DBs)) {
-    Anti_Res_Genes_PA.i <- NULL
-    Anti_Res_Genes_PA.i <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
-    Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i, select = -c(RESISTANCE, DATABASE))
-
-    Anti_Res_Genes_matrix <- as.matrix(Anti_Res_Genes_PA.i)
-      
-    plot_list[[i]] = grid.grabExpr(draw(Heatmap(Anti_Res_Genes_matrix, column_title = paste("Database = ", DBs[i], sep = ""))))
+    Create_DT(AntBioRes, caption = '')
   }
 }
 ```
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
-plot_grid(plotlist = plot_list)
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('abricate' in wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    Anti_Res_Genes <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP", "DATABASE")) %>% 
+      mutate(across(where(is_character), as_factor))
+    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+
+    "<br>"
+
+
+    "Following figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r paste((wombat_config_json$abricate$mincov), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$abricate$minid), "%", sep = "")`."
+
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      Anti_Res_Genes_PA <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
+        slice(-n()) %>% 
+        pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
+        left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+        pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0)
+    } else {
+      Anti_Res_Genes_PA <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
+        slice(-n()) %>% 
+        pivot_longer(data = ., cols = !c(Gene, RESISTANCE, DATABASE), names_to = "Sample", values_to = "P_A") %>% 
+        pivot_wider(data = ., names_from = "Sample", values_from = "P_A", values_fill = 0)
+    }
+
+    Anti_Res_Genes_PA
+
+    DBs <- levels(factor(Anti_Res_Genes_PA$DATABASE))
+    plot_list = list()
+
+  }
+}
 ```
 
 
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('abricate' in wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      for (i in seq_along(DBs)) {
+        Anti_Res_Genes_PA.i <- NULL
+        Anti_Res_Genes_PA.i <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
+        Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i, select = -c(RESISTANCE, `Clonal complex`, DATABASE))
+
+        Anti_Res_Genes_matrix <- as.matrix(Anti_Res_Genes_PA.i)
+          
+        plot_list[[i]] = grid.grabExpr(draw(Heatmap(Anti_Res_Genes_matrix, column_title = paste("Database = ", DBs[i], sep = ""))))
+      }
+    } else {
+      for (i in seq_along(DBs)) {
+        Anti_Res_Genes_PA.i <- NULL
+        Anti_Res_Genes_PA.i <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
+        Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i, select = -c(RESISTANCE, DATABASE))
+
+        Anti_Res_Genes_matrix <- as.matrix(Anti_Res_Genes_PA.i)
+          
+        plot_list[[i]] = grid.grabExpr(draw(Heatmap(Anti_Res_Genes_matrix, column_title = paste("Database = ", DBs[i], sep = ""))))
+      }
+    }
+
+    plot_grid(plotlist = plot_list)
+  }
+}
+```
 
 <br>
 
 [Back to index](#index)
-
-## Virulence genes {#virulence}
-
-Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __80%__ and identity below __80%__ was removed.
-
-
-Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
-
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-Virulence_Genes <- 
-  read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv") %>% 
-  select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-  mutate(across(where(is_character), as_factor))
-```
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('abricate' in wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    "## Virulence genes {#virulence}"
 
+    "Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __80%__ and identity below __80%__ was removed."
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Virulence_Genes, filter = "top", caption = '')
-```
+    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available)."
 
-***
+    Virulence_Genes <- 
+      read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv") %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+      mutate(across(where(is_character), as_factor))
 
-Following figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r paste((wombat_config_json$abricate$mincov), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$abricate$minid), "%", sep = "")`.
+    Create_DT(x = Virulence_Genes, filter = "top", caption = '')
 
+    "***"
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
-  Virulence_Genes_PA <- 
-    Virulence_Genes %>%  
-    rename(.data = ., Sample = SAMPLE) %>% 
-    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
-    mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`GENE`, "^-$"))) %>% 
-    mutate(across(where(is_character), as_factor)) %>% 
-    pivot_wider(data = ., names_from = "GENE", values_from = "Presence / Absence", values_fill = 0) 
-} else {
-  Virulence_Genes_PA <- 
-    Virulence_Genes %>%  
-    rename(.data = ., Sample = SAMPLE) %>% 
-    mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`GENE`, "^-$"))) %>% 
-    mutate(across(where(is_character), as_factor)) %>% 
-    pivot_wider(data = ., names_from = "GENE", values_from = "Presence / Absence", values_fill = 0) 
-}
-```
+    "Following figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r paste((wombat_config_json$abricate$mincov), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$abricate$minid), "%", sep = "")`."
 
-```{r echo=FALSE, eval=FALSE, purl=FALSE}
-Virulence_Genes_PA
-```
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      Virulence_Genes_PA <- 
+        Virulence_Genes %>%  
+        rename(.data = ., Sample = SAMPLE) %>% 
+        left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+        mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`GENE`, "^-$"))) %>% 
+        mutate(across(where(is_character), as_factor)) %>% 
+        pivot_wider(data = ., names_from = "GENE", values_from = "Presence / Absence", values_fill = 0) 
+    } else {
+      Virulence_Genes_PA <- 
+        Virulence_Genes %>%  
+        rename(.data = ., Sample = SAMPLE) %>% 
+        mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`GENE`, "^-$"))) %>% 
+        mutate(across(where(is_character), as_factor)) %>% 
+        pivot_wider(data = ., names_from = "GENE", values_from = "Presence / Absence", values_fill = 0) 
+    }
 
-```{r, echo=FALSE}
-Virulence_Genes_PA %>% 
-  select(c(1, 13:ncol(.))) %>% 
-  base::as.matrix() %>%
-  Heatmap()
-```
+    Virulence_Genes_PA
 
-
-***
-
-
-Following table shows virulence genes by screening the draft genomes against the custom database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below 50 % was removed.
-
-Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available).
-
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-Virulence_Genes_Screening <- 
-  read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
-  relocate(Sample) %>% 
-  mutate(across(where(is_character), as_factor)) %>% 
-  select(!tail(names(.), 1))
-```
-
-
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = '')
-```
-
-***
-
-Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = "")`.
-
-
-
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
-  Virulence_Genes_Blast <- 
-    read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
-    mutate(across(where(is_character), as_factor)) %>% 
-    slice(-n()) %>% 
-    pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
-    relocate(Sample) %>% 
-    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
-    pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
-} else {
-  Virulence_Genes_Blast <- 
-    read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
-    mutate(across(where(is_character), as_factor)) %>% 
-    slice(-n()) %>% 
-    pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
-    relocate(Sample) %>% 
-    pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
-}
-```
-
-```{r echo=FALSE, eval=FALSE, purl=FALSE}
-Virulence_Genes_Blast
-```
-
-```{r fig.width= 10, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
-  Virulence_Genes_Blast %>% 
-    select(!c(DATABASE, ST, `Clonal complex`)) %>% 
+    Virulence_Genes_PA %>% 
+    select(c(1, 13:ncol(.))) %>% 
     base::as.matrix() %>%
     Heatmap()
+  }
 }
 ```
 
+
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('blast' in wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+
+    "***"
+
+    "Following table shows virulence genes by screening the draft genomes against the custom database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below 50 % was removed."
+
+    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available)."
+
+    Virulence_Genes_Screening <- 
+      read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
+      relocate(Sample) %>% 
+      mutate(across(where(is_character), as_factor)) %>% 
+      select(!tail(names(.), 1))
+
+    Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = '')
+
+
+    "***"
+
+    "Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = "")`."
+
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      Virulence_Genes_Blast <- 
+        read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
+        mutate(across(where(is_character), as_factor)) %>% 
+        slice(-n()) %>% 
+        pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
+        relocate(Sample) %>% 
+        left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal complex`), by = "Sample") %>% 
+        pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
+    } else {
+      Virulence_Genes_Blast <- 
+        read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
+        mutate(across(where(is_character), as_factor)) %>% 
+        slice(-n()) %>% 
+        pivot_longer(data = ., cols = !c("Protein", "Type", "DATABASE"), names_to = "Sample", values_to = "P_A") %>% 
+        relocate(Sample) %>% 
+        pivot_wider(data = ., names_from = "Protein", values_from = "P_A", values_fill = 0) 
+    }
+
+    Virulence_Genes_Blast
+
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      Virulence_Genes_Blast %>% 
+        select(!c(DATABASE, ST, `Clonal complex`)) %>% 
+        base::as.matrix() %>%
+        Heatmap()
+    }
+  }
+}
+```
 
 <br>
 
 [Back to index](#index)
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$pangenome$run_pangenome == "true") {
+if(wombat_config_json$pangenome$run_pangenome == TRUE) {
 
   "## Pangenome analysis {#pangenome}"
 
@@ -1408,7 +1416,7 @@ if(wombat_config_json$pangenome$run_pangenome == "true") {
 <br>
 
 ```{r, echo=FALSE}
-if(wombat_config_json$pangenome$run_pangenome == "true") {
+if(wombat_config_json$pangenome$run_pangenome == TRUE) {
   "*    Pangenome tree based on presence/absence of accesory genes"
 
   #library(ape)
@@ -1477,7 +1485,7 @@ if(wombat_config_json$pangenome$run_pangenome == "true") {
 
 
 ```{r, echo=FALSE}
-if(wombat_config_json$pangenome$run_pangenome == "true") {
+if(wombat_config_json$pangenome$run_pangenome == TRUE) {
   Genomes_PA <- 
     readr::read_csv("Roary_pangenome/gene_presence_absence.csv", 
                     col_types = cols(`Accessory Fragment` = col_double(), 
@@ -1509,7 +1517,7 @@ Genomes_PA %>%
 Following table shows number of genomic structural variation identified in each draft genome using [Snippy](https://github.com/tseemann/snippy)
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   MLST_edited <-
     read_tsv(file = "MLST/MLST_and_CC.txt", col_types = list(Sample = col_double())) %>%
     slice(., 1:(n() - 1)) %>%
@@ -1520,7 +1528,7 @@ if(wombat_config_json$MLST$run_mlst == "true") {
 ```
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$run_mlst == "true") {
+if(wombat_config_json$MLST$run_mlst == TRUE) {
   Genomic_variants <- 
     read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
     relocate(Sample) %>% 

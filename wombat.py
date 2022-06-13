@@ -507,10 +507,16 @@ def amrfinder_call(samples_basenames, ref_genome_basename, annotation_dir, gff_d
 
     with open(amrfinder_out_file, "w") as global_file:
         for sample in samples:
+            
+            gff_file = sample
+            # Ref genome sample starts by + so that roary can place it first
+            if sample == ref_genome_basename:             
+                gff_file = "+"+sample
+
             call([  "amrfinder",
                     "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
                     "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
-                    "-g", gff_dir+"/"+sample+".gff", 
+                    "-g", gff_dir+"/"+gff_file+".gff", 
                     "--organism", genus, 
                     "--plus", 
                     "-i", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["minid"]),
@@ -902,6 +908,7 @@ def refactor_gff_from_dfast(gff_input, gff_output, gff_roary_format):
     with open(gff_input) as in_file, open(gff_output, 'w+') as out_file, open(gff_roary_format, "w") as roary_gff:
         in_assembly = False # Flag to avoid writing the assembly part in the gffs for AMRfinder but keep it in roary ones
         for line in in_file:
+            line = line.strip()
             line_w_name = ""
             if line.startswith("##FASTA"):
                 in_assembly = True
@@ -910,10 +917,10 @@ def refactor_gff_from_dfast(gff_input, gff_output, gff_roary_format):
                 line_id = line.split("\tID=")[1].split(";")[0]
 
                 line = line.replace(line_id, locus_tag, 1)
-                line_w_name = line[:-1] + ";" + "Name="+line_id+"|"+locus_tag+"\n"
+                line_w_name = line + ";" + "Name="+line_id+"|"+locus_tag+"\n"
             if not in_assembly:
                 out_file.write(line_w_name)
-            roary_gff.write(line)
+            roary_gff.write(line+"\n")
 
         
 
@@ -1153,12 +1160,13 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     assembly_report = pd.read_csv(assembly_dir+"/"+"quality_assembly_report.tsv", sep="\t")
     if reference_genome_basename:
         ref_assembly_report = pd.read_csv(assembly_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+"_assembly_statistics/"+"report.tsv", sep="\t")
-
+    
     if cfg.config["MLST"]["run_mlst"]:
         mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
-    vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
-    vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
-    vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
+    if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
+        vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
+        vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
+        vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
 
     fasta_mode = cfg.config["assembled_genomes"]
 
@@ -1197,7 +1205,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             # "GC": GC content (%) of the draft genome
             gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
 
-
+            
             if  sample != reference_genome_basename:
                 if not fasta_mode:
 
@@ -1213,14 +1221,19 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     # "ReadsQCLen": Average read length (bp) after quality control.
                     readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
 
-                    # "JoinReads": Total combined reads.
-                    joinreads = info_post_flash[sample]["JoinReads"]
+                    if cfg.config["merge_reads"]:
+                        # "JoinReads": Total combined reads.
+                        joinreads = info_post_flash[sample]["JoinReads"]
 
-                    # "JoinReadsLen: Mean length of combined reads.
-                    joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
-                    
-                    # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
-                    depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
+                        # "JoinReadsLen: Mean length of combined reads.
+                        joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
+                        
+                        # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
+                        depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
+                    else:
+                        joinreads = 0
+                        joinreadslen = 0
+                        depthcov = 0
                 
                 # "ContigLen": Average contig length (bp) (> 500bp).
                 contig_len_summatory = 0
@@ -1255,54 +1268,56 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             crisprs = "0"
             rrnas = "0"
             trnas = "0"
+            hy_prot = 0
             
-            if cfg.config["annotation"]["annotator"] == "prokka":
-                
-                with open(annotation_dir+"/"+sample+"/"+sample+".txt") as stats_file:
-                    for line in stats_file:
-                        # Column 'CDS'. 
-                        if line.startswith("CDS:"):
-                            cds = line.split()[-1].replace("\n", "")
+            if cfg.config["annotation"]["run_annotation"]:
+                if cfg.config["annotation"]["annotator"] == "prokka":
+                    
+                    with open(annotation_dir+"/"+sample+"/"+sample+".txt") as stats_file:
+                        for line in stats_file:
+                            # Column 'CDS'. 
+                            if line.startswith("CDS:"):
+                                cds = line.split()[-1].replace("\n", "")
 
-                        # Column 'CRISPRs'. 
-                        elif line.startswith("repeat_region:") or line.startswith("CRISPR:"):
-                            crisprs = line.split()[-1].replace("\n", "")
+                            # Column 'CRISPRs'. 
+                            elif line.startswith("repeat_region:") or line.startswith("CRISPR:"):
+                                crisprs = line.split()[-1].replace("\n", "")
 
-                        # Column 'rRNAs'. 
-                        elif line.startswith("rRNA:"):
-                            rrnas = line.split()[-1].replace("\n", "")
+                            # Column 'rRNAs'. 
+                            elif line.startswith("rRNA:"):
+                                rrnas = line.split()[-1].replace("\n", "")
 
-                        # Column 'tRNAs'. 
-                        elif line.startswith("tRNA:"):
-                            trnas = line.split()[-1].replace("\n", "")
+                            # Column 'tRNAs'. 
+                            elif line.startswith("tRNA:"):
+                                trnas = line.split()[-1].replace("\n", "")
 
-                with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
-                    # Column 'Hypothetical_proteins'
-                    hy_prot = faa_file.read().count("hypothetical protein")
+                    with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
+                        # Column 'Hypothetical_proteins'
+                        hy_prot = faa_file.read().count("hypothetical protein")
 
 
-            elif cfg.config["annotation"]["annotator"] == "dfast":
-                with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
-                    for line in stats_file:
-                        # Column 'CDS'.
-                        if line.startswith("Number of CDSs"):
-                            cds = line.split("\t")[-1].replace("\n", "")
-                        
-                        # Column 'CRISPRs'.
-                        elif line.startswith("Number of CRISPRs"):
-                            crisprs = line.split("\t")[-1].replace("\n", "")
+                elif cfg.config["annotation"]["annotator"] == "dfast":
+                    with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
+                        for line in stats_file:
+                            # Column 'CDS'.
+                            if line.startswith("Number of CDSs"):
+                                cds = line.split("\t")[-1].replace("\n", "")
+                            
+                            # Column 'CRISPRs'.
+                            elif line.startswith("Number of CRISPRs"):
+                                crisprs = line.split("\t")[-1].replace("\n", "")
 
-                        # Column 'rRNAs'. 
-                        elif line.startswith("Number of rRNAs"):    
-                            rrnas = line.split("\t")[-1].replace("\n", "")
+                            # Column 'rRNAs'. 
+                            elif line.startswith("Number of rRNAs"):    
+                                rrnas = line.split("\t")[-1].replace("\n", "")
 
-                        # Column 'tRNAs'. 
-                        elif line.startswith("Number of tRNAs"):
-                            trnas = line.split("\t")[-1].replace("\n", "")
-                # TODO Column 'Hypothetical proteins'
-                with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
-                    # Column 'Hypothetical_proteins'
-                    hy_prot = faa_file.read().count("hypothetical protein")
+                            # Column 'tRNAs'. 
+                            elif line.startswith("Number of tRNAs"):
+                                trnas = line.split("\t")[-1].replace("\n", "")
+                    # TODO Column 'Hypothetical proteins'
+                    with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
+                        # Column 'Hypothetical_proteins'
+                        hy_prot = faa_file.read().count("hypothetical protein")
             if fasta_mode:  
                 report_dict = { "Sample": sample, 
                             "Contigs": n_contigs, 
@@ -1345,20 +1360,23 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             
             # Column blocks to sort columns in final file
             df_1st_column_block = [*report_dict.keys()]
-            # Information from VF_matrix
-            # For each sample its column has the sum of genes present from each category
+            df_2nd_column_block = []
+            
             occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
             total_occurrences = 0
-            virulence_dict = {}
-            for category, _ in vir_total_by_categories.items():
-                with open(custom_VFDB) as custom_DB:
-                    occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
-                    total_occurrences += occurrences
-                virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
-            df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
-            virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
-            
-            report_dict.update(virulence_dict)
+            if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
+                # Information from VF_matrix
+                # For each sample its column has the sum of genes present from each category
+                virulence_dict = {}
+                for category, _ in vir_total_by_categories.items():
+                    with open(custom_VFDB) as custom_DB:
+                        occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
+                        total_occurrences += occurrences
+                    virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
+                df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
+                virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
+                
+                report_dict.update(virulence_dict)
 
 
             #Snippy block 
@@ -1416,6 +1434,9 @@ if __name__ == "__main__":
     amr_analysis_dir_abr = amr_analysis_dir+"/ABRicate"
     amr_analysis_dir_amrfinder = amr_analysis_dir+"/AMRFinder"
     prokka_dir = output_folder+"/Prokka_annotation"
+
+    annotation_dir = "" # Will be defined later
+    proteins_database_name = ""
     
     dfast_dir = output_folder+"/Dfast_annotation"
     roary_dir = output_folder+"/Roary_pangenome"
@@ -1437,14 +1458,16 @@ if __name__ == "__main__":
     if cfg.config["plasmids"]["run_plasmid_prediction"]:
         os.mkdir(plasmid_dir)
 
+
     os.mkdir(prinseq_dir)
-    os.mkdir(flash_dir)
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
     os.mkdir(mauve_dir)
     os.mkdir(snps_dir)
     os.mkdir(mlst_dir)
     
+    if cfg.config["merge_reads"]:
+        os.mkdir(flash_dir)
 
     if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
         os.mkdir(vir_dir)
@@ -1460,16 +1483,16 @@ if __name__ == "__main__":
             os.mkdir(amr_analysis_dir_amrfinder)
 
     os.mkdir(roary_dir)
-
-    if annotator == "dfast":
-        os.mkdir(dfast_dir)
-        os.mkdir(dfast_refactor_dir)
-        os.mkdir(roary_input_dir)
-    else:
-        os.mkdir(prokka_dir)
-        if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
-            if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
-                os.mkdir(prokka_refactor_dir)
+    if cfg.config["annotation"]["run_annotation"]:
+        if annotator == "dfast":
+            os.mkdir(dfast_dir)
+            os.mkdir(dfast_refactor_dir)
+            os.mkdir(roary_input_dir)
+        elif annotator == "prokka":
+            os.mkdir(prokka_dir)
+            if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
+                if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+                    os.mkdir(prokka_refactor_dir)
 
     roary_input_files = []
     snippy_output_files = []
@@ -1553,10 +1576,10 @@ if __name__ == "__main__":
                             sample_basename=reference_genome_basename,
                             organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
                 refactor_gff_from_dfast(dfast_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
-                                        dfast_refactor_dir+"/"+reference_genome_basename+".gff",
+                                        dfast_refactor_dir+"/+"+reference_genome_basename+".gff",
                                         roary_input_dir+"/+"+reference_genome_basename+".gff")
                 # Set roary input files (renaming to get reference file first)
-                os.rename(dfast_refactor_dir+"/"+reference_genome_basename+".gff", dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
+                # os.rename(dfast_refactor_dir+"/"+reference_genome_basename+".gff", dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
                 roary_input_files.append(roary_input_dir+"/+"+reference_genome_basename+".gff")
             else:
                 # Prokka call
@@ -1577,7 +1600,7 @@ if __name__ == "__main__":
                         annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
                 if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
                     if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
-                        refactor_gff_from_prokka(prokka_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff", prokka_refactor_dir+"/"+reference_genome_basename+".gff")
+                        refactor_gff_from_prokka(prokka_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff", prokka_refactor_dir+"/"+"+"+reference_genome_basename+".gff")
                 roary_input_files.append(annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
 
     
@@ -1853,6 +1876,7 @@ if __name__ == "__main__":
                 os.remove(vir_dir+"/"+vf_matrix_file)
 
         # Blast call (Virulence genes)
+        proteins_database_name = "inhouse_VFDB.txt"    # This is an output file name
         if "blast" in cfg.config["virulence_genes"]["virulence_genes_predictor_tool"]:
             print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against inhouse database)\n"), flush=True)
             step_counter += 1
@@ -1862,7 +1886,7 @@ if __name__ == "__main__":
             blast_output_name = "BLAST_inhouse_VFDB.txt"
             proteins_file = cfg.config["virulence_genes"]["blast"]["proteins_reference_file"]
             dna_database_blast = blast_proteins_dir+"/DNA_database"
-            proteins_database_name = "inhouse_VFDB.txt"    # This is an output file name
+            
             if not os.path.exists(blast_proteins_dir):
                 os.mkdir(blast_proteins_dir)
             if not os.path.exists(dna_database_blast):
@@ -1997,14 +2021,14 @@ if __name__ == "__main__":
                 amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
     
     if cfg.config["report"]["include_reference"]:
-        generate_report(samples_basenames,                    
-                        prinseq_dir, 
-                        assembly_dir, 
+        generate_report(samples_basenames,
+                        prinseq_dir,
+                        assembly_dir,
                         annotation_dir,
                         draft_contigs_dir,
-                        output_folder, 
-                        summary_pre_qc, 
-                        summary_post_qc, 
+                        output_folder,
+                        summary_pre_qc,
+                        summary_post_qc,
                         summary_post_flash,
                         mlst_dir+"/MLST_and_CC.txt",
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
