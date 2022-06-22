@@ -667,7 +667,7 @@ Number_of_contigs
 ```
 
 
-##### Draft genome lenght
+##### Draft genome length
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
@@ -1054,12 +1054,13 @@ Number_tRNAs
 
 
 
-<br>
-
-[Back to index](#index)
 
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
+  "<br>"
+
+  "[Back to index](#index)"
+
   "## Multi-Locus Sequence Typing (MLST) {#mlst}"
   "Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst)."
   MLST <- 
