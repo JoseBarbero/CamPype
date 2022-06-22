@@ -556,12 +556,12 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 
 [Back to index](#index)
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(wombat_config_json$MLST$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     "## Antibiotic resistance genes {#resistance}"
-    "Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity below `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))` was removed."
+    "Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r wombat_config_json$amrfinder$mincov*100`% and identity below `r wombat_config_json$amrfinder$minid*100`% was removed."
 
-    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Protein identifier`, `Contig id`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available)."
+    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Protein identifier`, `Contig id`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available)."
 
     AMR <- 
       read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
@@ -576,7 +576,7 @@ if(wombat_config_json$MLST$antimicrobial_resistance_genes$run_antimicrobial_resi
 
     "<br>"
 
-    "Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))`."
+    "Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r wombat_config_json$amrfinder$mincov*100`% and identity ≥ `r wombat_config_json$amrfinder$minid*100`%."
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       AMR_HeatMap <- 
@@ -608,7 +608,7 @@ if(wombat_config_json$MLST$antimicrobial_resistance_genes$run_antimicrobial_resi
     "<br>"
 
 
-    "Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r cat(paste((wombat_config_json$amrfinder$mincov)*100, "%", sep = ""))` and identity ≥ `r cat(paste((wombat_config_json$amrfinder$minid)*100, "%", sep = ""))`."
+    "Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r wombat_config_json$amrfinder$mincov*100`% and identity ≥ `r wombat_config_json$amrfinder$minid*100` %."
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       AntBioRes <-
@@ -639,7 +639,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
     "<br>"
 
 
-    "Following figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r paste((wombat_config_json$abricate$mincov), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$abricate$minid), "%", sep = "")`."
+    "Following figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r wombat_config_json$abricate$mincov`% and identity ≥ `r wombat_config_json$abricate$minid`%."
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       Anti_Res_Genes_PA <- 
@@ -705,7 +705,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 
     "Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __80%__ and identity below __80%__ was removed."
 
-    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available)."
+    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available)."
 
     Virulence_Genes <- 
       read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv") %>% 
@@ -716,7 +716,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 
     "***"
 
-    "Following figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r paste((wombat_config_json$abricate$mincov), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$abricate$minid), "%", sep = "")`."
+    "Following figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r wombat_config_json$abricate$mincov`% and identity ≥ `r wombat_config_json$abricate$minid`%."
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       Virulence_Genes_PA <- 
@@ -753,7 +753,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 
     "Following table shows virulence genes by screening the draft genomes against the custom database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below 50 % was removed."
 
-    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new "*subset*" into a separated file (see the export buttons available)."
+    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available)."
 
     Virulence_Genes_Screening <- 
       read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
@@ -766,7 +766,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 
     "***"
 
-    "Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_cover), "%", sep = "")` and identity ≥ `r paste((wombat_config_json$presence_absence_matrix$protein_identity), "%", sep = "")`."
+    "Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r wombat_config_json$presence_absence_matrix$protein_cover`% and identity ≥ `r wombat_config_json$presence_absence_matrix$protein_identity`%."
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       Virulence_Genes_Blast <- 
