@@ -85,9 +85,9 @@ def prinseq_call(input_file1, input_file2, output_folder, sample, log_name=None)
     Returns:
         int -- Execution state (0 if everything is all right)
     """
-    arguments = ["prinseq-lite.pl", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["prinseq"]["min_len"]), \
-                "-min_qual_mean", str(cfg.config["prinseq"]["min_qual_mean"]), "-trim_qual_right", str(cfg.config["prinseq"]["trim_qual_right"]), "-trim_qual_window", \
-                str(cfg.config["prinseq"]["trim_qual_window"]), "-trim_qual_type", "mean", "-out_format", "3", "-out_good", output_folder+"/"+sample, "-out_bad", "null", log_name]
+    arguments = ["prinseq-lite.pl", "-fastq", input_file1, "-fastq2", input_file2, "-min_len", str(cfg.config["read_qc_filtering"]["min_len"]), \
+                "-min_qual_mean", str(cfg.config["read_qc_filtering"]["min_qual_mean"]), "-trim_qual_right", str(cfg.config["read_qc_filtering"]["trim_qual_right"]), "-trim_qual_window", \
+                str(cfg.config["read_qc_filtering"]["trim_qual_window"]), "-trim_qual_type", "mean", "-out_format", "3", "-out_good", output_folder+"/"+sample, "-out_bad", "null", log_name]
     return call(arguments)
 
 
@@ -156,12 +156,12 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir, merged_sample=N
         {int} -- Execution state (0 if everything is all right)
     """
     if merged_sample:
-        arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"]]
+        arguments = ["spades.py", "--merged", merged_sample, "-1", forward_sample, "-2", reverse_sample, cfg.config["assembly"]["mode"]]
     else:
-        arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, cfg.config["spades"]["mode"]]
+        arguments = ["spades.py", "-1", forward_sample, "-2", reverse_sample, cfg.config["assembly"]["mode"]]
 
-    if cfg.config["spades"]["k"]:
-        arguments.extend(["-k", str(cfg.config["spades"]["k"])])
+    if cfg.config["assembly"]["k"]:
+        arguments.extend(["-k", str(cfg.config["assembly"]["k"])])
     arguments.extend(["-o", out_dir+"/"+sample])
     return call(arguments)
 
@@ -479,7 +479,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
         for sample in samples:
             sample_content = gene_content[gene_content["SAMPLE"] == sample]
             if len(sample_content) == 1:
-                if sample_content["%COVERAGE"].max() >= cfg.config["abricate"]["mincov"] and sample_content["%IDENTITY"].max() >= cfg.config["abricate"]["minid"]:
+                if sample_content["%COVERAGE"].max() >= cfg.config["virulence_genes"]["abricate"]["mincov"] and sample_content["%IDENTITY"].max() >= cfg.config["virulence_genes"]["abricate"]["minid"]:
                     new_row[sample] = 1
                 else:
                     new_row[sample] = 0
@@ -507,14 +507,20 @@ def amrfinder_call(samples_basenames, ref_genome_basename, annotation_dir, gff_d
 
     with open(amrfinder_out_file, "w") as global_file:
         for sample in samples:
+            
+            gff_file = sample
+            # Ref genome sample starts by + so that roary can place it first
+            if sample == ref_genome_basename:             
+                gff_file = "+"+sample
+
             call([  "amrfinder",
                     "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
                     "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
-                    "-g", gff_dir+"/"+sample+".gff", 
+                    "-g", gff_dir+"/"+gff_file+".gff", 
                     "--organism", genus, 
                     "--plus", 
-                    "-i", str(cfg.config["amrfinder"]["minid"]),
-                    "-c", str(cfg.config["amrfinder"]["mincov"]),
+                    "-i", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["minid"]),
+                    "-c", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["mincov"]),
                     "-o", output_dir+"/"+sample+".txt"])
 
             # Group all the results in a single file        
@@ -589,7 +595,7 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
 
     # Call tblastn
     tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest,
-                        "-soft_masking", str(cfg.config["blast"]["soft_masking"]).lower(),
+                        "-soft_masking", str(cfg.config["virulence_genes"]["blast"]["soft_masking"]).lower(),
                         "-outfmt", "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq",
                         "-out", blast_output_folder+"/"+blast_output_name])
 
@@ -721,7 +727,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
         for sample in samples:
             sample_content = gene_content[gene_content["Sample"] == sample]
             if len(sample_content) > 0:
-                if sample_content["% protein cover"].max() >= cfg.config["blast"]["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() >= cfg.config["blast"]["presence_absence_matrix"]["protein_cover"]:
+                if sample_content["% protein cover"].max() >= cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() >= cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["protein_cover"]:
                     new_row[sample] = 1
                 else:
                     new_row[sample] = 0
@@ -752,9 +758,9 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
     with open(p_a_matrix_file, "a") as matrix_file:
         matrix_file.write("Coverage >= (" + 
-                            str(cfg.config["blast"]["presence_absence_matrix"]["protein_cover"]) +
+                            str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["protein_cover"]) +
                             ") % and identity >= (" +
-                            str(cfg.config["blast"]["presence_absence_matrix"]["protein_cover"]) + 
+                            str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["protein_cover"]) + 
                             ") % on each sample for considering a virulence gene as present.")
 
 def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", rawproduct=False):
@@ -785,11 +791,43 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
                 "--species", species,
                 "--strain", strain,
                 "--gcode", "11"]
-    if cfg.config["prokka"]["reference_annotation"]:
+    if cfg.config["annotation"]["prokka"]["reference_annotation"]:
         arguments.extend(["--proteins", proteins])
     if rawproduct:
         arguments.append("--rawproduct")
     return call(arguments)
+
+
+def prokka_summary(prokka_files, output_file):
+    """
+    Generates a summary table from prokka data.
+
+    Args:
+        prokka_file {list}: Prokka results files.
+        output_file {str}: Summary output file.
+    """
+    
+    # Get columns (because some files can have different columns)
+    columns = set()
+    for prokka_file in prokka_files:
+        with open(prokka_file, "r") as prokka_f:
+            file_columns = [line[:-1].split(":")[0] for line in prokka_f.readlines()]
+            columns.update(file_columns)
+    columns = ["Sample"] + list(columns)
+
+    # Get data
+    summary_df = pd.DataFrame(columns = columns)
+
+    for prokka_file in prokka_files:
+        with open(prokka_file, "r") as prokka_f:
+            row = {'Sample': prokka_file.split("/")[-1].split(".")[0]}
+            for line in prokka_f.readlines():
+                row[line.split(":")[0]] = line[:-1].split(":")[1][1:]
+            print(row)
+        summary_df = summary_df.append(row, ignore_index = True)
+
+    # Export to tsv
+    summary_df.to_csv(output_file, sep="\t",index=False)
 
 
 def refactor_gff_from_prokka(gff_input, gff_output):
@@ -870,6 +908,7 @@ def refactor_gff_from_dfast(gff_input, gff_output, gff_roary_format):
     with open(gff_input) as in_file, open(gff_output, 'w+') as out_file, open(gff_roary_format, "w") as roary_gff:
         in_assembly = False # Flag to avoid writing the assembly part in the gffs for AMRfinder but keep it in roary ones
         for line in in_file:
+            line = line.strip()
             line_w_name = ""
             if line.startswith("##FASTA"):
                 in_assembly = True
@@ -878,10 +917,10 @@ def refactor_gff_from_dfast(gff_input, gff_output, gff_roary_format):
                 line_id = line.split("\tID=")[1].split(";")[0]
 
                 line = line.replace(line_id, locus_tag, 1)
-                line_w_name = line[:-1] + ";" + "Name="+line_id+"|"+locus_tag+"\n"
+                line_w_name = line + ";" + "Name="+line_id+"|"+locus_tag+"\n"
             if not in_assembly:
                 out_file.write(line_w_name)
-            roary_gff.write(line)
+            roary_gff.write(line+"\n")
 
         
 
@@ -897,10 +936,10 @@ def roary_call(input_files, output_dir, wombat_output_folder):
         {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["roary", "-f", output_dir, "-s", "-v"]
-    if cfg.config["roary"]["split_paralogs"]:
+    if cfg.config["pangenome"]["split_paralogs"]:
         arguments.append("-s")
-    if cfg.config["roary"]["min_identity"]:
-        arguments.extend(["-i", str(cfg.config["roary"]["min_identity"])])
+    if cfg.config["pangenome"]["min_identity"]:
+        arguments.extend(["-i", str(cfg.config["pangenome"]["min_identity"])])
     arguments.extend(input_files)
     ex_state = call(arguments)
     # Set Roary output directory name
@@ -1121,11 +1160,13 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     assembly_report = pd.read_csv(assembly_dir+"/"+"quality_assembly_report.tsv", sep="\t")
     if reference_genome_basename:
         ref_assembly_report = pd.read_csv(assembly_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+"_assembly_statistics/"+"report.tsv", sep="\t")
-
-    mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
-    vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
-    vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
-    vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
+    
+    if cfg.config["MLST"]["run_mlst"]:
+        mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
+    if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
+        vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
+        vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
+        vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
 
     fasta_mode = cfg.config["assembled_genomes"]
 
@@ -1136,6 +1177,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
                     "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
                     "rRNAs", "tRNAs"]
+
     if amrfinder_matrix_file:
         amr_data = pd.read_csv(amrfinder_matrix_file, sep="\t", skipfooter=1, engine="python")
         amr_data["Sample"] = amr_data["Sample"].astype(str)
@@ -1144,8 +1186,6 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         
 
     csv_report = pd.DataFrame(columns=df_columns)
-
-    # TODO es posible que no haga falta usar blast en la referencia. Igual se puede dejar vacío.
 
     for sample in samples+[reference_genome_basename]:
         if sample is not None:
@@ -1165,7 +1205,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             # "GC": GC content (%) of the draft genome
             gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
 
-
+            
             if  sample != reference_genome_basename:
                 if not fasta_mode:
 
@@ -1181,14 +1221,19 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     # "ReadsQCLen": Average read length (bp) after quality control.
                     readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
 
-                    # "JoinReads": Total combined reads.
-                    joinreads = info_post_flash[sample]["JoinReads"]
+                    if cfg.config["merge_reads"]:
+                        # "JoinReads": Total combined reads.
+                        joinreads = info_post_flash[sample]["JoinReads"]
 
-                    # "JoinReadsLen: Mean length of combined reads.
-                    joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
-                    
-                    # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
-                    depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
+                        # "JoinReadsLen: Mean length of combined reads.
+                        joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
+                        
+                        # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
+                        depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
+                    else:
+                        joinreads = 0
+                        joinreadslen = 0
+                        depthcov = 0
                 
                 # "ContigLen": Average contig length (bp) (> 500bp).
                 contig_len_summatory = 0
@@ -1209,63 +1254,70 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     reads = readlen = readsqc = readsqclen = joinreads = joinreadslen = depthcov = 0
 
             # Column ST (MLST)
-            st = mlst_data.loc[sample]["ST"]
+            if cfg.config["MLST"]["run_mlst"]:
+                st = mlst_data.loc[sample]["ST"]
+                # Column clonal_complex (MLST)
+                clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+            else:
+                st = None
+                clonal_complex = None
 
-            # Column clonal_complex (MLST)
-            clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+            
             
             cds = "0"
             crisprs = "0"
             rrnas = "0"
             trnas = "0"
+            hy_prot = 0
             
-            if cfg.config["annotator"] == "prokka":
-                
-                with open(annotation_dir+"/"+sample+"/"+sample+".txt") as stats_file:
-                    for line in stats_file:
-                        # Column 'CDS'. 
-                        if line.startswith("CDS:"):
-                            cds = line.split()[-1].replace("\n", "")
+            if cfg.config["annotation"]["run_annotation"]:
+                if cfg.config["annotation"]["annotator"] == "prokka":
+                    
+                    with open(annotation_dir+"/"+sample+"/"+sample+".txt") as stats_file:
+                        for line in stats_file:
+                            # Column 'CDS'. 
+                            if line.startswith("CDS:"):
+                                cds = line.split()[-1].replace("\n", "")
 
-                        # Column 'CRISPRs'. 
-                        elif line.startswith("repeat_region:") or line.startswith("CRISPR:"):
-                            crisprs = line.split()[-1].replace("\n", "")
+                            # Column 'CRISPRs'. 
+                            elif line.startswith("repeat_region:") or line.startswith("CRISPR:"):
+                                crisprs = line.split()[-1].replace("\n", "")
 
-                        # Column 'rRNAs'. 
-                        elif line.startswith("rRNA:"):
-                            rrnas = line.split()[-1].replace("\n", "")
+                            # Column 'rRNAs'. 
+                            elif line.startswith("rRNA:"):
+                                rrnas = line.split()[-1].replace("\n", "")
 
-                        # Column 'tRNAs'. 
-                        elif line.startswith("tRNA:"):
-                            trnas = line.split()[-1].replace("\n", "")
+                            # Column 'tRNAs'. 
+                            elif line.startswith("tRNA:"):
+                                trnas = line.split()[-1].replace("\n", "")
 
-                with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
-                    # Column 'Hypothetical_proteins'
-                    hy_prot = faa_file.read().count("hypothetical protein")
+                    with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
+                        # Column 'Hypothetical_proteins'
+                        hy_prot = faa_file.read().count("hypothetical protein")
 
 
-            elif cfg.config["annotator"] == "dfast":
-                with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
-                    for line in stats_file:
-                        # Column 'CDS'.
-                        if line.startswith("Number of CDSs"):
-                            cds = line.split("\t")[-1].replace("\n", "")
-                        
-                        # Column 'CRISPRs'.
-                        elif line.startswith("Number of CRISPRs"):
-                            crisprs = line.split("\t")[-1].replace("\n", "")
+                elif cfg.config["annotation"]["annotator"] == "dfast":
+                    with open(annotation_dir+"/"+sample+"/"+sample+"_statistics.txt") as stats_file:
+                        for line in stats_file:
+                            # Column 'CDS'.
+                            if line.startswith("Number of CDSs"):
+                                cds = line.split("\t")[-1].replace("\n", "")
+                            
+                            # Column 'CRISPRs'.
+                            elif line.startswith("Number of CRISPRs"):
+                                crisprs = line.split("\t")[-1].replace("\n", "")
 
-                        # Column 'rRNAs'. 
-                        elif line.startswith("Number of rRNAs"):    
-                            rrnas = line.split("\t")[-1].replace("\n", "")
+                            # Column 'rRNAs'. 
+                            elif line.startswith("Number of rRNAs"):    
+                                rrnas = line.split("\t")[-1].replace("\n", "")
 
-                        # Column 'tRNAs'. 
-                        elif line.startswith("Number of tRNAs"):
-                            trnas = line.split("\t")[-1].replace("\n", "")
-                # TODO Column 'Hypothetical proteins'
-                with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
-                    # Column 'Hypothetical_proteins'
-                    hy_prot = faa_file.read().count("hypothetical protein")
+                            # Column 'tRNAs'. 
+                            elif line.startswith("Number of tRNAs"):
+                                trnas = line.split("\t")[-1].replace("\n", "")
+                    # TODO Column 'Hypothetical proteins'
+                    with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
+                        # Column 'Hypothetical_proteins'
+                        hy_prot = faa_file.read().count("hypothetical protein")
             if fasta_mode:  
                 report_dict = { "Sample": sample, 
                             "Contigs": n_contigs, 
@@ -1273,7 +1325,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "ContigLen": round(avg_contig_len, 2), 
                             "N50": round(n50, 0),
                             "GC": round(gc, 2),
-                            "ST": st,
+                            "ST": st,       # TODO remove if MLST is not run
                             "clonal_complex": clonal_complex,
                             "CDS": cds,
                             "Hypotetical proteins": round(hy_prot, 0),
@@ -1294,7 +1346,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "N50": round(n50, 0),
                             "GC": round(gc, 2),
                             "DepthCov (X)": round(depthcov, 2),
-                            "ST": st,
+                            "ST": st,       # TODO remove if MLST is not run
                             "clonal_complex": clonal_complex,
                             "CDS": cds,
                             "Hypotetical proteins": round(hy_prot, 0),
@@ -1308,20 +1360,23 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             
             # Column blocks to sort columns in final file
             df_1st_column_block = [*report_dict.keys()]
-            # Information from VF_matrix
-            # For each sample its column has the sum of genes present from each category
+            df_2nd_column_block = []
+            
             occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
             total_occurrences = 0
-            virulence_dict = {}
-            for category, _ in vir_total_by_categories.items():
-                with open(custom_VFDB) as custom_DB:
-                    occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
-                    total_occurrences += occurrences
-                virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
-            df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
-            virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
-            
-            report_dict.update(virulence_dict)
+            if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
+                # Information from VF_matrix
+                # For each sample its column has the sum of genes present from each category
+                virulence_dict = {}
+                for category, _ in vir_total_by_categories.items():
+                    with open(custom_VFDB) as custom_DB:
+                        occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
+                        total_occurrences += occurrences
+                    virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
+                df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
+                virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
+                
+                report_dict.update(virulence_dict)
 
 
             #Snippy block 
@@ -1346,7 +1401,7 @@ if __name__ == "__main__":
     welcome("resources/wombat_ascii.txt")
 
     # Get config file parameters
-    annotator = cfg.config["annotator"]
+    annotator = cfg.config["annotation"]["annotator"]
 
     # Create output directories
     now = datetime.datetime.now()
@@ -1354,7 +1409,7 @@ if __name__ == "__main__":
     # Get reference files from wombat_config.py
     adapters_file =  cfg.config["adapters_reference_file"]
     reference_genome_file = cfg.config["reference_genome"]["file"]
-    proteins_file = cfg.config["blast"]["proteins_reference_file"]
+    proteins_file = cfg.config["virulence_genes"]["blast"]["proteins_reference_file"]
     
     output_folder = sys.argv[1]
 
@@ -1379,6 +1434,9 @@ if __name__ == "__main__":
     amr_analysis_dir_abr = amr_analysis_dir+"/ABRicate"
     amr_analysis_dir_amrfinder = amr_analysis_dir+"/AMRFinder"
     prokka_dir = output_folder+"/Prokka_annotation"
+
+    annotation_dir = "" # Will be defined later
+    proteins_database_name = ""
     
     dfast_dir = output_folder+"/Dfast_annotation"
     roary_dir = output_folder+"/Roary_pangenome"
@@ -1397,35 +1455,44 @@ if __name__ == "__main__":
     if cfg.config["trim_adaptors"]:
         os.mkdir(trimmomatic_dir)
 
-    if cfg.config["abricate"]["find_plasmids"]:
+    if cfg.config["plasmids"]["run_plasmid_prediction"]:
         os.mkdir(plasmid_dir)
 
+
     os.mkdir(prinseq_dir)
-    os.mkdir(flash_dir)
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
     os.mkdir(mauve_dir)
     os.mkdir(snps_dir)
     os.mkdir(mlst_dir)
-    os.mkdir(vir_dir)
+    
+    if cfg.config["merge_reads"]:
+        os.mkdir(flash_dir)
 
-    if cfg.config["amrfinder"]["run"] or cfg.config["abricate"]["run_amr"]:
+    if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
+        os.mkdir(vir_dir)
+        if "blast" in cfg.config["virulence_genes"]["virulence_genes_predictor_tool"]:
+            os.mkdir(blast_proteins_dir)
+        
+    
+    if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
         os.mkdir(amr_analysis_dir)
-        if cfg.config["amrfinder"]["run"]:
-            os.mkdir(amr_analysis_dir_amrfinder)
-        if cfg.config["abricate"]["run_amr"]:
+        if "abricate" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
             os.mkdir(amr_analysis_dir_abr)
+        if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+            os.mkdir(amr_analysis_dir_amrfinder)
 
     os.mkdir(roary_dir)
-
-    if annotator == "dfast":
-        os.mkdir(dfast_dir)
-        os.mkdir(dfast_refactor_dir)
-        os.mkdir(roary_input_dir)
-    else:
-        os.mkdir(prokka_dir)
-        if cfg.config["amrfinder"]["run"]:
-            os.mkdir(prokka_refactor_dir)
+    if cfg.config["annotation"]["run_annotation"]:
+        if annotator == "dfast":
+            os.mkdir(dfast_dir)
+            os.mkdir(dfast_refactor_dir)
+            os.mkdir(roary_input_dir)
+        elif annotator == "prokka":
+            os.mkdir(prokka_dir)
+            if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
+                if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+                    os.mkdir(prokka_refactor_dir)
 
     roary_input_files = []
     snippy_output_files = []
@@ -1474,6 +1541,8 @@ if __name__ == "__main__":
     if reference_genome_file:
         reference_genome_filename = reference_genome_file.split("/")[-1]
         reference_genome_basename = reference_genome_filename.split(".")[-2]
+        
+        print(Banner(f"\nProcessing reference sequence ({reference_genome_basename}) before your genomes of interest  \n"), flush=True)
 
         # Quast call for reference file
 
@@ -1489,48 +1558,50 @@ if __name__ == "__main__":
             os.mkdir(quast_dir)
             os.mkdir(quast_dir+quast_sample_dir)
 
+
         print(Banner(f"\nQuast on reference sequence ({reference_genome_basename})\n"), flush=True)
         quast_call( input_file=reference_genome_file,
                     output_dir=assembly_dir+"/"+reference_genome_basename+"/"+quast_sample_dir,
                     min_contig_len=cfg.config["min_contig_len"])
 
-
-        # Annotate reference fasta file 
-        if annotator.lower() == "dfast":
-            # Dfast call
-            annotation_dir = dfast_dir
-            print(Banner(f"\nAnnotating reference sequence: Dfast\n"), flush=True)
-            dfast_call( locus_tag=reference_genome_file+"_L",
-                        contigs_file=reference_genome_file,
-                        output_dir=dfast_dir+"/"+reference_genome_basename,
-                        sample_basename=reference_genome_basename,
-                        organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
-            refactor_gff_from_dfast(dfast_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
-                                    dfast_refactor_dir+"/"+reference_genome_basename+".gff",
-                                    roary_input_dir+"/+"+reference_genome_basename+".gff")
-            # Set roary input files (renaming to get reference file first)
-            os.rename(dfast_refactor_dir+"/"+reference_genome_basename+".gff", dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
-            roary_input_files.append(roary_input_dir+"/+"+reference_genome_basename+".gff")
-        else:
-            # Prokka call
-            annotation_dir = prokka_dir
-            print(Banner(f"\nAnnotating reference sequence: Prokka\n"), flush=True)
-            prokka_call(locus_tag=reference_genome_basename+"_L",
-                        output_dir=prokka_dir+"/"+reference_genome_basename,
-                        prefix=reference_genome_basename,
-                        input_file=reference_genome_file,
-                        genus=cfg.config["reference_genome"]["genus"],
-                        species=cfg.config["reference_genome"]["species"],
-                        strain=cfg.config["reference_genome"]["strain"],
-                        proteins=cfg.config["reference_genome"]["proteins"],
-                        rawproduct=cfg.config["prokka"]["rawproduct"]
-                        )
-            # Set roary input files (renaming to get reference file first)
-            os.rename(annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
-                      annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
-            if cfg.config["amrfinder"]["run"]: 
-                refactor_gff_from_prokka(prokka_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff", prokka_refactor_dir+"/"+reference_genome_basename+".gff")
-            roary_input_files.append(annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
+        if cfg.config["annotation"]["run_annotation"]:    
+            # Annotate reference fasta file 
+            if annotator.lower() == "dfast":
+                # Dfast call
+                annotation_dir = dfast_dir
+                print(Banner(f"\nAnnotating reference sequence: Dfast\n"), flush=True)
+                dfast_call( locus_tag=reference_genome_file+"_L",
+                            contigs_file=reference_genome_file,
+                            output_dir=dfast_dir+"/"+reference_genome_basename,
+                            sample_basename=reference_genome_basename,
+                            organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
+                refactor_gff_from_dfast(dfast_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
+                                        dfast_refactor_dir+"/+"+reference_genome_basename+".gff",
+                                        roary_input_dir+"/+"+reference_genome_basename+".gff")
+                # Set roary input files (renaming to get reference file first)
+                # os.rename(dfast_refactor_dir+"/"+reference_genome_basename+".gff", dfast_refactor_dir+"/+"+reference_genome_basename+".gff")
+                roary_input_files.append(roary_input_dir+"/+"+reference_genome_basename+".gff")
+            else:
+                # Prokka call
+                annotation_dir = prokka_dir
+                print(Banner(f"\nAnnotating reference sequence: Prokka\n"), flush=True)
+                prokka_call(locus_tag=reference_genome_basename+"_L",
+                            output_dir=prokka_dir+"/"+reference_genome_basename,
+                            prefix=reference_genome_basename,
+                            input_file=reference_genome_file,
+                            genus=cfg.config["reference_genome"]["genus"],
+                            species=cfg.config["reference_genome"]["species"],
+                            strain=cfg.config["reference_genome"]["strain"],
+                            proteins=cfg.config["reference_genome"]["proteins"],
+                            rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"]
+                            )
+                # Set roary input files (renaming to get reference file first)
+                os.rename(annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
+                        annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
+                if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
+                    if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+                        refactor_gff_from_prokka(prokka_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff", prokka_refactor_dir+"/"+"+"+reference_genome_basename+".gff")
+                roary_input_files.append(annotation_dir+"/"+reference_genome_basename+"/+"+reference_genome_basename+".gff")
 
     
     # Workflow Starts (for standard samples)
@@ -1682,43 +1753,44 @@ if __name__ == "__main__":
                     min_contig_len=min_contig_threshold)
         step_counter += 1
 
+        if cfg.config["annotation"]["run_annotation"]:
+            # Annotation (Prokka or dfast)
+            if annotator.lower() == "dfast":
+                # Dfast call
+                annotation_dir = dfast_dir
+                print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
+                dfast_call(locus_tag=sample_basename+"_L",
+                        contigs_file=draft_contigs,
+                        output_dir=dfast_dir+"/"+sample_basename,
+                        sample_basename=sample_basename,
+                        organism=organism)
+                step_counter += 1
 
-        # Annotation (Prokka or dfast)
-        if annotator.lower() == "dfast":
-            # Dfast call
-            annotation_dir = dfast_dir
-            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Dfast\n"), flush=True)
-            dfast_call(locus_tag=sample_basename+"_L",
-                       contigs_file=draft_contigs,
-                       output_dir=dfast_dir+"/"+sample_basename,
-                       sample_basename=sample_basename,
-                       organism=organism)
-            step_counter += 1
+                refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", 
+                                        dfast_refactor_dir+"/"+sample_basename+".gff",
+                                        roary_input_dir+"/"+sample_basename+".gff")
+                # Set roary input files
+                roary_input_files.append(roary_input_dir+"/"+sample_basename+".gff")
 
-            refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", 
-                                    dfast_refactor_dir+"/"+sample_basename+".gff",
-                                    roary_input_dir+"/"+sample_basename+".gff")
-            # Set roary input files
-            roary_input_files.append(roary_input_dir+"/"+sample_basename+".gff")
-
-        else:
-            # Prokka call
-            annotation_dir = prokka_dir
-            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Prokka\n"), flush=True)
-            prokka_call(locus_tag=sample_basename+"_L",
-                        output_dir=prokka_dir+"/"+sample_basename,
-                        prefix=sample_basename,
-                        input_file=draft_contigs,
-                        genus=genus,
-                        species=species,
-                        strain=sample_basename,
-                        proteins=cfg.config["reference_genome"]["proteins"],
-                        rawproduct=cfg.config["prokka"]["rawproduct"])
-            step_counter += 1
-            if cfg.config["amrfinder"]["run"]:
-                refactor_gff_from_prokka(prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff", prokka_refactor_dir+"/"+sample_basename+".gff")
-            # Set roary input files
-            roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
+            else:
+                # Prokka call
+                annotation_dir = prokka_dir
+                print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Prokka\n"), flush=True)
+                prokka_call(locus_tag=sample_basename+"_L",
+                            output_dir=prokka_dir+"/"+sample_basename,
+                            prefix=sample_basename,
+                            input_file=draft_contigs,
+                            genus=genus,
+                            species=species,
+                            strain=sample_basename,
+                            proteins=cfg.config["reference_genome"]["proteins"],
+                            rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"])
+                step_counter += 1
+                if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
+                    if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+                        refactor_gff_from_prokka(prokka_dir+"/"+sample_basename+"/"+sample_basename+".gff", prokka_refactor_dir+"/"+sample_basename+".gff")
+                # Set roary input files
+                roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
         
 
 
@@ -1737,6 +1809,12 @@ if __name__ == "__main__":
                     prefix=sample_basename)
         snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
 
+    # Prokka summary
+    if cfg.config["annotation"]["run_annotation"] and cfg.config["annotation"]["annotator"] == "prokka":
+        prokka_summary_outfile = prokka_dir+"/Prokka_summary.tsv"
+        prokka_summary_input_files = [prokka_dir+"/"+sample+"/"+sample+".txt" for sample in samples_basenames]
+        prokka_summary(prokka_summary_input_files, prokka_summary_outfile)
+
     # Snippy summary
     snippy_summary_outfile = snps_dir+"/Genomic_variants_summary.tsv"
     snippy_summary(snippy_output_files, snippy_summary_outfile)
@@ -1745,56 +1823,89 @@ if __name__ == "__main__":
     quast_report_unification(assembly_dir, samples_basenames, assembly_dir)
 
     # MLST call
-    mlst_out_file = "MLST.txt"
-    print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
-    step_counter += 1
-    mlst_call(input_dir=draft_contigs_dir,  
-            reference_file=reference_genome_file,
-            output_dir=mlst_dir,
-            output_filename=mlst_out_file)
-    
-    # MLST postprocessing
-    mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
-
-    # ABRicate call (virulence genes)
-    
-    global_vf_output_file = "Virulence_genes_ABRicate.tsv"
-    global_vf_matrix_file = "Virulence_genes_ABRicate_matrix.tsv"
-    for vf_database in cfg.config["abricate"]["virulence_factors_databases"]:
-        print(Banner(f"\nStep {step_counter}: Virulence genes (ABRicate: "+vf_database+")\n"), flush=True)
+    if cfg.config["MLST"]["run_mlst"]:
+        mlst_out_file = "MLST.txt"
+        print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
         step_counter += 1
-        vf_output_file = "Virulence_genes_ABRicate_"+vf_database+".tsv"
-        vf_matrix_file = "Virulence_genes_ABRicate_"+vf_database+"_matrix.tsv"
-        abricate_call(input_dir=draft_contigs_dir,
-                    output_dir=vir_dir,
-                    output_filename=vf_output_file,
-                    database=vf_database,
-                    mincov=cfg.config["abricate"]["mincov"],
-                    minid=cfg.config["abricate"]["minid"],
-                    gene_matrix_file=vf_matrix_file,
-                    samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
-        
-        # Concatenate every ABRicate output in a single file
-        with open(vir_dir+"/"+global_vf_output_file, "a") as global_file, open(vir_dir+"/"+vf_output_file, "r") as current_file:
-            if os.stat(vir_dir+"/"+global_vf_output_file).st_size == 0:   # If global file is empty, i.e. there is no header
-                global_file.write(current_file.read())
-            else:
-                for line in current_file.readlines()[1:]:
-                    global_file.write(line)
-            
-        with open(vir_dir+"/"+global_vf_matrix_file, "a") as global_matrix, open(vir_dir+"/"+vf_matrix_file, "r") as current_matrix:
-            if os.stat(vir_dir+"/"+global_vf_matrix_file).st_size == 0:   # If global file is empty, i.e. there is no header
-                global_matrix.write(current_matrix.read())
-            else:
-                for line in current_matrix.readlines()[1:]:
-                    global_matrix.write(line)
+        mlst_call(input_dir=draft_contigs_dir,  
+                reference_file=reference_genome_file,
+                output_dir=mlst_dir,
+                output_filename=mlst_out_file)
+        if cfg.config["MLST"]["include_cc"]:
+            # MLST postprocessing
+            mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
 
-        # Remove innecesary single files
-        os.remove(vir_dir+"/"+vf_output_file)
-        os.remove(vir_dir+"/"+vf_matrix_file)
+    # Virulence genes
+    if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
+
+        # ABRicate call (virulence genes)
+        if "abricate" in cfg.config["virulence_genes"]["virulence_genes_predictor_tool"]:
+            global_vf_output_file = "Virulence_genes_ABRicate.tsv"
+            global_vf_matrix_file = "Virulence_genes_ABRicate_matrix.tsv"
+            for vf_database in cfg.config["virulence_genes"]["abricate"]["virulence_factors_databases"]:
+                print(Banner(f"\nStep {step_counter}: Virulence genes (ABRicate: "+vf_database+")\n"), flush=True)
+                step_counter += 1
+                vf_output_file = "Virulence_genes_ABRicate_"+vf_database+".tsv"
+                vf_matrix_file = "Virulence_genes_ABRicate_"+vf_database+"_matrix.tsv"
+                abricate_call(input_dir=draft_contigs_dir,
+                            output_dir=vir_dir,
+                            output_filename=vf_output_file,
+                            database=vf_database,
+                            mincov=cfg.config["virulence_genes"]["abricate"]["mincov"],
+                            minid=cfg.config["virulence_genes"]["abricate"]["minid"],
+                            gene_matrix_file=vf_matrix_file,
+                            samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+                
+                # Concatenate every ABRicate output in a single file
+                with open(vir_dir+"/"+global_vf_output_file, "a") as global_file, open(vir_dir+"/"+vf_output_file, "r") as current_file:
+                    if os.stat(vir_dir+"/"+global_vf_output_file).st_size == 0:   # If global file is empty, i.e. there is no header
+                        global_file.write(current_file.read())
+                    else:
+                        for line in current_file.readlines()[1:]:
+                            global_file.write(line)
+                    
+                with open(vir_dir+"/"+global_vf_matrix_file, "a") as global_matrix, open(vir_dir+"/"+vf_matrix_file, "r") as current_matrix:
+                    if os.stat(vir_dir+"/"+global_vf_matrix_file).st_size == 0:   # If global file is empty, i.e. there is no header
+                        global_matrix.write(current_matrix.read())
+                    else:
+                        for line in current_matrix.readlines()[1:]:
+                            global_matrix.write(line)
+
+                # Remove innecesary single files
+                os.remove(vir_dir+"/"+vf_output_file)
+                os.remove(vir_dir+"/"+vf_matrix_file)
+
+        # Blast call (Virulence genes)
+        proteins_database_name = "inhouse_VFDB.txt"    # This is an output file name
+        if "blast" in cfg.config["virulence_genes"]["virulence_genes_predictor_tool"]:
+            print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against inhouse database)\n"), flush=True)
+            step_counter += 1
+            contig_files = ([os.path.join(draft_contigs_dir, f) for f in os.listdir(draft_contigs_dir)])
+            contig_files.append(cfg.config["reference_genome"]["file"])
+
+            blast_output_name = "BLAST_inhouse_VFDB.txt"
+            proteins_file = cfg.config["virulence_genes"]["blast"]["proteins_reference_file"]
+            dna_database_blast = blast_proteins_dir+"/DNA_database"
+            
+            if not os.path.exists(blast_proteins_dir):
+                os.mkdir(blast_proteins_dir)
+            if not os.path.exists(dna_database_blast):
+                os.mkdir(dna_database_blast)
+
+            blast_call( proteins_file_ori=proteins_file, 
+                        proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
+                        contigs_files_paths=contig_files+[ref_genome], 
+                        blast_database_output=dna_database_blast+"/DNA_database.fna", 
+                        blast_output_folder=blast_proteins_dir,
+                        blast_output_name=blast_output_name)
+            blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
+                                database_file=blast_proteins_dir+"/"+proteins_database_name,
+                                output_folder=blast_proteins_dir,
+                                samples=samples_basenames+[reference_genome_basename])
+
             
     # ABRicate call (Plasmids)
-    if cfg.config["abricate"]["find_plasmids"]:
+    if cfg.config["plasmids"]["run_plasmid_prediction"]:
         plasmids_database = "plasmidfinder"
         plasmids_output_file = "Plasmids_ABRicate_plasmidfinder.tsv"
         plasmids_matrix_file = "Plasmids_ABRicate_plasmidfinder_matrix.tsv"
@@ -1804,8 +1915,8 @@ if __name__ == "__main__":
                     output_dir=plasmid_dir,
                     output_filename=plasmids_output_file,
                     database=vf_database,
-                    mincov=cfg.config["abricate"]["mincov"],
-                    minid=cfg.config["abricate"]["minid"],
+                    mincov=cfg.config["virulence_genes"]["abricate"]["mincov"],
+                    minid=cfg.config["virulence_genes"]["abricate"]["minid"],
                     gene_matrix_file=plasmids_matrix_file,
                     samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
 
@@ -1815,133 +1926,109 @@ if __name__ == "__main__":
                 os.remove(plasmid_dir+"/"+plasmids_matrix_file)
             print(f"\nINFO: No plasmids were found.\n", flush=True)
 
-    # End line
-    with open(vir_dir+"/"+global_vf_matrix_file, "a") as matrix_file:
-        matrix_file.write("Coverage >= (" + 
-                            str(cfg.config["abricate"]["mincov"]) +
-                            ") % and identity >= (" +
-                            str(cfg.config["abricate"]["minid"]) + 
-                            ") % on each sample for considering a virulence gene as present.")
-
-
-    # Blast call
-    if cfg.config["blast"]["run_blast"]:
-        print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against inhouse database)\n"), flush=True)
-        step_counter += 1
-        contig_files = ([os.path.join(draft_contigs_dir, f) for f in os.listdir(draft_contigs_dir)])
-        contig_files.append(cfg.config["reference_genome"]["file"])
-
-        blast_output_name = "BLAST_inhouse_VFDB.txt"
-        proteins_file = cfg.config["blast"]["proteins_reference_file"]
-        dna_database_blast = blast_proteins_dir+"/DNA_database"
-        proteins_database_name = "inhouse_VFDB.txt"    # This is an output file name
-        if not os.path.exists(blast_proteins_dir):
-            os.mkdir(blast_proteins_dir)
-        if not os.path.exists(dna_database_blast):
-            os.mkdir(dna_database_blast)
-
-        blast_call( proteins_file_ori=proteins_file, 
-                    proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
-                    contigs_files_paths=contig_files+[ref_genome], 
-                    blast_database_output=dna_database_blast+"/DNA_database.fna", 
-                    blast_output_folder=blast_proteins_dir,
-                    blast_output_name=blast_output_name)
-        blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
-                            database_file=blast_proteins_dir+"/"+proteins_database_name,
-                            output_folder=blast_proteins_dir,
-                            samples=samples_basenames+[reference_genome_basename])
-
-
-    # Antimicrobial resistance genes
-    if cfg.config["abricate"]["run_amr"]:
-        global_amr_output_file = "AMR_ABRicate.tsv"
-        global_amr_matrix_file = "AMR_genes_ABRicate_matrix.tsv"
-        for amr_db in cfg.config["abricate"]["antimicrobial_resistance_databases"]:
-            print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate: "+amr_db+")\n"), flush=True)
-            step_counter += 1
-            amr_output_file = "AMR_ABRicate_"+amr_db+".tsv"
-            amr_matrix_file = "AMR_genes_ABRicate_"+amr_db+"_matrix.tsv"
-            abricate_call(input_dir=draft_contigs_dir, 
-                        output_dir=amr_analysis_dir_abr,
-                        output_filename=amr_output_file,
-                        database=amr_db,
-                        mincov=cfg.config["abricate"]["mincov"],
-                        minid=cfg.config["abricate"]["minid"],
-                        gene_matrix_file=amr_matrix_file,
-                        samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
-
-            # Concatenate every ABRicate output in a single file
-            with open(amr_analysis_dir_abr+"/"+global_amr_output_file, "a") as global_file, open(amr_analysis_dir_abr+"/"+amr_output_file, "r") as current_file:
-                if os.stat(amr_analysis_dir_abr+"/"+global_amr_output_file).st_size == 0:   # If global file is empty, i.e. there is no header
-                    global_file.write(current_file.read())
-                else:
-                    for line in current_file.readlines()[1:]:
-                        global_file.write(line)
-                
-            with open(amr_analysis_dir_abr+"/"+global_amr_matrix_file, "a") as global_matrix, open(amr_analysis_dir_abr+"/"+amr_matrix_file, "r") as current_matrix:
-                if os.stat(amr_analysis_dir_abr+"/"+global_amr_matrix_file).st_size == 0:   # If global file is empty, i.e. there is no header
-                    global_matrix.write(current_matrix.read())
-                else:
-                    for line in current_matrix.readlines()[1:]:
-                        global_matrix.write(line)
-            
-            # Remove innecesary single files
-            os.remove(amr_analysis_dir_abr+"/"+amr_output_file)
-            os.remove(amr_analysis_dir_abr+"/"+amr_matrix_file)
-
         # End line
-        with open(amr_analysis_dir_abr+"/"+global_amr_matrix_file, "a") as matrix_file:
+        with open(vir_dir+"/"+global_vf_matrix_file, "a") as matrix_file:
             matrix_file.write("Coverage >= (" + 
-                                str(cfg.config["abricate"]["mincov"]) +
+                                str(cfg.config["virulence_genes"]["abricate"]["mincov"]) +
                                 ") % and identity >= (" +
-                                str(cfg.config["abricate"]["minid"]) + 
+                                str(cfg.config["virulence_genes"]["abricate"]["minid"]) + 
                                 ") % on each sample for considering a virulence gene as present.")
+
+
     
 
 
-    if cfg.config["amrfinder"]["run"]:
-        amrfinder_db_name = "NDARO"
-        print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: {amrfinder_db_name})\n"), flush=True)
-        step_counter += 1
-        if annotator == "prokka":
-            gff_dir = prokka_refactor_dir
-        elif annotator == "dfast":
-            gff_dir = dfast_refactor_dir
-        else:
-            print("Specified annotator("+annotator+") is not valid.")
-        amrfinder_call(samples_basenames, reference_genome_basename, annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
+    # Antimicrobial resistance genes
+    if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
+        if "abricate" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+            global_amr_output_file = "AMR_ABRicate.tsv"
+            global_amr_matrix_file = "AMR_genes_ABRicate_matrix.tsv"
+            for amr_db in cfg.config["antimicrobial_resistance_genes"]["abricate"]["antimicrobial_resistance_databases"]:
+                print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (ABRicate: "+amr_db+")\n"), flush=True)
+                step_counter += 1
+                amr_output_file = "AMR_ABRicate_"+amr_db+".tsv"
+                amr_matrix_file = "AMR_genes_ABRicate_"+amr_db+"_matrix.tsv"
+                abricate_call(input_dir=draft_contigs_dir, 
+                            output_dir=amr_analysis_dir_abr,
+                            output_filename=amr_output_file,
+                            database=amr_db,
+                            mincov=cfg.config["antimicrobial_resistance_genes"]["abricate"]["mincov"],
+                            minid=cfg.config["antimicrobial_resistance_genes"]["abricate"]["minid"],
+                            gene_matrix_file=amr_matrix_file,
+                            samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+
+                # Concatenate every ABRicate output in a single file
+                with open(amr_analysis_dir_abr+"/"+global_amr_output_file, "a") as global_file, open(amr_analysis_dir_abr+"/"+amr_output_file, "r") as current_file:
+                    if os.stat(amr_analysis_dir_abr+"/"+global_amr_output_file).st_size == 0:   # If global file is empty, i.e. there is no header
+                        global_file.write(current_file.read())
+                    else:
+                        for line in current_file.readlines()[1:]:
+                            global_file.write(line)
+                    
+                with open(amr_analysis_dir_abr+"/"+global_amr_matrix_file, "a") as global_matrix, open(amr_analysis_dir_abr+"/"+amr_matrix_file, "r") as current_matrix:
+                    if os.stat(amr_analysis_dir_abr+"/"+global_amr_matrix_file).st_size == 0:   # If global file is empty, i.e. there is no header
+                        global_matrix.write(current_matrix.read())
+                    else:
+                        for line in current_matrix.readlines()[1:]:
+                            global_matrix.write(line)
+                
+                # Remove innecesary single files
+                os.remove(amr_analysis_dir_abr+"/"+amr_output_file)
+                os.remove(amr_analysis_dir_abr+"/"+amr_matrix_file)
+
+            # End line
+            with open(amr_analysis_dir_abr+"/"+global_amr_matrix_file, "a") as matrix_file:
+                matrix_file.write("Coverage >= (" + 
+                                    str(cfg.config["antimicrobial_resistance_genes"]["abricate"]["mincov"]) +
+                                    ") % and identity >= (" +
+                                    str(cfg.config["antimicrobial_resistance_genes"]["abricate"]["minid"]) + 
+                                    ") % on each sample for considering a virulence gene as present.")
+    
+        if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+            amrfinder_db_name = "NDARO"
+            print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: {amrfinder_db_name})\n"), flush=True)
+            step_counter += 1
+            if annotator == "prokka":
+                gff_dir = prokka_refactor_dir
+            elif annotator == "dfast":
+                gff_dir = dfast_refactor_dir
+            else:
+                print("Specified annotator("+annotator+") is not valid.")
+            amrfinder_call(samples_basenames, reference_genome_basename, annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
 
     # Roary call
-    print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
-    print("Roary input files:", roary_input_files)
-    step_counter += 1
-    roary_call(input_files=roary_input_files, output_dir=roary_dir, wombat_output_folder=output_folder)
+    if cfg.config["pangenome"]["run_pangenome"]:
+        print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
+        print("Roary input files:", roary_input_files)
+        step_counter += 1
+        roary_call(input_files=roary_input_files, output_dir=roary_dir, wombat_output_folder=output_folder)
 
-
-    # Roary plots call
-    os.mkdir(roary_plots_dir)
-    print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
-    step_counter += 1
-    roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
-                    input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
-                    output_dir=roary_plots_dir)
+        if cfg.config["MLST"]["run_mlst"]:
+            # Roary plots call
+            os.mkdir(roary_plots_dir)
+            print(Banner(f"\nStep {step_counter}: Roary Plots\n"), flush=True)
+            step_counter += 1
+            roary_plots_call(input_newick=roary_dir+"/accessory_binary_genes.fa.newick",
+                            input_gene_presence_absence=roary_dir+"/gene_presence_absence.csv",
+                            output_dir=roary_plots_dir)
 
     # Final report
     print(Banner(f"\nStep {step_counter}: Generate final report\n"), flush=True)
     step_counter += 1
     amrfinder_matrix_file = False
-    if cfg.config["amrfinder"]["run"]:
-        amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
+    if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
+            if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+                amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
     
     if cfg.config["report"]["include_reference"]:
-        generate_report(samples_basenames,                    
-                        prinseq_dir, 
-                        assembly_dir, 
+        generate_report(samples_basenames,
+                        prinseq_dir,
+                        assembly_dir,
                         annotation_dir,
                         draft_contigs_dir,
-                        output_folder, 
-                        summary_pre_qc, 
-                        summary_post_qc, 
+                        output_folder,
+                        summary_pre_qc,
+                        summary_post_qc,
                         summary_post_flash,
                         mlst_dir+"/MLST_and_CC.txt",
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
@@ -1971,8 +2058,10 @@ if __name__ == "__main__":
         shutil.rmtree(trimmomatic_dir)
     if cfg.config["reference_genome"]["file"]:
         shutil.rmtree(contigs_dir)
-    if annotator == "prokka" and cfg.config["amrfinder"]["run"]:
-        shutil.rmtree(prokka_refactor_dir)
+    if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
+        if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
+            if annotator == "prokka":
+                shutil.rmtree(prokka_refactor_dir)
 
     # Remove temporal files
     if compressed_mode:
