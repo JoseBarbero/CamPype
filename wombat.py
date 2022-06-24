@@ -369,7 +369,7 @@ def mlst_postprocessing(mlst_file, output_file):
 
     for _, row in mlst_df.iterrows():
         new_row = []
-        new_row.append(os.path.basename(row[0]).split(".")[0])  # Basename
+        new_row.append(os.path.basename(row[0]).split(".fast")[0])  # Basename
         new_row.append(row[1])                                  # Genus
         new_row.append(row[2])                                  # ST
         for column in mlst_df.columns[3:]:
