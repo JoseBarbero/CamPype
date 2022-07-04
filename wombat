@@ -17,13 +17,11 @@ if [ $? -eq 0 ]; then
     if [ $? -eq 0 ]; then
         if [ $FASTAMODE == "True" ]; then
             echo "Fasta mode is enabled." "$@" 2>&1 | tee -a $OUTDIR/wombat.log
-            echo $FASTAMODE "$@" 2>&1 | tee -a $OUTDIR/wombat.log
             conda activate wombatR
             Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
         else
             conda activate wombatR
             echo "Fasta mode is disabled." "$@" 2>&1 | tee -a $OUTDIR/wombat.log
-            echo $FASTAMODE "$@" 2>&1 | tee -a $OUTDIR/wombat.log
             Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
         fi
         conda activate wombat
