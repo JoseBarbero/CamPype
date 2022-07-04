@@ -496,10 +496,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
 
 
 
-def amrfinder_call(samples_basenames, ref_genome_basename, annotation_dir, gff_dir, genus, db_name, output_dir):
-    amrfinder_out_file = output_dir+"/AMR_AMRFinder.tsv"
-    resume_file = output_dir+"/AMR_genes_AMRFinder_matrix.tsv"
-
+def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, ref_genome_basename, annotation_dir, gff_dir, genus, db_name, output_dir):
     has_header = False
 
     samples = samples_basenames.copy()
@@ -561,6 +558,52 @@ def amrfinder_call(samples_basenames, ref_genome_basename, annotation_dir, gff_d
     with open(resume_file, "a") as res_file:
         res_file.write("'-' means no AMR gene found")
 
+def amrfinder_get_point_mutations(amrfinder_file, output_file):
+    """
+    Processes the AMR Finder matrix to get the point mutations.
+    
+    We get only the results from the column "Element subtype" when the value is "POINT".
+    In this new table, the first column will be Sample and will be filled with the names of the different Samples.
+    The headers of the following columns will be the different contents of the column "Class" (when "Element subtype" = "POINT").
+    The table will be filled with the content of the column "Gene symbol" when the Sample matches Class. BUT, a same Class can have more than one Gene symbol different.
+    """
+
+    # Read the matrix 
+    amr_data = pd.read_csv(amrfinder_file, sep="\t")
+
+    # Get the point mutations lines
+    point_mutations = amr_data[amr_data["Element subtype"] == "POINT"]
+
+    # Get the different classes
+    classes = point_mutations["Class"].unique().tolist()
+
+    # Set the header of the new table
+    header = ["Sample"] + classes
+    
+    # Create the new table
+    point_mutations_table = pd.DataFrame(columns=header)
+
+    # Get the samples
+    samples = amr_data["Sample"].unique().tolist()
+
+    for sample in samples:
+        point_mutations_table.loc[sample] = sample
+        for sample_class in classes:
+            gene_symbols = point_mutations[(point_mutations["Sample"] == sample) & (point_mutations["Class"] == sample_class)]["Gene symbol"].unique().tolist()
+            if len(gene_symbols) == 1:
+                point_mutations_table.loc[sample, sample_class] = gene_symbols[0]
+            elif len(gene_symbols) > 1:
+                point_mutations_table.loc[sample, sample_class] = ", ".join(gene_symbols)
+            else:
+                point_mutations_table.loc[sample, sample_class] = "-"
+
+    # Export the new matrix
+    point_mutations_table.to_csv(output_file, sep="\t", index=False)
+
+    # Add footer
+    with open(output_file, "a") as res_file:
+        res_file.write("'-' means no point mutation found")
+    
 
 def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name):
     """
@@ -1986,7 +2029,7 @@ if __name__ == "__main__":
     
         if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
             amrfinder_db_name = "NDARO"
-            print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes (AMRfinder: {amrfinder_db_name})\n"), flush=True)
+            print(Banner(f"\nStep {step_counter}: Antimicrobial resistance genes and point mutations (AMRfinder: {amrfinder_db_name})\n"), flush=True)
             step_counter += 1
             if annotator == "prokka":
                 gff_dir = prokka_refactor_dir
@@ -1994,7 +2037,13 @@ if __name__ == "__main__":
                 gff_dir = dfast_refactor_dir
             else:
                 print("Specified annotator("+annotator+") is not valid.")
-            amrfinder_call(samples_basenames, reference_genome_basename, annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
+
+            amrfinder_out_file = amr_analysis_dir_amrfinder+"/AMR_AMRFinder.tsv"
+            amrfinder_resume_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
+            amrfinder_point_mutations_file = amr_analysis_dir_amrfinder+"/AMR_point_mutations_AMRFinder_matrix.tsv"
+
+            amrfinder_call(amrfinder_out_file, amrfinder_resume_file, samples_basenames, reference_genome_basename, annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
+            amrfinder_get_point_mutations(amrfinder_out_file, amrfinder_point_mutations_file)
 
     # Roary call
     if cfg.config["pangenome"]["run_pangenome"]:
