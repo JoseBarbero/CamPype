@@ -21,17 +21,17 @@ params:
   directory: directory
 ---
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, dev='pdf'}
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE, dev='pdf'}
 knitr::opts_chunk$set(dpi = 120, fig.align = "center")
 ```
 
-```{r, setup, include=FALSE, dev='pdf'}
+```{r, results='asis', setup, include=FALSE, dev='pdf'}
 knitr::opts_knit$set(root.dir = params$directory)
 ```
 
 <br>
 
-``` {r, echo=FALSE, message=FALSE, warning=FALSE}
+``` {r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
 
 if (!require('DT')) install.packages('DT', repos = "http://cran.us.r-project.org"); library('DT')
 if (!require('ape')) install.packages('ape', repos = "http://cran.us.r-project.org"); library('ape')
@@ -50,12 +50,12 @@ library(ComplexHeatmap)
 ```
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 # Loading the configuration file to extract parameters into the report text
 wombat_config_json <- fromJSON(file = "wombat_config.json")
 ```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE}
 # Create a function to pass all the configuration for tables along the wombat report
 Create_DT <- function(x, caption = caption, filter = "none"){
   DT::datatable(x,
@@ -92,13 +92,13 @@ Create_DT <- function(x, caption = caption, filter = "none"){
 Following table shows the number of contigs (> 500 bp), genome length, average contig length, N50, GC content (%) and depth coverage using [SPAdes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519) and annotation information using [Prokka](https://www.ncbi.nlm.nih.gov/pubmed/24642063) o [DFAST](https://pubmed.ncbi.nlm.nih.gov/29106469) for each draft genome.
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 Assembly_left <- 
   read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor))
 ```
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Assembly_right <- 
     read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
@@ -114,12 +114,11 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
   Assembly_full <- Assembly_left
 }
 ```
-
   
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Number of contigs
 
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_of_contigs <-
@@ -157,9 +156,8 @@ Number_of_contigs[['x']][['layout']][['annotations']][[2]][['x']] <- -0.05
 Number_of_contigs 
 ```
 
-
 ##### Draft genome length
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Draft_genome_length <- ggplotly(
@@ -199,8 +197,7 @@ Draft_genome_length
 ```
 
 ##### Average contig length
-
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
 
@@ -242,9 +239,8 @@ Contig_length
 
 ```
 
-
 ##### N50
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   N50 <- 
@@ -287,7 +283,7 @@ N50
 
 
 ##### GC Content
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   GC_Content <- 
@@ -330,7 +326,7 @@ GC_Content
 
 
 ##### Sequencing depth
-```{r, echo=FALSE, eval=FALSE}
+```{r, results='asis', echo=FALSE, eval=FALSE}
 # options("scipen" = 100, "digits" = 0)
 # 
 # Sequencing_depth <- 
@@ -357,7 +353,7 @@ GC_Content
 ```
 
 ##### Number of CDS
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_CDS <- 
@@ -400,7 +396,7 @@ Number_CDS
 
 
 ##### Number of CRISPRs
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_CRISPRs <- 
@@ -443,7 +439,7 @@ Number_CRISPRs
 
 
 ##### Number of rRNAs
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
     
@@ -487,7 +483,7 @@ Number_rRNAs
 
 
 ##### Number of tRNAs
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_tRNAs <- 
@@ -531,14 +527,14 @@ Number_tRNAs
 
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
-  "<br>"
+  cat("\n<br>")
 
-  "[Back to index](#index)"
+  cat("\n[Back to index](#index)")
 
-  "## Multi-Locus Sequence Typing (MLST) {#mlst}"
-  "Following table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst)."
+  cat("\n## Multi-Locus Sequence Typing (MLST) {#mlst}")
+  cat("\nFollowing table shows the MLST, MLST allelic profile and clonal complex using [mlst](https://github.com/tseemann/mlst).")
   MLST <- 
     read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
     mutate(across(where(is_character), as_factor)) %>% 
@@ -554,13 +550,13 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 <br>
 
 [Back to index](#index)
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
-    "## Antibiotic resistance genes {#resistance}"
-    "Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r wombat_config_json$amrfinder$mincov*100`% and identity below `r wombat_config_json$amrfinder$minid*100`% was removed."
+    cat("\n## Antibiotic resistance genes {#resistance}")
+    cat("\nFollowing table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below `r wombat_config_json$amrfinder$mincov*100`% and identity below `r wombat_config_json$amrfinder$minid*100`% was removed.")
 
-    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Protein identifier`, `Contig id`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available)."
+    cat("\nBelow the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Protein identifier`, `Contig id`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available).")
 
     AMR <- 
       read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
@@ -571,11 +567,11 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
     Create_DT(x = AMR, filter = "top", caption = '')
 
 
-    "***"
+    cat("\n***")
 
-    "<br>"
+    cat("\n<br>")
 
-    "Following figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r wombat_config_json$amrfinder$mincov*100`% and identity ≥ `r wombat_config_json$amrfinder$minid*100`%."
+    cat("\nFollowing figure represents presence/absence of antibiotic resistance genes in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as coverage ≥ `r wombat_config_json$amrfinder$mincov*100`% and identity ≥ `r wombat_config_json$amrfinder$minid*100`%.")
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       AMR_HeatMap <- 
@@ -596,18 +592,18 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 
     AMR_HeatMap %>%
       pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
-      select(!c("-")) %>% 
-      base::as.matrix() %>%
+      # select(!c("-")) %>% # TODO SOLVE THIS BUG
+      base::as.matrix() %>% 
       Heatmap()
 
 
 
-    "***"
+    cat("\n***")
 
-    "<br>"
+    cat("\n<br>")
 
 
-    "Following table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r wombat_config_json$amrfinder$mincov*100`% and identity ≥ `r wombat_config_json$amrfinder$minid*100` %."
+    cat("\nFollowing table shows point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder) (known mutations). Presence is represented as coverage ≥ `r wombat_config_json$amrfinder$mincov*100`% and identity ≥ `r wombat_config_json$amrfinder$minid*100` %.")
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       AntBioRes <-
@@ -626,7 +622,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 ```
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     Anti_Res_Genes <- 
@@ -635,10 +631,10 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
       mutate(across(where(is_character), as_factor))
     Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
 
-    "<br>"
+    cat("\n<br>")
 
 
-    "Following figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r wombat_config_json$abricate$mincov`% and identity ≥ `r wombat_config_json$abricate$minid`%."
+    cat("\nFollowing figure represents presence/absence of antibiotic resistance genes in each sample by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r wombat_config_json$abricate$mincov`% and identity ≥ `r wombat_config_json$abricate$minid`%.")
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       Anti_Res_Genes_PA <- 
@@ -665,7 +661,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 ```
 
 
-```{r message=FALSE, warning=FALSE, echo=FALSE}
+```{r results='asis', message=FALSE, warning=FALSE, echo=FALSE}
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     if(wombat_config_json$MLST$run_mlst == TRUE) {
@@ -696,15 +692,14 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 ```
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
-    "## Virulence genes {#virulence}"
+    cat("\n## Virulence genes {#virulence}")
 
-    "Following table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __80%__ and identity below __80%__ was removed."
+    cat("\nFollowing table shows virulence genes by screening the draft genomes against the [Virulence Factors Data Base]( https://www.ncbi.nlm.nih.gov/pubmed/15608208) (VFDB) by using [ABRicate]( https://github.com/tseemann/abricate) and against a custom database using BLAST. Any hit with coverage below __80%__ and identity below __80%__ was removed.")
 
-    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available)."
+    cat("\nBelow the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available).")
 
     Virulence_Genes <- 
       read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv") %>% 
@@ -713,9 +708,9 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 
     Create_DT(x = Virulence_Genes, filter = "top", caption = '')
 
-    "***"
+    cat("\n***")
 
-    "Following figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r wombat_config_json$abricate$mincov`% and identity ≥ `r wombat_config_json$abricate$minid`%."
+    cat("\nFollowing figure represents presence/absence of virulence genes in each draft genome by using [ABRicate]( https://github.com/tseemann/abricate). Presence is represented as coverage ≥ `r wombat_config_json$abricate$mincov`% and identity ≥ `r wombat_config_json$abricate$minid`%.")
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       Virulence_Genes_PA <- 
@@ -744,15 +739,15 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 }
 ```
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
 
-    "***"
+    cat("\n***")
 
-    "Following table shows virulence genes by screening the draft genomes against the custom database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below 50 % was removed."
+    cat("\nFollowing table shows virulence genes by screening the draft genomes against the custom database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below 50 % was removed.")
 
-    "Below the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available)."
+    cat("\nBelow the variables' heading (columns' name) you will find a *filter box* that can be used to filter the table for each `Sample`, `Gene`, etc. You are also able to filter for more than one sample and export this new *subset* into a separated file (see the export buttons available).")
 
     Virulence_Genes_Screening <- 
       read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
@@ -763,9 +758,9 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
     Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = '')
 
 
-    "***"
+    cat("\n***")
 
-    "Following figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r wombat_config_json$presence_absence_matrix$protein_cover`% and identity ≥ `r wombat_config_json$presence_absence_matrix$protein_identity`%."
+    cat("\nFollowing figure represents presence/absence of virulence genes in each draft genome by using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as coverage ≥ `r wombat_config_json$presence_absence_matrix$protein_cover`% and identity ≥ `r wombat_config_json$presence_absence_matrix$protein_identity`%.")
 
     if(wombat_config_json$MLST$run_mlst == TRUE) {
       Virulence_Genes_Blast <- 
@@ -801,14 +796,14 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 <br>
 
 [Back to index](#index)
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$pangenome$run_pangenome == TRUE) {
-  "## Pangenome analysis {#pangenome}"
+  cat("\n## Pangenome analysis {#pangenome}")
 
-  "Following charts show pangenome analysis using [Roary](https://pubmed.ncbi.nlm.nih.gov/26198102):"
+  cat("\nFollowing charts show pangenome analysis using [Roary](https://pubmed.ncbi.nlm.nih.gov/26198102):")
 
 
-  "*     Pangenome genes summary"
+  cat("\n*     Pangenome genes summary")
 
   Pangenome_genes_summary <- 
     read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE) %>% 
@@ -848,9 +843,9 @@ if(wombat_config_json$pangenome$run_pangenome == TRUE) {
       plot.title = element_text(size = 14),
     )
 
-  "<br>"
+  cat("\n<br>")
 
-  "*     Pangenome frequency"
+  cat("\n*     Pangenome frequency")
 
   Pangenome_frequency <- 
     readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv", show_col_types = FALSE) %>% 
@@ -880,9 +875,9 @@ if(wombat_config_json$pangenome$run_pangenome == TRUE) {
       plot.title = element_text(size = 14),
     )
 
-  "<br>"
+  cat("\n<br>")
 
-  "*    Pangenome tree based on presence/absence of accessory genes"
+  cat("\n*    Pangenome tree based on presence/absence of accessory genes")
 
 
   Phylo_tree <- 
@@ -945,7 +940,7 @@ if(wombat_config_json$pangenome$run_pangenome == TRUE) {
 ```
 
 
-```{r, echo=FALSE}
+```{r, results='asis', echo=FALSE}
 if(wombat_config_json$pangenome$run_pangenome == TRUE) {
   Genomes_PA <- 
     readr::read_csv("Roary_pangenome/gene_presence_absence.csv", 
@@ -977,7 +972,7 @@ Following table shows number of genomic structural variation identified in each 
 
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   MLST_edited <-
     read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
@@ -988,7 +983,7 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 ```
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Genomic_variants <- 
     read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
@@ -1004,7 +999,7 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 ```
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 Create_DT(x = Genomic_variants, filter = "top", caption = '')
 ```
 
@@ -1017,7 +1012,7 @@ Create_DT(x = Genomic_variants, filter = "top", caption = '')
 Following table shows summary information for each draft genome:
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 summary_draft_genome <- 
   read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
   relocate(Sample) %>% 
@@ -1025,7 +1020,7 @@ summary_draft_genome <-
 ```
 
 
-```{r warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
 Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 ```
 
