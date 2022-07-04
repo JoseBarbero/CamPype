@@ -50,7 +50,7 @@ library(ComplexHeatmap)
 ```
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 # Loading the configuration file to extract parameters into the report text
 wombat_config_json <- fromJSON(file = "wombat_config.json")
 ```
@@ -92,13 +92,13 @@ Create_DT <- function(x, caption = caption, filter = "none"){
 Following table shows the number of contigs (> 500 bp), genome length, average contig length, N50, GC content (%) and depth coverage using [SPAdes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519) and annotation information using [Prokka](https://www.ncbi.nlm.nih.gov/pubmed/24642063) o [DFAST](https://pubmed.ncbi.nlm.nih.gov/29106469) for each draft genome.
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 Assembly_left <- 
   read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
   mutate(across(where(is_character), as_factor))
 ```
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Assembly_right <- 
     read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
@@ -325,9 +325,10 @@ GC_Content
 ```
 
 
-##### Sequencing depth
+
 ```{r, results='asis', echo=FALSE, eval=FALSE}
 # options("scipen" = 100, "digits" = 0)
+# cat("##### Sequencing depth\n")
 # 
 # Sequencing_depth <- 
 #   ggplotly(
@@ -527,7 +528,7 @@ Number_tRNAs
 
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   cat("\n<br>")
 
@@ -550,7 +551,7 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 <br>
 
 [Back to index](#index)
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     cat("\n## Antibiotic resistance genes {#resistance}")
@@ -622,7 +623,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 ```
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     Anti_Res_Genes <- 
@@ -692,7 +693,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 ```
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     cat("\n## Virulence genes {#virulence}")
@@ -739,7 +740,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 }
 ```
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
 
@@ -796,7 +797,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 <br>
 
 [Back to index](#index)
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$pangenome$run_pangenome == TRUE) {
   cat("\n## Pangenome analysis {#pangenome}")
 
@@ -940,7 +941,7 @@ if(wombat_config_json$pangenome$run_pangenome == TRUE) {
 ```
 
 
-```{r, results='asis', echo=FALSE}
+```{r, results='asis', message=FALSE, echo=FALSE}
 if(wombat_config_json$pangenome$run_pangenome == TRUE) {
   Genomes_PA <- 
     readr::read_csv("Roary_pangenome/gene_presence_absence.csv", 
@@ -972,7 +973,7 @@ Following table shows number of genomic structural variation identified in each 
 
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   MLST_edited <-
     read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
@@ -983,7 +984,7 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 ```
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Genomic_variants <- 
     read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
@@ -999,7 +1000,7 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 ```
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 Create_DT(x = Genomic_variants, filter = "top", caption = '')
 ```
 
@@ -1012,7 +1013,7 @@ Create_DT(x = Genomic_variants, filter = "top", caption = '')
 Following table shows summary information for each draft genome:
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 summary_draft_genome <- 
   read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
   relocate(Sample) %>% 
@@ -1020,7 +1021,7 @@ summary_draft_genome <-
 ```
 
 
-```{r results='asis', warning=FALSE, message=TRUE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 ```
 
