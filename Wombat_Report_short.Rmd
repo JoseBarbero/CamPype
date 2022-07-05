@@ -440,7 +440,7 @@ Number_CRISPRs
 
 
 ##### Number of rRNAs
-```{r, results='asis', echo=FALSE}
+```{r results='asis', echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
     
@@ -484,7 +484,7 @@ Number_rRNAs
 
 
 ##### Number of tRNAs
-```{r, results='asis', echo=FALSE}
+```{r echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_tRNAs <- 
@@ -525,9 +525,6 @@ Number_tRNAs
 
 ```
 
-
-
-
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   cat("\n<br>")
@@ -551,7 +548,7 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 <br>
 
 [Back to index](#index)
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=TRUE, message=TRUE, echo=TRUE}
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     cat("\n## Antibiotic resistance genes {#resistance}")
@@ -593,7 +590,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 
     AMR_HeatMap %>%
       pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
-      # select(!c("-")) %>% # TODO SOLVE THIS BUG
+      #select(!c("-")) %>% # TODO SOLVE THIS BUG
       base::as.matrix() %>% 
       Heatmap()
 
