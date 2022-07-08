@@ -8,7 +8,7 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
-    "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
+    "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
     "trim_adaptors": False, #Remove adapter sequences from reads if set to True. Otherwise, set to False. Default: True
     "read_qc_filtering": {
         "min_len": 50, # Minimum read length. Default: 50
@@ -28,7 +28,7 @@ config = {
     },
     "virulence_genes":{
         "run_virulence_genes_prediction": False, #Set this to True or False if you want to search for virulence genes or not.
-        "virulence_genes_predictor_tool": ["abricate", "blast"], # Select as many tools as desired to identify virulence genes: abricate and/or blast. Keep in mind that abricate uses BLASTn and our BLAST against an inhouse database uses tBLASTn. Default: ["abricate", "blast"].
+        "virulence_genes_predictor_tool": [], # Select as many tools as desired to identify virulence genes: abricate and/or blast. Keep in mind that abricate uses BLASTn and our BLAST against an inhouse database uses tBLASTn. Default: ["abricate", "blast"].
         "abricate": {
             "virulence_factors_databases": ["vfdb"], # Select as many databases as desired from ABRicate to identify virulence factors: vfdb or/and ecoli_vf. Remember, ABRicate uses blastn. Default: ["vfdb"]
             "mincov": 90, # Minimum DNA % coverage for considering a virulence gene as present. Default: 90
@@ -67,6 +67,7 @@ config = {
             "reference_annotation": True    # Use reference genome annotation GenBank file to first annotate from if set to True. Otherwise, set to False. Default: True
         },
     },
+    "run_variant_calling": True, # Set this to True or False if you want to run the variant calling step
     "pangenome":{
         "run_pangenome": False, # Set this to True or False if you want to run the pangenome construction step. Remember that "run_annotation" must be to True to allow the pangenome construction
         "split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True

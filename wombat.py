@@ -1422,12 +1422,13 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                 report_dict.update(virulence_dict)
 
 
-            #Snippy block 
-            if sample != reference_genome_basename:
-                snippy_data = pd.read_csv(snippy_summary, sep="\t", dtype={'Sample':str})
-                snippy_data.set_index("Sample", inplace=True)
-                df_3rd_column_block = [*snippy_data.columns]
-                report_dict.update(snippy_data.loc[sample].to_dict())
+            if cfg.config["run_variant_calling"]:
+                #Snippy block 
+                if sample != reference_genome_basename:
+                    snippy_data = pd.read_csv(snippy_summary, sep="\t", dtype={'Sample':str})
+                    snippy_data.set_index("Sample", inplace=True)
+                    df_3rd_column_block = [*snippy_data.columns]
+                    report_dict.update(snippy_data.loc[sample].to_dict())
 
 
             csv_report = csv_report.append(report_dict, ignore_index=True)
@@ -1836,21 +1837,21 @@ if __name__ == "__main__":
                 roary_input_files.append(annotation_dir+"/"+sample_basename+"/"+sample_basename+".gff")
         
 
-
-        # SNPs identification (SNIPPY)
-        print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SNIPPY\n"), flush=True)
-        step_counter += 1
-        reference_genome_filename = reference_genome_file.split("/")[-1]
-        reference_genome_basename = reference_genome_filename.split(".")[-2]
-        if cfg.config["reference_genome"]["proteins"]:
-            ref_genome = cfg.config["reference_genome"]["proteins"]
-        else:
-            ref_genome = cfg.config["reference_genome"]["file"]
-        snippy_call(reference_genome=ref_genome,
-                    contigs=draft_contigs,
-                    output_dir=snps_dir+"/"+sample_basename,
-                    prefix=sample_basename)
-        snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
+        if cfg.config["run_variant_calling"]:
+            # SNPs identification (SNIPPY)
+            print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SNIPPY\n"), flush=True)
+            step_counter += 1
+            reference_genome_filename = reference_genome_file.split("/")[-1]
+            reference_genome_basename = reference_genome_filename.split(".")[-2]
+            if cfg.config["reference_genome"]["proteins"]:
+                ref_genome = cfg.config["reference_genome"]["proteins"]
+            else:
+                ref_genome = cfg.config["reference_genome"]["file"]
+            snippy_call(reference_genome=ref_genome,
+                        contigs=draft_contigs,
+                        output_dir=snps_dir+"/"+sample_basename,
+                        prefix=sample_basename)
+            snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
 
     # Prokka summary
     if cfg.config["annotation"]["run_annotation"] and cfg.config["annotation"]["annotator"] == "prokka":
@@ -1859,8 +1860,9 @@ if __name__ == "__main__":
         prokka_summary(prokka_summary_input_files, prokka_summary_outfile)
 
     # Snippy summary
-    snippy_summary_outfile = snps_dir+"/Genomic_variants_summary.tsv"
-    snippy_summary(snippy_output_files, snippy_summary_outfile)
+    if cfg.config["run_variant_calling"]:
+        snippy_summary_outfile = snps_dir+"/Genomic_variants_summary.tsv"
+        snippy_summary(snippy_output_files, snippy_summary_outfile)
 
     # Quast report unification
     quast_report_unification(assembly_dir, samples_basenames, assembly_dir)
