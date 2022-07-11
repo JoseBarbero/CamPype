@@ -26,7 +26,28 @@ config = {
     "min_contig_len": 500,
     "MLST": {
         "run_mlst": False, # Set this to True or False if you want to run the MLST step
-        "include_cc": True # Will match sequences types (ST) will clonal complexes (CC) using the PubMLST Campylobacter database. You should set this option to False if you are analysing other genus.
+        "include_cc": True # Will match sequences types (ST) will clonal complexes (CC) using the PubMLST Campylobacter database (internet connection is required). You should set this option to False if you are analysing other genus.
+    },
+    "annotation": {
+        "run_annotation": False, # Set this to True or False if you want to run the annotation step
+        "annotator": "",  # Set this to "prokka" or "dfast"
+        "prokka": {
+            "rawproduct": True, # Do not clean up product annotation if set to True. Otherwise, set to False. Default: True
+            "reference_annotation": True    # Use reference genome annotation GenBank file to first annotate from if set to True. Otherwise, set to False. Default: True
+        },
+    },
+    "antimicrobial_resistance_genes":{
+        "run_antimicrobial_resistance_genes_prediction": False, #Set this to True or False if you want to search for antimicrobial resistance genes or not.
+        "antimicrobial_resistance_genes_predictor_tool": [], # Select as many tools as desired to identify virulence genes: abricate and/or amrfinder. Keep in mind that abricate uses BLASTn and AMRFinder uses blastp. Be aware to run genome annotation if using AMRFinder! 
+        "abricate": {
+            "antimicrobial_resistance_databases": [], # Select as many databases as desired from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or/and resfinder. Remember, ABRicate uses blastn. Default: ["card", "ncbi"]
+            "mincov": 90, # Minimum DNA % coverage for considering a virulence gene as present. Default: 90
+            "minid": 90 # Minimum DNA % identity for considering a virulence gene as present. Default: 90
+        },
+        "amrfinder": {
+            "mincov": 0.9, # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
+            "minid": 0.9 # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
+        }
     },
     "virulence_genes":{
         "run_virulence_genes_prediction": False, #Set this to True or False if you want to search for virulence genes or not.
@@ -45,29 +66,8 @@ config = {
             }
         }
     },
-    "antimicrobial_resistance_genes":{
-        "run_antimicrobial_resistance_genes_prediction": False, #Set this to True or False if you want to search for antimicrobial resistance genes or not.
-        "antimicrobial_resistance_genes_predictor_tool": [], # Select as many tools as desired to identify virulence genes: abricate and/or amrfinder. Keep in mind that abricate uses BLASTn and AMRFinder uses blastp.
-        "abricate": {
-            "antimicrobial_resistance_databases": [], # Select as many databases as desired from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or/and resfinder. Remember, ABRicate uses blastn. Default: ["card", "ncbi"]
-            "mincov": 90, # Minimum DNA % coverage for considering a virulence gene as present. Default: 90
-            "minid": 90 # Minimum DNA % identity for considering a virulence gene as present. Default: 90
-        },
-        "amrfinder": {
-            "mincov": 0.9, # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
-            "minid": 0.9 # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
-        }
-    },
     "plasmids":{
         "run_plasmid_prediction": False #Set this to True or False if you want to search for plasmids or not.
-    },
-    "annotation": {
-        "run_annotation": False, # Set this to True or False if you want to run the annotation step
-        "annotator": "",  # Set this to "prokka" or "dfast"
-        "prokka": {
-            "rawproduct": True, # Do not clean up product annotation if set to True. Otherwise, set to False. Default: True
-            "reference_annotation": True    # Use reference genome annotation GenBank file to first annotate from if set to True. Otherwise, set to False. Default: True
-        },
     },
     "run_variant_calling": True, # Set this to True or False if you want to run the variant calling step
     "pangenome":{
