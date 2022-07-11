@@ -1,7 +1,7 @@
 config = {
     "output_directory": ".",    # "." is Wombat's directory (you need to have writing permissions to save Wombat's output in certain directories.)
     "reference_genome": {   # OPTIONAL (if you don't want to use it, just leave every parameter empty)
-        "file": "reference_files/NCTC11168.fasta",    # Required if you want to reorder genome contigs against a reference genome and search SNPs
+        "file": "reference_files/NCTC11168.fasta",    # Required if you want to reorder genome contigs against a reference genome and search for SNPs
         "genus": "Campylobacter",   
         "species": "jejuni",    
         "strain": "NCTC11168",
