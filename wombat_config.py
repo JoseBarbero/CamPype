@@ -54,8 +54,8 @@ config = {
             "minid": 90 # Minimum DNA % identity for considering a virulence gene as present. Default: 90
         },
         "amrfinder": {
-            "mincov": 0.9 # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
-            "minid": 0.9, # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
+            "mincov": 0.9, # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
+            "minid": 0.9 # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         }
     },
     "plasmids":{
