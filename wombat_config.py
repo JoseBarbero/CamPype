@@ -40,7 +40,7 @@ config = {
             "proteins_reference_file": "reference_files/custom_VFDB.txt", # A FASTA database must be indicated if "predictor_tool" above is set to blast. You can modigy this inhouse database with any selected protein sequence you want to scan.
             "soft_masking": True, # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
             "presence_absence_matrix": { # Parameters for blast matrix construction
-                "protein_cover": 90, # Minimum % protein cover for considering a virulence gene as present. Default: 90
+                "mincov": 90, # Minimum % protein cover for considering a virulence gene as present. Default: 90
                 "protein_identity": 90 # Minimum % protein identity for considering a virulence gene as present. Default: 90
             }
         }
@@ -73,7 +73,7 @@ config = {
     "pangenome":{
         "run_pangenome": False, # Set this to True or False if you want to run the pangenome construction step. Remember that "run_annotation" must be to True to allow the pangenome construction
         "split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
-        "min_identity": 95  # Minimum percentage identity for blastp (1-100). Default: 95
+        "minid": 95  # Minimum percentage identity for blastp (1-100). Default: 95
     },
     "report":{
         "include_reference": False, # Set this to True to include the reference genome in the final report.
