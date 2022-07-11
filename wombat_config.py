@@ -41,7 +41,7 @@ config = {
             "soft_masking": True, # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
             "presence_absence_matrix": { # Parameters for blast matrix construction
                 "mincov": 90, # Minimum % protein cover for considering a virulence gene as present. Default: 90
-                "protein_identity": 90 # Minimum % protein identity for considering a virulence gene as present. Default: 90
+                "minid": 90 # Minimum % protein identity for considering a virulence gene as present. Default: 90
             }
         }
     },
@@ -54,8 +54,8 @@ config = {
             "minid": 90 # Minimum DNA % identity for considering a virulence gene as present. Default: 90
         },
         "amrfinder": {
-            "minid": 0.9, # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
             "mincov": 0.9 # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-1). Default: 0.9
+            "minid": 0.9, # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-1). Default: 0.9
         }
     },
     "plasmids":{
