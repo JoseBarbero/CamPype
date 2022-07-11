@@ -770,7 +770,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
         for sample in samples:
             sample_content = gene_content[gene_content["Sample"] == sample]
             if len(sample_content) > 0:
-                if sample_content["% protein cover"].max() >= cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["protein_cover"] and sample_content["% protein identity"].max() >= cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["protein_cover"]:
+                if sample_content["% protein cover"].max() >= cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["mincov"] and sample_content["% protein identity"].max() >= cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["minid"]:
                     new_row[sample] = 1
                 else:
                     new_row[sample] = 0
@@ -801,9 +801,9 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
     with open(p_a_matrix_file, "a") as matrix_file:
         matrix_file.write("Coverage >= (" + 
-                            str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["protein_cover"]) +
+                            str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["mincov"]) +
                             ") % and identity >= (" +
-                            str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["protein_cover"]) + 
+                            str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["minid"]) + 
                             ") % on each sample for considering a virulence gene as present.")
 
 def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", rawproduct=False):
@@ -981,8 +981,8 @@ def roary_call(input_files, output_dir, wombat_output_folder):
     arguments = ["roary", "-f", output_dir, "-s", "-v"]
     if cfg.config["pangenome"]["split_paralogs"]:
         arguments.append("-s")
-    if cfg.config["pangenome"]["min_identity"]:
-        arguments.extend(["-i", str(cfg.config["pangenome"]["min_identity"])])
+    if cfg.config["pangenome"]["minid"]:
+        arguments.extend(["-i", str(cfg.config["pangenome"]["minid"])])
     arguments.extend(input_files)
     ex_state = call(arguments)
     # Set Roary output directory name
@@ -1959,7 +1959,7 @@ if __name__ == "__main__":
         abricate_call(input_dir=draft_contigs_dir,
                     output_dir=plasmid_dir,
                     output_filename=plasmids_output_file,
-                    database=vf_database,
+                    database=plasmids_database,
                     mincov=cfg.config["virulence_genes"]["abricate"]["mincov"],
                     minid=cfg.config["virulence_genes"]["abricate"]["minid"],
                     gene_matrix_file=plasmids_matrix_file,
