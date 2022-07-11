@@ -109,6 +109,13 @@ Run ```prokka --setupdb``` first and execute Wombat again.
 
 Run ```abricate --setupdb``` first and execute Wombat again.
 
+
+## Citation
+Please cite Wombat whenever you use it as:
+
+Jose A. Barbero, Irene Ortega-Sanz and Antonio Canepa. Wombat. Availabe at [https://github.com/JoseBarbero/Wombat](https://github.com/JoseBarbero/Wombat)
+
+
 ## Contact:
 For questions, bugs and suggestions, please contact to iortega@ubu.es or jabarbero@ubu.es.
 
