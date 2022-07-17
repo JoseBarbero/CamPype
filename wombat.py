@@ -2071,7 +2071,7 @@ if __name__ == "__main__":
             if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
                 amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
     
-    if cfg.config["report"]["include_reference"]:
+    if cfg.config["summary_report"]["include_reference"]:
         generate_report(samples_basenames,
                         prinseq_dir,
                         assembly_dir,
