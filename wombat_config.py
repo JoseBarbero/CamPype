@@ -75,7 +75,7 @@ config = {
         "split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
         "minid": 95  # Minimum percentage identity for blastp (1-100). Default: 95
     },
-    "report":{
-        "include_reference": False, # Set this to True to include the reference genome in the final report.
+    "summary_report":{
+        "include_reference": False, # Set this to True to include the reference genome in the summary report.
     }
 }
