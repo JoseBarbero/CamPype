@@ -516,8 +516,8 @@ def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, ref_genom
                     "-g", gff_dir+"/"+gff_file+".gff", 
                     "--organism", genus, 
                     "--plus", 
-                    "-i", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["minid"]),
-                    "-c", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["mincov"]),
+                    "-i", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["minid"]/100),
+                    "-c", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["mincov"]/100),
                     "-o", output_dir+"/"+sample+".txt"])
 
             # Group all the results in a single file        
