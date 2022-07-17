@@ -1968,8 +1968,7 @@ if __name__ == "__main__":
         # Delete plasmids_matrix_file if it contains only one line
         with open(plasmid_dir+"/"+plasmids_matrix_file, 'r') as f:
             if len(f.readlines()) == 1:
-                os.remove(plasmid_dir+"/"+plasmids_matrix_file)
-            print(f"\nINFO: No plasmids were found.\n", flush=True)
+                print(f"\nINFO: No plasmids were found.\n", flush=True)
 
         # End line
         with open(plasmid_dir+"/"+plasmids_matrix_file, "a") as matrix_file:
@@ -1977,7 +1976,7 @@ if __name__ == "__main__":
                                 str(cfg.config["plasmids"]["abricate"]["mincov"]) +
                                 " % and identity >= " +
                                 str(cfg.config["plasmids"]["abricate"]["minid"]) + 
-                                " % on each sample for considering a virulence gene as present.")
+                                " % on each sample for considering a plasmid as present.")
 
 
     
