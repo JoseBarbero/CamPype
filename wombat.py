@@ -800,11 +800,11 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
     # Export to tsv
     gene_presence_absence.to_csv(p_a_matrix_file, sep="\t",index=False)
     with open(p_a_matrix_file, "a") as matrix_file:
-        matrix_file.write("Coverage >= (" + 
+        matrix_file.write("Coverage >= " + 
                             str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["mincov"]) +
-                            ") % and identity >= (" +
+                            " % and identity >= " +
                             str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["minid"]) + 
-                            ") % on each sample for considering a virulence gene as present.")
+                            " % on each sample for considering a virulence gene as present.")
 
 def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", rawproduct=False):
     """
@@ -1972,12 +1972,12 @@ if __name__ == "__main__":
             print(f"\nINFO: No plasmids were found.\n", flush=True)
 
         # End line
-        with open(vir_dir+"/"+global_vf_matrix_file, "a") as matrix_file:
-            matrix_file.write("Coverage >= (" + 
-                                str(cfg.config["virulence_genes"]["abricate"]["mincov"]) +
-                                ") % and identity >= (" +
-                                str(cfg.config["virulence_genes"]["abricate"]["minid"]) + 
-                                ") % on each sample for considering a virulence gene as present.")
+        with open(plasmid_dir+"/"+plasmids_matrix_file, "a") as matrix_file:
+            matrix_file.write("Coverage >= " + 
+                                str(cfg.config["plasmids"]["abricate"]["mincov"]) +
+                                " % and identity >= " +
+                                str(cfg.config["plasmids"]["abricate"]["minid"]) + 
+                                " % on each sample for considering a virulence gene as present.")
 
 
     
@@ -2023,11 +2023,11 @@ if __name__ == "__main__":
 
             # End line
             with open(amr_analysis_dir_abr+"/"+global_amr_matrix_file, "a") as matrix_file:
-                matrix_file.write("Coverage >= (" + 
+                matrix_file.write("Coverage >= " + 
                                     str(cfg.config["antimicrobial_resistance_genes"]["abricate"]["mincov"]) +
-                                    ") % and identity >= (" +
+                                    " % and identity >= " +
                                     str(cfg.config["antimicrobial_resistance_genes"]["abricate"]["minid"]) + 
-                                    ") % on each sample for considering a virulence gene as present.")
+                                    " % on each sample for considering a virulence gene as present.")
     
         if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
             amrfinder_db_name = "NDARO"
