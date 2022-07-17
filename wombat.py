@@ -1960,8 +1960,8 @@ if __name__ == "__main__":
                     output_dir=plasmid_dir,
                     output_filename=plasmids_output_file,
                     database=plasmids_database,
-                    mincov=cfg.config["virulence_genes"]["abricate"]["mincov"],
-                    minid=cfg.config["virulence_genes"]["abricate"]["minid"],
+                    mincov=cfg.config["plasmids"]["mincov"],
+                    minid=cfg.config["plasmids"]["minid"],
                     gene_matrix_file=plasmids_matrix_file,
                     samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
 
