@@ -1371,7 +1371,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "ST": st,       # TODO remove if MLST is not run
                             "clonal_complex": clonal_complex,
                             "CDS": cds,
-                            "Hypotetical proteins": round(hy_prot, 0),
+                            "Hypothetical proteins": round(hy_prot, 0),
                             "CRISPRs": crisprs,
                             "rRNAs": rrnas,
                             "tRNAs": trnas}
@@ -1392,7 +1392,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "ST": st,       # TODO remove if MLST is not run
                             "clonal_complex": clonal_complex,
                             "CDS": cds,
-                            "Hypotetical proteins": round(hy_prot, 0),
+                            "Hypothetical proteins": round(hy_prot, 0),
                             "CRISPRs": crisprs,
                             "rRNAs": rrnas,
                             "tRNAs": trnas}
