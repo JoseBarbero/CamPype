@@ -68,8 +68,8 @@ config = {
     },
     "plasmids":{
         "run_plasmid_prediction": False #Set this to True or False if you want to search for plasmids or not.
-         "mincov": 80, # Minimum DNA % coverage for considering a plasmid as present. Default: 80
-         "minid": 80 # Minimum DNA % identity for considering a plasmid as present. Default: 80
+        "mincov": 80, # Minimum DNA % coverage for considering a plasmid as present. Default: 80
+        "minid": 80 # Minimum DNA % identity for considering a plasmid as present. Default: 80
     },
     "run_variant_calling": True, # Set this to True or False if you want to run the variant calling step
     "pangenome":{
