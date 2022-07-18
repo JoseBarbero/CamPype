@@ -1919,6 +1919,14 @@ if __name__ == "__main__":
                 # Remove innecesary single files
                 os.remove(vir_dir+"/"+vf_output_file)
                 os.remove(vir_dir+"/"+vf_matrix_file)
+                
+                # End line
+                with open(vir_dir+"/"+global_vf_matrix_file, "a") as matrix_file:
+                matrix_file.write("Coverage >= " + 
+                                    str(cfg.config["virulence_genes"]["abricate"]["mincov"]) +
+                                    " % and identity >= " +
+                                    str(cfg.config["virulence_genes"]["abricate"]["minid"]) + 
+                                    " % on each sample for considering a virulence gene as present.")
 
         # Blast call (Virulence genes)
         proteins_database_name = "inhouse_VFDB.txt"    # This is an output file name
