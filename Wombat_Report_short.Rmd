@@ -355,7 +355,8 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
           labs(x = "Samples", y = "N50", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+          facet_grid(~`Clonal Complex`, scales = "free", space = "free")) + 
+          scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))
   }
 } else {
   N50 <-
@@ -555,7 +556,9 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST"))
+          labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") + 
+          scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+}
   if(wombat_config_json$MLST$include_cc == TRUE) {
     Number_CRISPRs <-
       ggplotly(
@@ -571,8 +574,8 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
           labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
-  }
+          facet_grid(~`Clonal Complex`, scales = "free", space = "free") + 
+          scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
 } else {
   Number_CRISPRs <-
     ggplotly(
@@ -587,7 +590,8 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
               axis.title.x = element_blank(),
               axis.title.y = element_blank(),
               axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Number of CRISPRs", title = ""))
+        labs(x = "Samples", y = "Number of CRISPRs", title = "") + 
+        scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
 }
 Number_CRISPRs
 ```
