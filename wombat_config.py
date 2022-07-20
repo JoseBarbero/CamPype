@@ -29,7 +29,7 @@ config = {
         "include_cc": True # Will match sequences types (ST) will clonal complexes (CC) using the PubMLST Campylobacter database (internet connection is required). You should set this option to False if you are analysing other genus.
     },
     "annotation": {
-        "run_annotation": Truee, # Set this to True or False if you want to run the annotation step
+        "run_annotation": True, # Set this to True or False if you want to run the annotation step
         "annotator": "prokka",  # Set this to "prokka" or "dfast"
         "prokka": {
             "rawproduct": True, # Do not clean up product annotation if set to True. Otherwise, set to False. Default: True
