@@ -1780,7 +1780,7 @@ Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 
 ## How to citate {#citation}
 <br>
-Jose A. Barbero, Irene Ortega-Sanz and Antonio Canepa. __Wombat__ (2022). Available at [https://github.com/JoseBarbero/Wombat](https://github.com/JoseBarbero/Wombat)
+Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. __Wombat__ (2022). Available at [https://github.com/JoseBarbero/Wombat](https://github.com/JoseBarbero/Wombat)
 <br>
 <br>
 
