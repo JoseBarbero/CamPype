@@ -2123,8 +2123,43 @@ if __name__ == "__main__":
 
     # Remove temporal files
     if compressed_mode:
+        # Remove decompressed files
         for key, value in decompressed_samples_fw.items():
             os.remove(value)
+        for key, value in decompressed_samples_rv.items():
+            os.remove(value)
+
+        # Keep only compressed files in trimmomatic/prinseq folders to reduce the output size
+        for root, dirnames, filenames in os.walk(prinseq_dir, topdown=False):
+            for dirname in dirnames:
+                try:
+                    os.remove(os.path.join(root, dirname, dirname+"_R1.fastq"))
+                    os.remove(os.path.join(root, dirname, dirname+"_R2.fastq"))
+                except OSError:
+                    pass
+    else:
+        # Compressed fastq files in trimmomatic/prinseq folders to reduce the output size
+        for root, dirnames, filenames in os.walk(prinseq_dir, topdown=False):
+            for dirname in dirnames:
+                fastqR1 = os.path.join(root, dirname, dirname+"_R1.fastq")
+                fastqR2 = os.path.join(root, dirname, dirname+"_R2.fastq")
+                
+                for fastqfile in [fastqR1, fastqR2]:
+                    if os.path.exists(fastqfile):
+                        call(["gzip", fastqfile])
+        
+
+
+    # Gzip flash fastq files to reduce the output size
+    for root, dirnames, filenames in os.walk(flash_dir, topdown=False):
+        for dirname in dirnames:
+            extendedfragsfile = os.path.join(root, dirname, dirname+".extendedFrags.fastq") # TODO should I compress this one too? It was not specified in the mail
+            notcombinedfile1 = os.path.join(root, dirname, dirname+".notCombined_1.fastq")
+            notcombinedfile2 = os.path.join(root, dirname, dirname+".notCombined_2.fastq")
+            
+            for fastqfile in [extendedfragsfile, notcombinedfile1, notcombinedfile2]:
+                if os.path.exists(fastqfile):
+                    call(["gzip", fastqfile])
 
     # Remove empty folders
     for root, dirnames, filenames in os.walk(output_folder, topdown=False):
