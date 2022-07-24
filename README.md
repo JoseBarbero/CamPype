@@ -26,8 +26,9 @@ Wombat is a pipeline for the analysis of Illumina paired-end sequencing data and
     $ sudo apt-get install ttf-dejavu
     ```
 
-IMPORTANT. After installing or updating Wombat, we recommend you to update the databases of AMRFinder, Prokka and ABRicate by running in the Wombat environment:
- ```conda activate wombat
+IMPORTANT. After installing or updating Wombat, we recommend you to update the databases of AMRFinder, Prokka and ABRicate by running:
+ ```
+ conda activate wombat
  amrfinder -u
  prokka --setupdb
  abricate --setupdb
