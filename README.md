@@ -101,6 +101,14 @@ We recommend you to answer YES to the first question to update configuration fil
 ## Output
 The results of Wombat are stored in very detailed directories for each analysis, with separate folders for each tool and isolate. Los files will be generated for analysis tracking due to execution error. An interactive HTML summary report will be generated at the end of the analysis to simplify the task of data visualization and interpretation. This HTML file can be opened on any Web browser. An example of report can be found here.
 
+You can generate the report after Wombat analysis by executing the following command in the Linux terminal:
+```
+Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '~/path/to/data'))"
+Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '~/path/to/data'))"
+```
+where you will have to change ```'~/path/to/data'``` with the corresponding path of the Wombat output folder.
+
+
 ## FAQ
 1. Prokka stops running with this error:
 ```
