@@ -36,6 +36,8 @@ IMPORTANT. After installing or updating Wombat, we recommend you to update the d
  
 ## How to update Wombat (Linux)
 
+We recommend to update Wombat when newer versions are launched:
+
 1. Make sure you are not in Wombat conda environment
     ```bash
     $ conda deactivate
@@ -46,7 +48,7 @@ IMPORTANT. After installing or updating Wombat, we recommend you to update the d
     ```bash
     $ ./updatewombat
     ```
-We recommend you to answer YES to the first question to update configuration files and NO to the second question, otherwise all the packages and tools included in Wombat will me removed and installed again, which is a time-consuming task.
+You should answer YES to the first question (Are you sure you want to remove your configuration files?) to update configuration files and YES to the second question (Proceed ([y]/n)?) to update all the packages and tools included in Wombat. This might take several minutes.
 
 
 ## How to uninstall Wombat (Linux)
