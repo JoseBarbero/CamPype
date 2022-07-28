@@ -1,6 +1,6 @@
 # Wombat
 
-Wombat is a pipeline for the analysis of Illumina paired-end sequencing data and/or whole bacterial genomes. The development of the workflow is mainly intended for the analysis of Campylobacter jejuni/coli genomes, although any other bacterial genus can be analyzed as well. Wombat is specially designed for users without knowledge of bioinformatics or programming, so the ease of installation and execution are the fundamentals of its development. Moreover, Wombat is a user-customizable workflow that allows you to select the analysis and the tools you are interested in.
+Wombat is a pipeline for the analysis of Illumina paired-end sequencing data and/or whole bacterial genomes. The development of the workflow is mainly intended for the analysis of <em>Campylobacter jejuni/coli</em> genomes, although any other bacterial genus can be analyzed as well. Wombat is specially designed for users without knowledge of bioinformatics or programming, so the ease of installation and execution are the fundamentals of its development. Moreover, Wombat is a user-customizable workflow that allows you to select the analysis and the tools you are interested in.
 
 ![scheme](https://user-images.githubusercontent.com/58036036/180643838-d771f326-3ef9-465e-b591-b5e9df792aec.png)
 
@@ -34,6 +34,57 @@ IMPORTANT. After installing or updating Wombat, we recommend you to update the d
  abricate --setupdb
  ```
  
+## Set input files and configuration
+
+1.  Set input files in Wombat/input_files.csv (tab as separator):
+
+    | Samples        | Forward           | Reverse  | Genus  | Species  |
+    | ------------- |:-------------:|:-----:|:-----:|:-----:|
+    | [sample_basename]  | /path/to/your/forward/fastq1_file.fastq | /path/to/your/reverse/fastq1_file.fastq | YourStrainGenus | YourStrainSpecies
+    | [sample_basename]  | /path/to/your/forward/fastq2_file.fastq | /path/to/your/reverse/fastq2_file.fastq | YourStrainGenus | YourStrainSpecies
+    | [sample_basename]  | /path/to/your/forward/fastq3_file.fastq | /path/to/your/reverse/fastq3_file.fastq | YourStrainGenus | YourStrainSpecies
+
+    Make sure headers haven't changed. If your input data are previously assembled genomes, both the Forward and Reverse columns will refer to the path of the assembled genome, that is, the content of both columns will be the same, except for the headers name.
+    
+1. Set your own running parameters and tools to run in "workflow_config.py" file. 
+
+1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. I you want to use a different bacteria, we recommend you to deactivate the option ```include_cc``` and use abricate for virulence genes searching or use your own database with BLAST instead.
+
+
+## Running the workflow
+
+1. Activate the environment
+    ```bash
+    $ conda activate wombat
+    ```
+1. Go to Wombat folder
+    ```bash
+    $ cd your/path/to/Wombat
+    ```
+1. Run the workflow
+    ```bash
+    $ bash -i wombat
+    ```
+1. \(*) You can deactivate the environment when you are finished
+    ```bash
+    $ conda deactivate
+    ```
+
+## Output
+The results of Wombat are stored in very detailed directories for each analysis, with separate folders for each tool and isolate. Los files will be generated for analysis tracking due to execution error. An interactive HTML summary report will be generated at the end of the analysis to simplify the task of data visualization and interpretation. This HTML file can be opened on any Web browser. An example of report can be found here.
+
+You can generate the report after Wombat analysis by executing the following command in the Linux terminal:
+* For raw fastq reads as input:
+```
+Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '~/path/to/data'))"
+```
+* For assembled genomes as input:
+```
+Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '~/path/to/data'))"
+```
+In both cases, you will have to change ```'~/path/to/data'``` with the corresponding path of the Wombat output folder containing the output files required to create the summary report.
+
+
 ## How to update Wombat (Linux)
 
 We recommend to update Wombat when newer versions are launched:
@@ -64,54 +115,6 @@ You should answer YES to the first question (Are you sure you want to remove you
     $ ./uninstallwombat
     ```
 
-
-## Set input files and configuration
-
-1.  Set input files in Wombat/input_files.csv (tab as separator):
-
-    | Samples        | Forward           | Reverse  | Genus  | Species  |
-    | ------------- |:-------------:|:-----:|:-----:|:-----:|
-    | [sample_basename]  | /path/to/your/forward/fastq1_file.fastq | /path/to/your/reverse/fastq1_file.fastq | YourStrainGenus | YourStrainSpecies
-    | [sample_basename]  | /path/to/your/forward/fastq2_file.fastq | /path/to/your/reverse/fastq2_file.fastq | YourStrainGenus | YourStrainSpecies
-    | [sample_basename]  | /path/to/your/forward/fastq3_file.fastq | /path/to/your/reverse/fastq3_file.fastq | YourStrainGenus | YourStrainSpecies
-
-    Make sure headers haven't changed. If your input data are previously assembled genomes, both the Forward and Reverse columns will refer to the path of the assembled genomes, that is, the content of both columns will be the same, except for the headers name.
-    
-1. Set your own running parameters and tools to run in "workflow_config.py" file. 
-
-1. Default settings are configured for Campylobacter jejuni/coli. I you want to use a different bacteria, we recommend you to deactivate the option ```include_cc``` and use abricate for virulence genes searching or use your own database with BLAST instead.
-
-
-## Running the workflow
-
-1. Activate the environment
-    ```bash
-    $ conda activate wombat
-    ```
-1. Go to Wombat folder
-    ```bash
-    $ cd your/path/to/Wombat
-    ```
-1. Run the workflow
-    ```bash
-    $ bash -i wombat
-    ```
-1. \(*) You can deactivate the environment when you are finished
-    ```bash
-    $ conda deactivate
-    ```
-
-## Output
-The results of Wombat are stored in very detailed directories for each analysis, with separate folders for each tool and isolate. Los files will be generated for analysis tracking due to execution error. An interactive HTML summary report will be generated at the end of the analysis to simplify the task of data visualization and interpretation. This HTML file can be opened on any Web browser. An example of report can be found here.
-
-You can generate the report after Wombat analysis by executing the following command in the Linux terminal:
-```
-Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '~/path/to/data'))"
-Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '~/path/to/data'))"
-```
-where you will have to change ```'~/path/to/data'``` with the corresponding path of the Wombat output folder.
-
-
 ## FAQ
 1. Prokka stops running with this error:
 ```
@@ -132,5 +135,4 @@ Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. Wombat. Availabe at [http
 
 
 ## Contact:
-For questions, bugs and suggestions, please contact to iortega@ubu.es or jabarbero@ubu.es.
-
+For questions, bugs and suggestions, please open a new issue or contact iortega@ubu.es or jabarbero@ubu.es.
