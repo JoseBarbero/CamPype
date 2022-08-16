@@ -979,7 +979,7 @@ def roary_call(input_files, output_dir, wombat_output_folder):
         {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["roary", "-f", output_dir, "-s", "-v"]
-    if cfg.config["pangenome"]["split_paralogs"]:
+    if cfg.config["pangenome"]["no_split_paralogs"]:
         arguments.append("-s")
     if cfg.config["pangenome"]["minid"]:
         arguments.extend(["-i", str(cfg.config["pangenome"]["minid"])])
