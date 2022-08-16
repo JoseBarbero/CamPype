@@ -76,7 +76,7 @@ config = {
     "run_variant_calling": True, # Set this to True or False if you want to run the variant calling step
     "pangenome":{
         "run_pangenome": True, # Set this to True or False if you want to run the pangenome construction step. Remember that "run_annotation" must be to True to allow the pangenome construction
-        "split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
+        "no_split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
         "minid": 95  # Minimum percentage identity for blastp (1-100). Default: 95
     },
     "summary_report":{
