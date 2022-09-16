@@ -1137,7 +1137,6 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
         select(c("RESISTANCE")) %>%
         as.data.frame
       
-      #COMENTARIO IRENE: top_annotation solo debe aparecer cuando DBs[i] = card or ncbi
       if(DBs[i] == "card" | DBs[i] == "ncbi"){
         top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
                                                     which = "col", 
@@ -1165,17 +1164,6 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
           Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
           rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
           Anti_Res_Genes_matrix$Sample <- NULL
-          
-          #COMENTARIO IRENE: top_annotation solo debe aparecer cuando DBs[i] = card or ncbi
-          if(DBs[i] == "card" | DBs[i] == "ncbi"){
-            top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                       which = "col", 
-                                                       simple_anno_size = unit(4, "mm"), 
-                                                       annotation_name_side = "left", 
-                                                       gap = unit(1, 'mm'))
-          } else {
-            top_annotation = NULL
-          }
           
           draw(
             Heatmap(Anti_Res_Genes_matrix, 
