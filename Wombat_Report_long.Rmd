@@ -1351,14 +1351,12 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 ```
 <br>
 
-############### IRENE El botón (tabset) solo debe aparecer para cada base de datos de wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases
-
 #### Select the database {.tabset .tabset-fade .tabset-pills}
-##### argannot
-```{r, results='asis', echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('argannot' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### argannot\n\n")
     Anti_Res_Genes <- 
       read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
       select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
@@ -1371,11 +1369,11 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 }
 ```
 
-##### CARD
-```{r, results='asis', echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('card' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### CARD\n\n")
     Anti_Res_Genes <- 
       read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
       select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
@@ -1388,11 +1386,11 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 }
 ```
 
-##### Ecoh
-```{r, results='asis', echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('ecoh' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### Ecoh\n\n")
     Anti_Res_Genes <- 
       read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
       select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
@@ -1405,11 +1403,11 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 }
 ```
 
-##### Megares
-```{r, results='asis', echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('megares' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### Megares\n\n")
     Anti_Res_Genes <- 
       read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
       select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
@@ -1421,12 +1419,11 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
   }
 }
 ```
-
-##### NCBI
-```{r, results='asis', echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('ncbi' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### NCBI\n\n")
     Anti_Res_Genes <- 
       read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
       select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
@@ -1439,11 +1436,11 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 }
 ```
 
-##### Resfinder
-```{r, results='asis', echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('resfinder' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### Resfinder\n\n")
     Anti_Res_Genes <- 
       read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
       select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
@@ -1494,7 +1491,6 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
         select(c("RESISTANCE")) %>%
         as.data.frame
       
-      #COMENTARIO IRENE: top_annotation solo debe aparecer cuando DBs[i] = card or ncbi
       if(DBs[i] == "card" | DBs[i] == "ncbi"){
         top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
                                                     which = "col", 
