@@ -22,10 +22,14 @@ if [ $? -eq 0 ]; then
             conda activate wombatR
             Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
         fi
+        
+        if [ $? -eq 0 ]; then
+            python -c "from terminal_banner import Banner; print(Banner('\nDONE\n'), flush=True)" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
+        fi
+        
         conda activate wombat
 
         rm $OUTDIR/wombat_config.json
-
-        python -c "from terminal_banner import Banner; print(Banner('\nDONE\n'), flush=True)" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
+        
     fi
 fi
