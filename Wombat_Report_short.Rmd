@@ -155,12 +155,11 @@ if(wombat_config_json$annotation$run_annotation == TRUE) {
 assembly$ST = as.factor(assembly$ST)
 Create_DT(x = assembly, filter = "top", caption = '')
 ```
-###############COMENTARIO IRENE: SOLO CUANDO wombat_config_json$annotation$run_annotation == TRUE deben aparecer los tabsets de CDS, hypothetical proteins, CRISPRs, rRNAs y tRNAs (generate the tabs programmatically: https://stackoverflow.com/questions/49725591/dynamically-control-number-of-tabsets-in-r-markdown, https://interludeone.com/posts/2022-03-04-programmatically-generate-tabs-in-rmarkdown/?panelset=biscoe)
-
   
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
-##### Number of contigs
-```{r, echo=FALSE}
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### Number of contigs\n\n")
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Number_of_contigs <-
@@ -213,8 +212,8 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 Number_of_contigs 
 ```
 
-##### Draft genome length
-```{r, echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### Draft genome length\n\n")
 options("digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Draft_genome_length <-
@@ -267,8 +266,8 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 Draft_genome_length 
 ```
 
-##### Average contig length
-```{r, echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### Average contig length\n\n")
 options("digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   Contig_length <-
@@ -318,11 +317,11 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
               axis.ticks = element_blank()) +
         labs(x = "Samples", y = "Average contig length (bp)", title = ""))
 }
-Contig_length 
+Contig_length
 ```
 
-##### N50
-```{r, echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### N50\n\n")
 options("digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   N50 <-
@@ -354,8 +353,7 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
           labs(x = "Samples", y = "N50", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free")) + 
-          scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))
+          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
   }
 } else {
   N50 <-
@@ -376,8 +374,8 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 N50
 ```
 
-##### GC Content
-```{r, echo=FALSE}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### GC Content\n\n")
 options("scipen" = 100, "digits" = 0)
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   GC_content <-
@@ -430,30 +428,48 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
 GC_content 
 ```
 
-##### Number of CDS
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == TRUE) {
-  Number_CDS <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = CDS, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST"))
-  if(wombat_config_json$MLST$include_cc == TRUE) {
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Number of CDS\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_CDS <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = CDS, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST"))
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_CDS <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = CDS, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    }
+  } else {
     Number_CDS <-
       ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = CDS, fill = ST)) +
+        ggplot(data = assembly, aes(x = Sample, y = CDS)) +
           geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
+          theme(panel.border = element_blank(), 
                 panel.background = element_rect(colour = "grey90"),
                 panel.grid.minor = element_blank(),
                 panel.grid.major = element_blank(),
@@ -462,52 +478,54 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+          labs(x = "Samples", y = "Number of CDS", title = ""))
   }
-} else {
-  Number_CDS <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = CDS)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Number of CDS", title = ""))
+  Number_CDS
 }
-Number_CDS 
 ```
 
-##### Hypothetical proteins
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == TRUE) {
-  Number_hypothetical_proteins <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST"))
-  if(wombat_config_json$MLST$include_cc == TRUE) {
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Hypothetical proteins\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_hypothetical_proteins <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST"))
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_hypothetical_proteins <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    }
+  } else {
     Number_hypothetical_proteins <-
       ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`, fill = ST)) +
+        ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`)) +
           geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
+          theme(panel.border = element_blank(), 
                 panel.background = element_rect(colour = "grey90"),
                 panel.grid.minor = element_blank(),
                 panel.grid.major = element_blank(),
@@ -516,54 +534,56 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+          labs(x = "Samples", y = "Number of hypothetical proteins", title = ""))
   }
-} else {
-  Number_hypothetical_proteins <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Number of hypothetical proteins", title = ""))
+  Number_hypothetical_proteins 
 }
-Number_hypothetical_proteins 
 ```
 
-##### Number of CRISPRs
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == TRUE) {
-  Number_CRISPRs <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = CRISPRs, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") + 
-          scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
-}
-  if(wombat_config_json$MLST$include_cc == TRUE) {
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Number of CRISPRs\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_CRISPRs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = CRISPRs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") + 
+            scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+  }
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_CRISPRs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = CRISPRs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free") + 
+            scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+  } else {
     Number_CRISPRs <-
       ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = CRISPRs, fill = ST)) +
+        ggplot(data = assembly, aes(x = Sample, y = CRISPRs)) +
           geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
+          theme(panel.border = element_blank(), 
                 panel.background = element_rect(colour = "grey90"),
                 panel.grid.minor = element_blank(),
                 panel.grid.major = element_blank(),
@@ -572,53 +592,55 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free") + 
+          labs(x = "Samples", y = "Number of CRISPRs", title = "") + 
           scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
-} else {
-  Number_CRISPRs <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = CRISPRs)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Number of CRISPRs", title = "") + 
-        scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+  }
+  Number_CRISPRs
 }
-Number_CRISPRs
 ```
 
-##### Number of rRNAs
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == TRUE) {
-  Number_rRNAs <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = rRNAs, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST"))
-  if(wombat_config_json$MLST$include_cc == TRUE) {
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Number of rRNAs\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_rRNAs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = rRNAs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST"))
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_rRNAs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = rRNAs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    }
+  } else {
     Number_rRNAs <-
       ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = rRNAs, fill = ST)) +
+        ggplot(data = assembly, aes(x = Sample, y = rRNAs)) +
           geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
+          theme(panel.border = element_blank(), 
                 panel.background = element_rect(colour = "grey90"),
                 panel.grid.minor = element_blank(),
                 panel.grid.major = element_blank(),
@@ -627,52 +649,55 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+          labs(x = "Samples", y = "Number of rRNAs", title = ""))
   }
-} else {
-  Number_rRNAs <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = rRNAs)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Number of rRNAs", title = ""))
+  Number_rRNAs
 }
-Number_rRNAs
 ```
 
-##### Number of tRNAs
-```{r, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$MLST$run_mlst == TRUE) {
-  Number_tRNAs <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = tRNAs, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST"))
-  if(wombat_config_json$MLST$include_cc == TRUE) {
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Number of tRNAs\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_tRNAs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = tRNAs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST"))
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_tRNAs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = tRNAs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    }
+  } else {
     Number_tRNAs <-
       ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = tRNAs, fill = ST)) +
+        ggplot(data = assembly, aes(x = Sample, y = tRNAs)) +
           geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
+          theme(panel.border = element_blank(), 
                 panel.background = element_rect(colour = "grey90"),
                 panel.grid.minor = element_blank(),
                 panel.grid.major = element_blank(),
@@ -681,26 +706,10 @@ if(wombat_config_json$MLST$run_mlst == TRUE) {
                 axis.title.x = element_blank(),
                 axis.title.y = element_blank(),
                 axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+          labs(x = "Samples", y = "Number of tRNAs", title = ""))
   }
-} else {
-  Number_tRNAs <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = tRNAs)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Number of tRNAs", title = ""))
+  Number_tRNAs
 }
-Number_tRNAs
 ```
 <br>
 
@@ -1200,17 +1209,6 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
         Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
           rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
           Anti_Res_Genes_matrix$Sample <- NULL
-          
-          #COMENTARIO IRENE: top_annotation solo debe aparecer cuando DBs[i] = card or ncbi
-          if(DBs[i] == "card" | DBs[i] == "ncbi"){
-            top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                       which = "col", 
-                                                       simple_anno_size = unit(4, "mm"), 
-                                                       annotation_name_side = "left", 
-                                                       gap = unit(1, 'mm'))
-          } else {
-            top_annotation = NULL
-          }
 
           draw(
             Heatmap(Anti_Res_Genes_matrix, 
