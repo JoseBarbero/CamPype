@@ -1,7 +1,6 @@
 ---
-title:    | 
- | Wombat Analysis Report
- 
+title:  "Wombat Analysis Report"
+
 output:
   html_document:
     df_print: paged
