@@ -24,6 +24,7 @@ if [ $? -eq 0 ]; then
         fi
         
         if [ $? -eq 0 ]; then
+            conda activate wombat
             python -c "from terminal_banner import Banner; print(Banner('\nDONE\n'), flush=True)" "$@" 2>&1 | tee -a $OUTDIR/wombat.log
         fi
         

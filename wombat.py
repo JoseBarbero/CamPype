@@ -739,6 +739,8 @@ def blast_postprocessing(blast_file, database_file, output_folder, samples):
                     "Aligned part of subject sequence"]
     
     blast_output = blast_output[new_columns]
+    blast_output['% protein cover'] = blast_output['% protein cover'].apply(lambda x: round(x, 2))
+    blast_output['% protein identity'] = blast_output['% protein identity'].apply(lambda x: round(x, 2))
 
     # Sort rows
     blast_output = blast_output.sort_values(by=["Protein type", "Protein", "Sample"])

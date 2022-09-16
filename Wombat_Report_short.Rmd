@@ -1446,8 +1446,6 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 ```
 <br>
 
-#COMENTARIO IRENE: Se deben aproximar los valores de las columnas "% protein cover" y "% protein identity" a dos decimales
-
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
