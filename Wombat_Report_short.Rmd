@@ -1114,8 +1114,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
 #### Select the database {.tabset .tabset-fade .tabset-pills}
 
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, fig.align='left', fig.width=10, fig.height=5}
-#COMENTARIO IRENE: generate tabsets in R markdown with a loop (se debe crear un tab por cada base de datos, cada tab representará el heatmap). Ayuda: https://stackoverflow.com/questions/36458193/knitr-one-plot-per-tabset-in-for-loop, https://stackoverflow.com/questions/46877451/generating-tabs-in-r-markdown-with-a-loop
-#COMENTARIO IRENE: top_annotation solo debe aparecer cuando DBs[i] = card or ncbi
+
 if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     Anti_Res_Genes_PA <- 
@@ -1138,6 +1137,17 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
         select(c("RESISTANCE")) %>%
         as.data.frame
       
+      #COMENTARIO IRENE: top_annotation solo debe aparecer cuando DBs[i] = card or ncbi
+      if(DBs[i] == "card" | DBs[i] == "ncbi"){
+        top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                    which = "col", 
+                                                    simple_anno_size = unit(4, "mm"), 
+                                                    annotation_name_side = "left", 
+                                                    gap = unit(1, 'mm'))
+      } else {
+        top_annotation = NULL
+      }
+      
       if(wombat_config_json$MLST$run_mlst == TRUE) {
         if(wombat_config_json$MLST$include_cc == TRUE) {
           Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
@@ -1155,7 +1165,18 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
           Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
           rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
           Anti_Res_Genes_matrix$Sample <- NULL
-        
+          
+          #COMENTARIO IRENE: top_annotation solo debe aparecer cuando DBs[i] = card or ncbi
+          if(DBs[i] == "card" | DBs[i] == "ncbi"){
+            top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                       which = "col", 
+                                                       simple_anno_size = unit(4, "mm"), 
+                                                       annotation_name_side = "left", 
+                                                       gap = unit(1, 'mm'))
+          } else {
+            top_annotation = NULL
+          }
+          
           draw(
             Heatmap(Anti_Res_Genes_matrix, 
                     width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
@@ -1164,11 +1185,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
                     col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                     cluster_rows = FALSE,
                     cluster_columns = FALSE,
-                    top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                       which = "col", 
-                                                       simple_anno_size = unit(4, "mm"), 
-                                                       annotation_name_side = "left", 
-                                                       gap = unit(1, 'mm')), 
+                    top_annotation = top_annotation, 
                     left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                         which = "row",
                                                         simple_anno_size = unit(4, "mm"),
@@ -1195,7 +1212,18 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
         Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
           rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
           Anti_Res_Genes_matrix$Sample <- NULL
-        
+          
+          #COMENTARIO IRENE: top_annotation solo debe aparecer cuando DBs[i] = card or ncbi
+          if(DBs[i] == "card" | DBs[i] == "ncbi"){
+            top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                       which = "col", 
+                                                       simple_anno_size = unit(4, "mm"), 
+                                                       annotation_name_side = "left", 
+                                                       gap = unit(1, 'mm'))
+          } else {
+            top_annotation = NULL
+          }
+
           draw(
             Heatmap(Anti_Res_Genes_matrix, 
                     width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
@@ -1204,11 +1232,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
                     col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                     cluster_rows = FALSE,
                     cluster_columns = FALSE,
-                    top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                       which = "col", 
-                                                       simple_anno_size = unit(4, "mm"), 
-                                                       annotation_name_side = "left", 
-                                                       gap = unit(1, 'mm')), 
+                    top_annotation = top_annotation, 
                     left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                         which = "row",
                                                         simple_anno_size = unit(4, "mm"),
@@ -1229,11 +1253,7 @@ if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistanc
                   col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                   cluster_rows = FALSE,
                   cluster_columns = FALSE,
-                  top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                     which = "col", 
-                                                     simple_anno_size = unit(4, "mm"), 
-                                                     annotation_name_side = "left", 
-                                                     gap = unit(1, 'mm')), 
+                  top_annotation = top_annotation, 
                   heatmap_legend_param = list(at = c(1, 0), 
                                               labels = c("Presence", "Absence"),
                                               title = " ",
