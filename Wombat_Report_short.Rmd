@@ -1264,26 +1264,29 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 <br>
 
 #### Select the database {.tabset .tabset-fade .tabset-pills}
-##### VFDB
 ```{r, results='asis', echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
-  if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
-    Virulence_Genes <- 
-      read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
-      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-      filter(`DATABASE` == "vfdb" ) %>% 
-      select(!c("DATABASE")) %>% 
-      mutate(across(where(is_character), as_factor))
-    Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+if('vfdb' %in% wombat_config_json$virulence_genes$abricate$virulence_factors_databases) { 
+  cat('##### VFDB\n\n')
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+    if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+      Virulence_Genes <- 
+        read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
+        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+        filter(`DATABASE` == "vfdb" ) %>% 
+        select(!c("DATABASE")) %>% 
+        mutate(across(where(is_character), as_factor))
+      Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+    }
   }
 }
 ```
 
-##### ecoli_vf
 ```{r, results='asis', echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+if('ecoli_vf' %in% wombat_config_json$virulence_genes$abricate$virulence_factors_databases) { 
+  cat('##### ecoli_vf\n\n')
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     Virulence_Genes <- 
       read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
@@ -1292,8 +1295,10 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
       select(!c("DATABASE")) %>% 
       mutate(across(where(is_character), as_factor))
     Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+    }
   }
 }
+
 ```
 <br>
 
