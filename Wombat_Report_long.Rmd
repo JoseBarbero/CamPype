@@ -1672,7 +1672,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 }
 ```
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=35}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     Virulence_Genes_PA <- 
@@ -1680,7 +1680,6 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
       slice(-n())
     
     DBs <- levels(factor(Virulence_Genes_PA$DATABASE))
-    plot_list = list()
     
     for (i in seq_along(DBs)) {
       Virulence_Genes_PA.i <- NULL
@@ -1696,46 +1695,6 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
         as.data.frame
       
       if(wombat_config_json$MLST$run_mlst == TRUE) {
-        Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
-        Virulence_Genes_matrix <- tibble::rownames_to_column(Virulence_Genes_matrix, "Sample")
-        
-        Virulence_Genes_matrix_mlst <- Virulence_Genes_matrix  %>% 
-          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
-
-        mlst_annotation <- Virulence_Genes_matrix_mlst %>% 
-          select(., ST) %>%
-          mutate(across(c(ST),
-                        factor))  %>%
-          as.data.frame
-        
-        Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
-          rownames(Virulence_Genes_matrix) <- Virulence_Genes_matrix$Sample
-          Virulence_Genes_matrix$Sample <- NULL
-        
-          plot_list[[i]] = grid.grabExpr(draw(
-            Heatmap(Virulence_Genes_matrix, 
-                    width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                    height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
-                    column_title = paste("Database = ", DBs[i], sep = ""),
-                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                    cluster_rows = FALSE,
-                    cluster_columns = FALSE,
-                    top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                       which = "col", 
-                                                       simple_anno_size = unit(4, "mm"), 
-                                                       annotation_name_side = "left", 
-                                                       gap = unit(1, 'mm')), 
-                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                        which = "row",
-                                                        simple_anno_size = unit(4, "mm"),
-                                                        annotation_name_side = "bottom",
-                                                        gap = unit(0.5, 'mm')),
-                    heatmap_legend_param = list(at = c(1, 0), 
-                                                labels = c("Presence", "Absence"),
-                                                title = " ",
-                                                color_bar = "discrete")
-            )))
-                    
         if(wombat_config_json$MLST$include_cc == TRUE) {
           Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
           Virulence_Genes_matrix <- tibble::rownames_to_column(Virulence_Genes_matrix, "Sample")
@@ -1753,7 +1712,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
           rownames(Virulence_Genes_matrix) <- Virulence_Genes_matrix$Sample
           Virulence_Genes_matrix$Sample <- NULL
         
-          plot_list[[i]] = grid.grabExpr(draw(
+          draw(
             Heatmap(Virulence_Genes_matrix, 
                     width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
                     height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
@@ -1775,10 +1734,51 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                                                 labels = c("Presence", "Absence"),
                                                 title = " ",
                                                 color_bar = "discrete")
-          )))
-        }
+          ))
+        } else{
+          Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
+        Virulence_Genes_matrix <- tibble::rownames_to_column(Virulence_Genes_matrix, "Sample")
+        
+        Virulence_Genes_matrix_mlst <- Virulence_Genes_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+
+        mlst_annotation <- Virulence_Genes_matrix_mlst %>% 
+          select(., ST) %>%
+          mutate(across(c(ST),
+                        factor))  %>%
+          as.data.frame
+        
+        Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
+          rownames(Virulence_Genes_matrix) <- Virulence_Genes_matrix$Sample
+          Virulence_Genes_matrix$Sample <- NULL
+        
+          draw(
+            Heatmap(Virulence_Genes_matrix, 
+                    width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                    height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                    column_title = paste("Database = ", DBs[i], sep = ""),
+                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                    cluster_rows = FALSE,
+                    cluster_columns = FALSE,
+                    top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                       which = "col", 
+                                                       simple_anno_size = unit(4, "mm"), 
+                                                       annotation_name_side = "left", 
+                                                       gap = unit(1, 'mm')), 
+                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                        which = "row",
+                                                        simple_anno_size = unit(4, "mm"),
+                                                        annotation_name_side = "bottom",
+                                                        gap = unit(0.5, 'mm')),
+                    heatmap_legend_param = list(at = c(1, 0), 
+                                                labels = c("Presence", "Absence"),
+                                                title = " ",
+                                                color_bar = "discrete")
+            )
+          )
+        }           
       } else {
-        plot_list[[i]] = grid.grabExpr(draw(
+        draw(
           Heatmap(Virulence_Genes_matrix,
                   width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
                   height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),                  
@@ -1795,10 +1795,10 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                                               labels = c("Presence", "Absence"),
                                               title = " ",
                                               color_bar = "discrete")
-          )))
+          ))
       }
+      cat(' \n \n')
     }
-    plot_grid(plotlist = plot_list)
   }
 }
 ```
