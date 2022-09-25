@@ -386,9 +386,9 @@ def mlst_postprocessing(mlst_file, output_file):
             if len(database.loc[database["ST"] == st]["clonal_complex"].values) > 0:
                 new_row.append(database.loc[database["ST"] == st]["clonal_complex"].values[0])
             else:
-                new_row.append("-")
+                new_row.append("Other")
         except ValueError:
-            new_row.append("-")
+            new_row.append("Other")
         
 
 
@@ -1265,6 +1265,9 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
 
                     # "ReadsQCLen": Average read length (bp) after quality control.
                     readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
+                    
+                    # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
+                        depthcov = round((info_post_QC[sample]["R1Reads"] * info_post_QC[sample]["R1LenMean"] + info_post_QC[sample]["R2Reads"] * info_post_QC[sample]["R2LenMean"])/ genome_len, 0)
 
                     if cfg.config["merge_reads"]:
                         # "JoinReads": Total combined reads.
@@ -1273,12 +1276,9 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                         # "JoinReadsLen: Mean length of combined reads.
                         joinreadslen = info_post_flash[sample]["JoinLenMeanReads"]
                         
-                        # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
-                        depthcov = round(info_post_flash[sample]["JoinLenMeanReads"] * info_post_flash[sample]["JoinReads"] / genome_len, 0)
                     else:
                         joinreads = 0
                         joinreadslen = 0
-                        depthcov = 0
                 
                 # "ContigLen": Average contig length (bp) (> 500bp).
                 contig_len_summatory = 0
