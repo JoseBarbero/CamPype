@@ -1,0 +1,2182 @@
+---
+title:  "Wombat Analysis Report"
+ 
+output:
+  html_document:
+    df_print: paged
+    toc: yes  
+    toc_float: yes
+    toc_depth: 6
+  pdf_document:
+    toc: yes
+params:
+  directory: directory
+---
+
+<style>
+ table.display td { white-space: nowrap; }
+</style>
+
+```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE, dev='pdf'}
+knitr::opts_chunk$set(dpi = 120, fig.align = "center")
+```
+
+```{r, results='asis', setup, include=FALSE, dev='pdf'}
+knitr::opts_knit$set(root.dir = params$directory)
+```
+
+``` {r, results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+if (!require('pander')) install.packages('pander', repos = "http://cran.us.r-project.org"); library('pander')
+if (!require('DT')) install.packages('DT', repos = "http://cran.us.r-project.org"); library('DT')
+if (!require('ape')) install.packages('ape', repos = "http://cran.us.r-project.org"); library('ape')
+if (!require('plotly')) install.packages('plotly', repos = "http://cran.us.r-project.org"); library('plotly')
+if (!require('rjson')) install.packages('rjson', repos = "http://cran.us.r-project.org"); library('rjson')
+if (!require('viridis')) install.packages('viridis', repos = "http://cran.us.r-project.org"); library('viridis')
+if (!require('scales')) install.packages('scales', repos = "http://cran.us.r-project.org"); library('scales')
+if (!require('ggrepel')) install.packages('ggrepel', repos = "http://cran.us.r-project.org"); library('ggrepel')
+if (!require('rmarkdown')) install.packages('rmarkdown', repos = "http://cran.us.r-project.org"); library('rmarkdown')
+if (!require('cowplot')) install.packages('cowplot', repos = "http://cran.us.r-project.org"); library('cowplot')
+if (!require('BiocManager')) install.packages('BiocManager', repos = "http://cran.us.r-project.org"); library('BiocManager')
+if (!require('tidyverse')) install.packages('tidyverse', repos = "http://cran.us.r-project.org"); library('tidyverse')
+if (!require('phytools')) install.packages('phytools', repos = "http://cran.us.r-project.org"); library('phytools')
+BiocManager::install("ComplexHeatmap", force = FALSE); library(ComplexHeatmap)
+BiocManager::install("ggtree", force = FALSE); library(ggtree)
+```
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+# Loading the configuration file to extract parameters into the report text
+wombat_config_json <- fromJSON(file = "wombat_config.json")
+```
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE}
+# Create a function to pass all the configuration for tables along the wombat report
+Create_DT <- function(x, caption = caption, filter = "none"){
+  DT::datatable(x,
+                caption = caption,
+                filter = filter,
+                extensions = 'Buttons',
+                rownames = FALSE,
+                options = list(dom = 'Blfrtip',
+                               buttons = c('copy', 'csv', 'excel', 'pdf'),
+                               lengthMenu = list(c(10,25,50,-1),
+                                                 c(10,25,50,"All"))))
+}
+```
+
+##### Analysis performed on `r format(Sys.time(), '%B %d, %Y at %X')`, using [Wombat]( https://github.com/JoseBarbero/Wombat)
+
+<br>
+
+### Wombat's report sections {.sidebar #index}
+* #### [Sequencing summary before and after quality control (QC)](#Sequencingsummary)
+* #### [Joined reads summary](#Joinedreads)
+* #### [Multi-Locus Sequence Typing (MLST)](#mlst)
+* #### [Assembly analysis and annotation](#annotation)
+* #### [Antibiotic resistance genes](#resistance)
+* #### [Virulence genes](#virulence)
+* #### [Plasmids](#plasmid)
+* #### [Pangenome analysis](#pangenome)
+* #### [Genomic variants](#variants)
+* #### [Summary report](#summary)
+* #### [How to citate](#citation)
+
+<br>
+
+## Sequencing summary before and after quality control (QC) {#Sequencingsummary}
+
+### Before QC
+Following tables show, by sample, the number, mean length and length standard deviation of R1 and R2 reads.
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$trim_adaptors == TRUE) {
+  BeforeQC <- 
+  read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_beforeQC.tsv") %>% 
+  mutate(Sample = factor(Sample))
+} else {
+  BeforeQC <- 
+  read_tsv(file = "Prinseq_filtering/reads_statistics_beforeQC.tsv") %>% 
+  mutate(Sample = factor(Sample))
+}
+Create_DT(x = BeforeQC, caption = '')
+```
+
+#### Select the parameter {.tabset .tabset-fade .tabset-pills}
+##### Number of reads R1
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = BeforeQC, aes(x = Sample, y = R1Reads)) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank())
+)
+```
+
+##### Average read length R1
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = BeforeQC, aes(x = Sample, y = R1LenMean)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = R1LenMean - R1LenSd, ymax = R1LenMean + R1LenSd), width = 0.18) +
+  theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank())
+)
+```
+
+##### Number of reads R2
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = BeforeQC, aes(x = Sample, y = R2Reads)) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank())
+)
+```
+
+##### Average read length R2
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = BeforeQC, aes(x = Sample, y = R2LenMean)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = R2LenMean - R2LenSd, ymax = R2LenMean + R2LenSd), width = 0.18) +
+  theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank())
+)
+```
+
+### After QC
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$trim_adaptors$run_trim_adaptors == TRUE) {
+  pander(cat("QC was performed with [Trimmomatic](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4103590/) and [PRINSEQ](https://www.ncbi.nlm.nih.gov/pubmed/21278185)."))
+} else {
+  pander(cat("QC was performed with [PRINSEQ](https://www.ncbi.nlm.nih.gov/pubmed/21278185)."))
+}
+```
+
+Following tables show, by sample, the number, mean length and length standard deviation of R1 and R2 reads.
+```{r warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$trim_adaptors == TRUE) {
+  AfterQC <- 
+  read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_afterQC.tsv") %>% 
+  mutate(Sample = factor(Sample))
+} else {
+  AfterQC <- 
+  read_tsv(file = "Prinseq_filtering/reads_statistics_afterQC.tsv") %>% 
+  mutate(Sample = factor(Sample))
+}
+Create_DT(x = AfterQC, caption = '')
+```
+
+#### Select the parameter {.tabset .tabset-fade .tabset-pills}
+##### Number of reads R1
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = AfterQC, aes(x = Sample, y = R1ReadsQC)) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank())
+)
+```
+
+##### Average read length R1
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = AfterQC, aes(x = Sample, y = R1LenMeanQC)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = R1LenMeanQC - R1LenSdQC, ymax = R1LenMeanQC + R1LenSdQC), width = 0.18) +
+  theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank())
+)
+```
+
+##### Number of reads R2
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = AfterQC, aes(x = Sample, y = R2ReadsQC)) +
+  geom_bar(stat = "identity") +
+  theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank())
+)
+```
+
+##### Average read length R2
+```{r, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+ggplotly(
+ggplot(data = AfterQC, aes(x = Sample, y = R2LenMeanQC)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(ymin = R2LenMeanQC - R2LenSdQC, ymax = R2LenMeanQC + R2LenSdQC), width = 0.18) +
+  theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank())
+)
+```
+<br>
+
+[Back to index](#index)
+
+## Joined reads summary {#Joinedreads}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  cat("\nFollowing table shows the number of reads, average length and standard deviation for joined and unjoined reads using [FLASH](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3198573).")
+}
+
+if(wombat_config_json$merge_reads == TRUE) {
+  FLASH_Reads <- 
+    read_tsv(file = "Flash_read_extension/reads_statistics_FLASH.tsv") %>% 
+    mutate(Sample = factor(Sample))
+ 
+  Create_DT(x = FLASH_Reads, caption = '')
+}
+```
+
+#### Select the parameter {.tabset .tabset-fade .tabset-pills}
+##### Percentage of joined reads
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = `JoinReads (%)`)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()))
+}
+```
+
+##### Number of joined reads
+```{r results='asis', echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinReads)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()))
+}
+```
+
+##### Average joined reads length
+```{r results='asis', echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinLenMeanReads)) +
+    geom_bar(stat = "identity") +
+    geom_errorbar(aes(ymin = JoinLenMeanReads - JoinLenSdReads, ymax = JoinLenMeanReads + JoinLenSdReads), width = 0.18) +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()))
+}
+```
+
+##### Number of unjoined R1 reads
+```{r results='asis', echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1Reads)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()))
+}
+```
+
+##### Average unjoined R1 reads length
+```{r results='asis', echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+    ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1LenMeanReads)) +
+      geom_bar(stat = "identity") +
+      geom_errorbar(aes(ymin = UnjoinR1LenMeanReads - UnjoinR1LenSdReads, ymax = UnjoinR1LenMeanReads + UnjoinR1LenSdReads), width = 0.18) +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()))
+}
+```
+
+##### Number of unjoined R2 reads
+```{r results='asis', echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+  ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2Reads)) +
+    geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()))
+}
+```
+
+##### Average unjoined R2 reads length
+```{r results='asis', echo=FALSE}
+if(wombat_config_json$merge_reads == TRUE) {
+  options("scipen" = 100, "digits" = 0)
+  ggplotly(
+    ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2LenMeanReads)) +
+      geom_bar(stat = "identity") +
+      geom_errorbar(aes(ymin = UnjoinR2LenMeanReads - UnjoinR2LenSdReads, ymax = UnjoinR2LenMeanReads + UnjoinR2LenSdReads), width = 0.18) +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()))
+}
+```
+<br>
+
+[Back to index](#index)
+
+## Multi-Locus Sequence Typing (MLST) {#mlst}
+<br>
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$MLST$run_mlst == TRUE) {
+  if(wombat_config_json$MLST$include_cc == TRUE) {
+    cat("Following table shows the Sequence Type (ST), MLST allelic profile and Clonal Complex (CC) for each isolate using [mlst](https://github.com/tseemann/mlst).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
+    MLST <- 
+      read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
+      mutate(across(where(is_character), as_factor)) %>% 
+      rename(`Clonal Complex` = clonal_complex)
+} else {
+    cat("Following table shows the Sequence Type (ST) and MLST allelic profile for each isolate using [mlst](https://github.com/tseemann/mlst).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
+    MLST <- 
+      read_tsv(file = "MLST/MLST.txt", show_col_types = FALSE) %>% #Comprobar cómo queda el archivo cuando include_cc == FALSE
+      mutate(across(where(is_character), as_factor))
+  }
+}
+Create_DT(x = MLST, filter = "top", caption = '')
+```
+<br>
+[Back to index](#index)
+<br>
+
+## Assembly analysis and annotation {#annotation}
+<br>
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$annotator == "prokka") {
+  pander(cat("Following table shows the number of contigs (>", toString(wombat_config_json$min_contig_len), "bp), genome length, average contig length, N50, GC content (%) and depth coverage using [SPAdes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519) and annotation information using [Prokka](https://www.ncbi.nlm.nih.gov/pubmed/24642063) for each draft genome.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+}
+
+if(wombat_config_json$annotation$annotator == "dfast") {
+  pander(cat("Following table shows the number of contigs (>", toString(wombat_config_json$min_contig_len), "bp), genome length, average contig length, N50, GC content (%) and depth coverage using [SPAdes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519) and annotation information using [DFAST](https://pubmed.ncbi.nlm.nih.gov/29106469) for each draft genome.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+}
+
+if(wombat_config_json$annotation$run_annotation == TRUE) { 
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    assembly <- read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
+      select(., Sample, Contigs, GenomeLen, ContigLen,	N50,	GC, ST, CDS, `Hypothetical proteins`,	CRISPRs,	rRNAs,	tRNAs) %>%
+      relocate(ST, .after = tRNAs)
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      assembly <- read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
+        select(., Sample, Contigs, GenomeLen, ContigLen,	N50,	GC, ST, `clonal_complex`, CDS, `Hypothetical proteins`,	CRISPRs,	rRNAs,	tRNAs) %>%
+        relocate(ST, `clonal_complex`, .after = tRNAs) %>% 
+        mutate(across(where(is_character), as_factor)) %>% 
+        rename(`Clonal Complex` = clonal_complex)
+    }
+  } else {
+    assembly <- read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
+        select(., Sample, Contigs, GenomeLen, ContigLen,	N50,	GC, CDS, `Hypothetical proteins`,	CRISPRs,	rRNAs,	tRNAs) %>%
+        mutate(across(where(is_character), as_factor))
+  }
+} else {
+  pander(cat("Following table shows the number of contigs (>", toString(wombat_config_json$min_contig_len), "bp), genome length, average contig length, N50, GC content (%) and depth coverage using [SPAdes](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519) for each draft genome.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    assembly <- read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>%
+      select(., Sample, Contigs, GenomeLen, ContigLen,	N50,	GC, ST) %>%
+      relocate(ST, .after = tRNAs)
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      assembly <- read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
+        select(., Sample, Contigs, GenomeLen, ContigLen,	N50,	GC, ST, `clonal_complex`) %>%
+        relocate(ST, `clonal_complex`, .after = tRNAs) %>% 
+        mutate(across(where(is_character), as_factor)) %>% 
+        rename(`Clonal Complex` = clonal_complex)
+    }
+  } else {
+    assembly <- read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
+        select(., Sample, Contigs, GenomeLen, ContigLen,	N50,	GC) %>%
+        mutate(across(where(is_character), as_factor))
+  }
+}
+assembly$ST = as.factor(assembly$ST)
+Create_DT(x = assembly, filter = "top", caption = '')
+```
+
+#### Select the parameter {.tabset .tabset-fade .tabset-pills}
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### Number of contigs\n\n")
+options("scipen" = 100, "digits" = 0)
+if(wombat_config_json$MLST$run_mlst == TRUE) {
+  Number_of_contigs <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = Contigs, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST"))
+  if(wombat_config_json$MLST$include_cc == TRUE) {
+    Number_of_contigs <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = Contigs, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST") +
+          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+  }
+} else {
+  Number_of_contigs <-
+    ggplotly(
+      ggplot(data = assembly, aes(x = Sample, y = Contigs)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(), 
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "Number of contigs", title = ""))
+}
+Number_of_contigs 
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### Draft genome length\n\n")
+options("digits" = 0)
+if(wombat_config_json$MLST$run_mlst == TRUE) {
+  Draft_genome_length <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = GenomeLen, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "ST"))
+  if(wombat_config_json$MLST$include_cc == TRUE) {
+    Draft_genome_length <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = GenomeLen, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "ST") +
+          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+  }
+} else {
+  Draft_genome_length <-
+    ggplotly(
+      ggplot(data = assembly, aes(x = Sample, y = GenomeLen)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(), 
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "Genome lengh (bp)", title = ""))
+}
+Draft_genome_length 
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### Average contig length\n\n")
+options("digits" = 0)
+if(wombat_config_json$MLST$run_mlst == TRUE) {
+  Contig_length <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = ContigLen, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "ST"))
+  if(wombat_config_json$MLST$include_cc == TRUE) {
+    Contig_length <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = ContigLen, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "ST") +
+          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+  }
+} else {
+  Contig_length <-
+    ggplotly(
+      ggplot(data = assembly, aes(x = Sample, y = ContigLen)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(), 
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "Average contig length (bp)", title = ""))
+}
+Contig_length
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### N50\n\n")
+options("digits" = 0)
+if(wombat_config_json$MLST$run_mlst == TRUE) {
+  N50 <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = N50, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "N50", title = "", fill = "ST"))
+  if(wombat_config_json$MLST$include_cc == TRUE) {
+    N50 <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = N50, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "N50", title = "", fill = "ST") +
+          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+  }
+} else {
+  N50 <-
+    ggplotly(
+      ggplot(data = assembly, aes(x = Sample, y = N50)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(), 
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "N50", title = ""))
+}
+N50
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("##### GC Content\n\n")
+options("scipen" = 100, "digits" = 0)
+if(wombat_config_json$MLST$run_mlst == TRUE) {
+  GC_content <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = GC, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "GC", title = "", fill = "ST"))
+  if(wombat_config_json$MLST$include_cc == TRUE) {
+    GC_content <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = GC, fill = ST)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(),
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "GC", title = "", fill = "ST") +
+          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+  }
+} else {
+  GC_content <-
+    ggplotly(
+      ggplot(data = assembly, aes(x = Sample, y = GC)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(), 
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "GC", title = ""))
+}
+GC_content 
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Number of CDS\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_CDS <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = CDS, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST"))
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_CDS <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = CDS, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    }
+  } else {
+    Number_CDS <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = CDS)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(), 
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Number of CDS", title = ""))
+  }
+  Number_CDS
+}
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Hypothetical proteins\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_hypothetical_proteins <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST"))
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_hypothetical_proteins <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    }
+  } else {
+    Number_hypothetical_proteins <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(), 
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Number of hypothetical proteins", title = ""))
+  }
+  Number_hypothetical_proteins 
+}
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Number of CRISPRs\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_CRISPRs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = CRISPRs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") + 
+            scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+  }
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_CRISPRs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = CRISPRs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free") + 
+            scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+  } else {
+    Number_CRISPRs <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = CRISPRs)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(), 
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Number of CRISPRs", title = "") + 
+          scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+  }
+  Number_CRISPRs
+}
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Number of rRNAs\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_rRNAs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = rRNAs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST"))
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_rRNAs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = rRNAs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    }
+  } else {
+    Number_rRNAs <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = rRNAs)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(), 
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Number of rRNAs", title = ""))
+  }
+  Number_rRNAs
+}
+```
+
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$annotation$run_annotation == TRUE) {
+  cat("##### Number of tRNAs\n")
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$MLST$run_mlst == TRUE) {
+    Number_tRNAs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = tRNAs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST"))
+    if(wombat_config_json$MLST$include_cc == TRUE) {
+      Number_tRNAs <-
+        ggplotly(
+          ggplot(data = assembly, aes(x = Sample, y = tRNAs, fill = ST)) +
+            geom_bar(stat = "identity") +
+            theme(panel.border = element_blank(),
+                  panel.background = element_rect(colour = "grey90"),
+                  panel.grid.minor = element_blank(),
+                  panel.grid.major = element_blank(),
+                  axis.text = element_text(size = 10),
+                  axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(),
+                  axis.title.y = element_blank(),
+                  axis.ticks = element_blank()) +
+            labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST") +
+            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    }
+  } else {
+    Number_tRNAs <-
+      ggplotly(
+        ggplot(data = assembly, aes(x = Sample, y = tRNAs)) +
+          geom_bar(stat = "identity") +
+          theme(panel.border = element_blank(), 
+                panel.background = element_rect(colour = "grey90"),
+                panel.grid.minor = element_blank(),
+                panel.grid.major = element_blank(),
+                axis.text = element_text(size = 10),
+                axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(),
+                axis.title.y = element_blank(),
+                axis.ticks = element_blank()) +
+          labs(x = "Samples", y = "Number of tRNAs", title = ""))
+  }
+  Number_tRNAs
+}
+```
+<br>
+
+[Back to index](#index)
+
+## Antibiotic resistance genes {#resistance}
+<br>
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    pander(cat("Following table shows antibiotic resistance genes by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$mincov), "% and identity below", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$minid), "% was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+  }
+}
+
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {    
+    AMR <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
+      mutate(across(where(is_character), as_factor)) %>% 
+      filter(`Element type` == "AMR" & `Element subtype` != "POINT") %>% 
+      select(-c("Scope", "Element type", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
+  }
+}
+Create_DT(x = AMR, filter = "top", caption = '')
+
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    pander(cat("<br>", "Following figure represents presence/absence of antibiotic resistance genes in each draft genome against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus](https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as minimum coverage of", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$mincov),  "% and minimum identity of", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$minid), "%.", "<br>"))
+  }
+}
+```
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    AMR_matrix <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
+      pivot_longer(data = ., cols = !c(Sample, DATABASE), names_to = "Resistance Class", values_to = "Gene symbol") %>%
+      mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>%
+      mutate(across(where(is_character), as_factor))
+    
+    resistance_class_annotation <- AMR_matrix[, c("Resistance Class", "Gene symbol")] %>% 
+    distinct() %>% 
+    filter(`Gene symbol` != "-") %>%
+    select(c("Resistance Class")) %>%
+    as.data.frame
+
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      AMR_matrix <- AMR_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+        
+        mlst_annotation <- MLST %>% 
+          select(., ST) %>%
+          mutate(across(c(ST),
+                        factor))  %>%
+          as.data.frame
+
+        AMR_heatmap <- AMR_matrix %>%
+          select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
+          pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
+          select(., -`-`) %>%
+          remove_rownames %>% 
+          column_to_rownames(var="Sample") %>% 
+          base::as.matrix() %>%  
+          Heatmap(.,
+                  name = " ",
+                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  top_annotation = HeatmapAnnotation(df = resistance_class_annotation,
+                                                     which = "col", 
+                                                     simple_anno_size = unit(4, "mm"), 
+                                                     annotation_name_side = "left", 
+                                                     gap = unit(1, 'mm')), 
+                  left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                      which = "row",
+                                                      simple_anno_size = unit(4, "mm"),
+                                                      annotation_name_side = "bottom",
+                                                      gap = unit(0.5, 'mm')),
+                  heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete"))
+
+      if(wombat_config_json$MLST$include_cc == TRUE) {
+        AMR_matrix <- AMR_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+        
+        mlst_annotation <- MLST %>% 
+          select(., ST, `Clonal Complex`) %>%
+          mutate(across(c(ST),
+                        factor))  %>%
+          as.data.frame
+
+        AMR_heatmap <- AMR_matrix %>%
+          select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
+          pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
+          select(., -`-`) %>%
+          remove_rownames %>% 
+          column_to_rownames(var="Sample") %>% 
+          base::as.matrix() %>%  
+          Heatmap(.,
+                  name = " ",
+                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  top_annotation = HeatmapAnnotation(df = resistance_class_annotation,
+                                                     which = "col", 
+                                                     simple_anno_size = unit(4, "mm"), 
+                                                     annotation_name_side = "left", 
+                                                     gap = unit(1, 'mm')), 
+                  left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                      which = "row",
+                                                      simple_anno_size = unit(4, "mm"),
+                                                      annotation_name_side = "bottom",
+                                                      gap = unit(0.5, 'mm')),
+                  heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete"))
+      }
+    } else {
+      AMR_heatmap <- AMR_matrix %>%
+        select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
+        pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
+        select(., -`-`) %>%
+        remove_rownames %>% 
+        column_to_rownames(var="Sample") %>% 
+        base::as.matrix() %>%  
+        Heatmap(.,
+                name = " ",
+                col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                cluster_rows = FALSE,
+                cluster_columns = FALSE,
+                top_annotation = HeatmapAnnotation(df = resistance_class_annotation,
+                                                   which = "col", 
+                                                   simple_anno_size = unit(4, "mm"), 
+                                                   annotation_name_side = "left", 
+                                                   gap = unit(1, 'mm')), 
+                heatmap_legend_param = list(at = c(1, 0), 
+                                            labels = c("Presence", "Absence"),
+                                            title = " ",
+                                            color_bar = "discrete"))
+    }
+    AMR_heatmap
+  }
+}
+```
+<br>
+
+#### Point mutations conferring antibiotic resistance
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    pander(cat("<br>", "Following table shows known point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$mincov), "% and identity below", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$minid), "% was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+  }
+}
+    
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    AMR_pmut <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
+      mutate(across(where(is_character), as_factor)) %>% 
+      filter(`Element subtype` == "POINT" ) %>% 
+      select(-c("Scope", "Element type", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
+    
+    Create_DT(x = AMR_pmut, filter = "top", caption = '')
+  }
+}
+
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    pander(cat("<br>", "Following figure represents known point mutations in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as minimum coverage of", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$mincov),  "% and minimum identity of", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$minid), "%."))
+  }
+}
+```
+  
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('amrfinder' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    AMR_pmut_matrix <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
+      pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Class", values_to = "Point mutation") %>%
+      mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Point mutation`, "^-$"))) %>%
+      mutate(`Point mutation` = strsplit(as.character(`Point mutation`), ",")) %>% 
+      unnest(`Point mutation`) %>%
+      mutate(across(where(is_character), as_factor))
+
+    resistance_class_pmut_annotation <- AMR_pmut_matrix[, c("Resistance Class", "Point mutation")] %>%
+      distinct() %>% 
+      filter(`Point mutation` != "-") %>%
+      select(c("Resistance Class")) %>%
+      as.data.frame
+    
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      AMR_pmut_matrix <- AMR_pmut_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+      
+        pmut_heatmap <- AMR_pmut_matrix %>%
+          select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
+          distinct() %>%
+          pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
+          select(., -`-`) %>%
+          column_to_rownames(var="Sample") %>% 
+          base::as.matrix() %>%  
+          Heatmap(.,
+                  name = " ",
+                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                     which = "col",
+                                                     simple_anno_size = unit(4, "mm"),
+                                                     annotation_name_side = "left",
+                                                     gap = unit(1, 'mm')),
+                  left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                      which = "row",
+                                                      simple_anno_size = unit(4, "mm"),
+                                                      annotation_name_side = "bottom",
+                                                      gap = unit(0.5, 'mm')),
+                  heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete"))
+      
+      if(wombat_config_json$MLST$include_cc == TRUE) {
+        AMR_pmut_matrix <- AMR_pmut_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+      
+        pmut_heatmap <- AMR_pmut_matrix %>%
+          select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
+          distinct() %>%
+          pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
+          select(., -`-`) %>%
+          column_to_rownames(var="Sample") %>% 
+          base::as.matrix() %>%  
+          Heatmap(.,
+                  name = " ",
+                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                     which = "col",
+                                                     simple_anno_size = unit(4, "mm"),
+                                                     annotation_name_side = "left",
+                                                     gap = unit(1, 'mm')),
+                  left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                      which = "row",
+                                                      simple_anno_size = unit(4, "mm"),
+                                                      annotation_name_side = "bottom",
+                                                      gap = unit(0.5, 'mm')),
+                  heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete"))
+      }
+    } else {
+      pmut_heatmap <- AMR_pmut_matrix %>%
+        select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
+        distinct() %>%
+        pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
+        select(., -`-`) %>%
+        column_to_rownames(var="Sample") %>% 
+        base::as.matrix() %>%  
+        Heatmap(.,
+                name = " ",
+                col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                cluster_rows = FALSE,
+                cluster_columns = FALSE,
+                top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                   which = "col",
+                                                   simple_anno_size = unit(4, "mm"),
+                                                   annotation_name_side = "left",
+                                                   gap = unit(1, 'mm')),
+                heatmap_legend_param = list(at = c(1, 0), 
+                                            labels = c("Presence", "Absence"),
+                                            title = " ",
+                                            color_bar = "discrete"))
+    }
+    pmut_heatmap
+  }
+}
+```
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    pander(cat("Following table(s) show(s) antibiotic resistance genes by screening the draft genomes against the selected database(s) by using [ABRicate](https://github.com/tseemann/abricate). Any hit with coverage below", toString(wombat_config_json$antimicrobial_resistance_genes$abricate$mincov), "% and identity below", toString(wombat_config_json$antimicrobial_resistance_genes$amrfinder$minid), "% was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+  }
+}
+```
+<br>
+
+#### Select the database {.tabset .tabset-fade .tabset-pills}
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('argannot' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### argannot\n\n")
+    Anti_Res_Genes <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+      filter(`DATABASE` == "argannot" ) %>% 
+      select(!c("DATABASE")) %>% 
+      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
+      mutate(across(where(is_character), as_factor))
+    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  }
+}
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('card' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### CARD\n\n")
+    Anti_Res_Genes <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+      filter(`DATABASE` == "card" ) %>% 
+      select(!c("DATABASE")) %>% 
+      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
+      mutate(across(where(is_character), as_factor))
+    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  }
+}
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('ecoh' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### Ecoh\n\n")
+    Anti_Res_Genes <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+      filter(`DATABASE` == "ecoh" ) %>% 
+      select(!c("DATABASE")) %>% 
+      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
+      mutate(across(where(is_character), as_factor))
+    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  }
+}
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('megares' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### Megares\n\n")
+    Anti_Res_Genes <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+      filter(`DATABASE` == "megares" ) %>% 
+      select(!c("DATABASE")) %>% 
+      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
+      mutate(across(where(is_character), as_factor))
+    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  }
+}
+```
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('ncbi' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### NCBI\n\n")
+    Anti_Res_Genes <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+      filter(`DATABASE` == "ncbi" ) %>% 
+      select(!c("DATABASE")) %>% 
+      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>% 
+      mutate(across(where(is_character), as_factor))
+    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  }
+}
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('resfinder' %in% wombat_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+    cat("##### Resfinder\n\n")
+    Anti_Res_Genes <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+      filter(`DATABASE` == "resfinder" ) %>% 
+      select(!c("DATABASE")) %>% 
+      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>% 
+      mutate(across(where(is_character), as_factor))
+    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  }
+}
+```
+<br>
+
+## {-}
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    pander(cat("<br>", "Following figure(s) represent(s) presence/absence of antibiotic resistance genes in each draft genome against the selected database(s) by using [ABRicate](https://github.com/tseemann/abricate). Presence is represented as minimum coverage of", toString(wombat_config_json$antimicrobial_resistance_genes$abricate$mincov),  "% and minimum identity of", toString(wombat_config_json$antimicrobial_resistance_genes$abricate$minid), "%.", "<br>"))
+  }
+}
+```
+<br>
+
+#### Select the database {.tabset .tabset-fade .tabset-pills}
+
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, fig.align='left', fig.width=10, fig.height=5}
+if(wombat_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('abricate' %in% wombat_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    Anti_Res_Genes_PA <- 
+      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
+      slice(-n())
+    
+    DBs <- levels(factor(Anti_Res_Genes_PA$DATABASE))
+    
+    for (i in seq_along(DBs)) {
+      cat('#####',DBs[i],' \n')
+      Anti_Res_Genes_PA.i <- NULL
+      Anti_Res_Genes_PA.i_data <- Anti_Res_Genes_PA[Anti_Res_Genes_PA$DATABASE == DBs[i],]
+      Anti_Res_Genes_PA.i <- subset(Anti_Res_Genes_PA.i_data, select = -c(RESISTANCE, DATABASE))
+      Anti_Res_Genes_PA.i <- as.data.frame(Anti_Res_Genes_PA.i)
+      rownames(Anti_Res_Genes_PA.i) <- Anti_Res_Genes_PA.i$Gene
+      Anti_Res_Genes_PA.i$Gene <- NULL
+      Anti_Res_Genes_matrix <- t(as.matrix(Anti_Res_Genes_PA.i))
+      
+      resistance_class_annotation <- Anti_Res_Genes_PA.i_data[, c("Gene", "RESISTANCE")] %>% 
+        select(c("RESISTANCE")) %>%
+        as.data.frame
+      
+      if(DBs[i] == "card" | DBs[i] == "ncbi"){
+        top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                    which = "col", 
+                                                    simple_anno_size = unit(4, "mm"), 
+                                                    annotation_name_side = "left", 
+                                                    gap = unit(1, 'mm'))
+      } else {
+        top_annotation = NULL
+      }
+      
+      if(wombat_config_json$MLST$run_mlst == TRUE) {
+        if(wombat_config_json$MLST$include_cc == TRUE) {
+          Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
+          Anti_Res_Genes_matrix <- tibble::rownames_to_column(Anti_Res_Genes_matrix, "Sample")
+        
+          Anti_Res_Genes_matrix_mlst <- Anti_Res_Genes_matrix  %>% 
+            left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+
+          mlst_annotation <- Anti_Res_Genes_matrix_mlst %>% 
+            select(., ST, `Clonal Complex`) %>%
+            mutate(across(c(ST),
+                          factor))  %>%
+            as.data.frame
+        
+          Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
+          rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
+          Anti_Res_Genes_matrix$Sample <- NULL
+          
+          if(DBs[i] == "card" | DBs[i] == "ncbi"){
+            top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                       which = "col", 
+                                                       simple_anno_size = unit(4, "mm"), 
+                                                       annotation_name_side = "left", 
+                                                       gap = unit(1, 'mm'))
+          } else {
+            top_annotation = NULL
+          }
+          
+          draw(
+            Heatmap(Anti_Res_Genes_matrix, 
+                    width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                    height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+                    column_title = paste("Database = ", DBs[i], sep = ""),
+                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                    cluster_rows = FALSE,
+                    cluster_columns = FALSE,
+                    top_annotation = top_annotation, 
+                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                        which = "row",
+                                                        simple_anno_size = unit(4, "mm"),
+                                                        annotation_name_side = "bottom",
+                                                        gap = unit(0.5, 'mm')),
+                    heatmap_legend_param = list(at = c(1, 0), 
+                                                labels = c("Presence", "Absence"),
+                                                title = " ",
+                                                color_bar = "discrete")
+          ))
+        } else { 
+          Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
+        Anti_Res_Genes_matrix <- tibble::rownames_to_column(Anti_Res_Genes_matrix, "Sample")
+        
+        Anti_Res_Genes_matrix_mlst <- Anti_Res_Genes_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+
+        mlst_annotation <- Anti_Res_Genes_matrix_mlst %>% 
+          select(., ST) %>%
+          mutate(across(c(ST),
+                        factor))  %>%
+          as.data.frame
+        
+        Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
+          rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
+          Anti_Res_Genes_matrix$Sample <- NULL
+
+          draw(
+            Heatmap(Anti_Res_Genes_matrix, 
+                    width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                    height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+                    column_title = paste("Database = ", DBs[i], sep = ""),
+                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                    cluster_rows = FALSE,
+                    cluster_columns = FALSE,
+                    top_annotation = top_annotation, 
+                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                        which = "row",
+                                                        simple_anno_size = unit(4, "mm"),
+                                                        annotation_name_side = "bottom",
+                                                        gap = unit(0.5, 'mm')),
+                    heatmap_legend_param = list(at = c(1, 0), 
+                                                labels = c("Presence", "Absence"),
+                                                title = " ",
+                                                color_bar = "discrete")
+            ))
+        }
+      } else {
+        draw(
+          Heatmap(Anti_Res_Genes_matrix,
+                  width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                  height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),                  
+                  column_title = paste("Database = ", DBs[i], sep = ""),
+                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  top_annotation = top_annotation, 
+                  heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete")
+          )
+        )
+      }
+      cat(' \n \n')
+    }
+  }
+}
+```
+<br>
+<br>
+
+[Back to index](#index)
+
+## Virulence Genes {#virulence}
+<br>
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    pander(cat("Following table(s) show(s) virulence genes by screening the draft genomes against the selected database(s) by using [ABRicate](https://github.com/tseemann/abricate). Any hit with coverage below", toString(wombat_config_json$virulence_genes$abricate$mincov), "% and identity below", toString(wombat_config_json$virulence_genes$amrfinder$minid), "% was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+  }
+}
+```
+<br>
+
+#### Select the database {.tabset .tabset-fade .tabset-pills}
+```{r, results='asis', echo=FALSE}
+if('vfdb' %in% wombat_config_json$virulence_genes$abricate$virulence_factors_databases) { 
+  cat('##### VFDB\n\n')
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+    if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+      Virulence_Genes <- 
+        read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
+        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+        filter(`DATABASE` == "vfdb" ) %>% 
+        select(!c("DATABASE")) %>% 
+        mutate(across(where(is_character), as_factor))
+      Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+    }
+  }
+}
+```
+
+```{r, results='asis', echo=FALSE}
+if('ecoli_vf' %in% wombat_config_json$virulence_genes$abricate$virulence_factors_databases) { 
+  cat('##### ecoli_vf\n\n')
+  options("scipen" = 100, "digits" = 0)
+  if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    Virulence_Genes <- 
+      read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
+      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+      filter(`DATABASE` == "ecoli_vf" ) %>% 
+      select(!c("DATABASE")) %>% 
+      mutate(across(where(is_character), as_factor))
+    Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+    }
+  }
+}
+
+```
+<br>
+
+## {-}
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, results='asis'}
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    pander(cat("<br>", "Following figure represents presence/absence of virulence genes in each draft genome against the selected database(s) by using [ABRicate](https://github.com/tseemann/abricate). Presence is represented as minimum coverage of", toString(wombat_config_json$virulence_genes$abricate$mincov), "% and minimum identity of", toString(wombat_config_json$virulence_genes$abricate$minid), "%.", "<br>"))
+  }
+}
+```
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=35}
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    Virulence_Genes_PA <- 
+      read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate_matrix.tsv", show_col_types = FALSE) %>% 
+      slice(-n())
+    
+    DBs <- levels(factor(Virulence_Genes_PA$DATABASE))
+    
+    for (i in seq_along(DBs)) {
+      Virulence_Genes_PA.i <- NULL
+      Virulence_Genes_PA.i_data <- Virulence_Genes_PA[Virulence_Genes_PA$DATABASE == DBs[i],]
+      Virulence_Genes_PA.i <- subset(Virulence_Genes_PA.i_data, select = -c(RESISTANCE, DATABASE))
+      Virulence_Genes_PA.i <- as.data.frame(Virulence_Genes_PA.i)
+      rownames(Virulence_Genes_PA.i) <- Virulence_Genes_PA.i$Gene
+      Virulence_Genes_PA.i$Gene <- NULL
+      Virulence_Genes_matrix <- t(as.matrix(Virulence_Genes_PA.i))
+      
+      resistance_class_annotation <- Virulence_Genes_PA.i_data[, c("Gene", "RESISTANCE")] %>% 
+        select(c("RESISTANCE")) %>%
+        as.data.frame
+      
+      if(wombat_config_json$MLST$run_mlst == TRUE) {
+        if(wombat_config_json$MLST$include_cc == TRUE) {
+          Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
+          Virulence_Genes_matrix <- tibble::rownames_to_column(Virulence_Genes_matrix, "Sample")
+        
+          Virulence_Genes_matrix_mlst <- Virulence_Genes_matrix  %>% 
+            left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+
+          mlst_annotation <- Virulence_Genes_matrix_mlst %>% 
+            select(., ST, `Clonal Complex`) %>%
+            mutate(across(c(ST),
+                          factor))  %>%
+            as.data.frame
+        
+          Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
+          rownames(Virulence_Genes_matrix) <- Virulence_Genes_matrix$Sample
+          Virulence_Genes_matrix$Sample <- NULL
+        
+          draw(
+            Heatmap(Virulence_Genes_matrix, 
+                    width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                    height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                    column_title = paste("Database = ", DBs[i], sep = ""),
+                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                    cluster_rows = FALSE,
+                    cluster_columns = FALSE,
+                    top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                       which = "col", 
+                                                       simple_anno_size = unit(4, "mm"), 
+                                                       annotation_name_side = "left", 
+                                                       gap = unit(1, 'mm')), 
+                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                        which = "row",
+                                                        simple_anno_size = unit(4, "mm"),
+                                                        annotation_name_side = "bottom",
+                                                        gap = unit(0.5, 'mm')),
+                    heatmap_legend_param = list(at = c(1, 0), 
+                                                labels = c("Presence", "Absence"),
+                                                title = " ",
+                                                color_bar = "discrete")
+          ))
+        } else{
+          Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
+        Virulence_Genes_matrix <- tibble::rownames_to_column(Virulence_Genes_matrix, "Sample")
+        
+        Virulence_Genes_matrix_mlst <- Virulence_Genes_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+
+        mlst_annotation <- Virulence_Genes_matrix_mlst %>% 
+          select(., ST) %>%
+          mutate(across(c(ST),
+                        factor))  %>%
+          as.data.frame
+        
+        Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
+          rownames(Virulence_Genes_matrix) <- Virulence_Genes_matrix$Sample
+          Virulence_Genes_matrix$Sample <- NULL
+        
+          draw(
+            Heatmap(Virulence_Genes_matrix, 
+                    width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                    height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                    column_title = paste("Database = ", DBs[i], sep = ""),
+                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                    cluster_rows = FALSE,
+                    cluster_columns = FALSE,
+                    top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                       which = "col", 
+                                                       simple_anno_size = unit(4, "mm"), 
+                                                       annotation_name_side = "left", 
+                                                       gap = unit(1, 'mm')), 
+                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                        which = "row",
+                                                        simple_anno_size = unit(4, "mm"),
+                                                        annotation_name_side = "bottom",
+                                                        gap = unit(0.5, 'mm')),
+                    heatmap_legend_param = list(at = c(1, 0), 
+                                                labels = c("Presence", "Absence"),
+                                                title = " ",
+                                                color_bar = "discrete")
+            )
+          )
+        }           
+      } else {
+        draw(
+          Heatmap(Virulence_Genes_matrix,
+                  width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                  height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),                  
+                  column_title = paste("Database = ", DBs[i], sep = ""),
+                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+                                                     which = "col", 
+                                                     simple_anno_size = unit(4, "mm"), 
+                                                     annotation_name_side = "left", 
+                                                     gap = unit(1, 'mm')), 
+                  heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete")
+          ))
+      }
+      cat(' \n \n')
+    }
+  }
+}
+```
+<br>
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    pander(cat("Following table shows virulence genes by screening the draft genomes against the inhouse VFDB database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below __50__ % was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+  }
+}
+
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    Virulence_Genes_Screening <- 
+      read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_processed.tsv") %>% 
+      relocate(Sample) %>% 
+      mutate(across(where(is_character), as_factor)) %>% 
+      select(!tail(names(.), 1))
+    Create_DT(x = Virulence_Genes_Screening, filter = "top", caption = '')
+  }
+}
+
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    pander(cat("<br>", "Following figure represents presence/absence of virulence genes in each draft genome against the inhouse VFDB database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Presence is represented as minimum coverage of", toString(wombat_config_json$virulence_genes$blast$presence_absence_matrix$mincov), "% and minimum identity of", toString(wombat_config_json$virulence_genes$blast$presence_absence_matrix$minid), "%.", "<br>"))
+  }
+}
+``` 
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80}
+if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+  if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
+    Virulence_Genes_PA <- 
+      read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
+      slice(-n())
+    
+    Virulence_Genes_PA_matrix <- Virulence_Genes_PA  %>% 
+      select(-c(Type, DATABASE)) %>%
+      as.data.frame 
+    
+    rownames(Virulence_Genes_PA_matrix) <- Virulence_Genes_PA_matrix$Protein
+    Virulence_Genes_PA_matrix$Protein <- NULL
+    Virulence_Res_Genes_matrix <- t(as.matrix(Virulence_Genes_PA_matrix))
+    
+    virulence_class_annotation <- Virulence_Genes_PA[, c("Protein", "Type")] %>% 
+        select(c("Type")) %>%
+        as.data.frame
+    
+    if(wombat_config_json$MLST$run_mlst == TRUE) {
+      Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
+        Virulence_Res_Genes_matrix <- tibble::rownames_to_column(Virulence_Res_Genes_matrix, "Sample")
+        
+        Virulence_Res_Genes_matrix_mlst <- Virulence_Res_Genes_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+      
+        mlst_annotation <- Virulence_Res_Genes_matrix_mlst %>% 
+          select(., ST) %>%
+          mutate(across(c(ST),
+                        factor))  %>%
+          as.data.frame
+      
+        Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
+        rownames(Virulence_Res_Genes_matrix) <- Virulence_Res_Genes_matrix$Sample
+        Virulence_Res_Genes_matrix$Sample <- NULL
+      
+        Heatmap(Virulence_Res_Genes_matrix,
+                column_names_gp = gpar(fontsize = 4),
+                row_names_gp = gpar(fontsize = 4),
+                width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
+                height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
+                col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                cluster_rows = FALSE,
+                cluster_columns = FALSE,
+                left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                    which = "row",
+                                                    simple_anno_size = unit(4, "mm"),
+                                                    annotation_name_side = "bottom",
+                                                    gap = unit(0.5, 'mm')),
+                top_annotation = HeatmapAnnotation(df = virulence_class_annotation,
+                                                   which = "col", 
+                                                   simple_anno_size = unit(4, "mm"), 
+                                                   annotation_name_side = "left", 
+                                                   gap = unit(1, 'mm')), 
+                heatmap_legend_param = list(at = c(1, 0), 
+                                            labels = c("Presence", "Absence"),
+                                            title = " ",
+                                            color_bar = "discrete"))
+        
+      if(wombat_config_json$MLST$include_cc == TRUE) {
+        Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
+        Virulence_Res_Genes_matrix <- tibble::rownames_to_column(Virulence_Res_Genes_matrix, "Sample")
+        
+        Virulence_Res_Genes_matrix_mlst <- Virulence_Res_Genes_matrix  %>% 
+          left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+      
+        mlst_annotation <- Virulence_Res_Genes_matrix_mlst %>% 
+          select(., ST, `Clonal Complex`) %>%
+          mutate(across(c(ST),
+                        factor))  %>%
+          as.data.frame
+      
+        Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
+        rownames(Virulence_Res_Genes_matrix) <- Virulence_Res_Genes_matrix$Sample
+        Virulence_Res_Genes_matrix$Sample <- NULL
+      
+        Heatmap(Virulence_Res_Genes_matrix,
+                column_names_gp = gpar(fontsize = 4),
+                row_names_gp = gpar(fontsize = 4),
+                width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
+                height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
+                col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                cluster_rows = FALSE,
+                cluster_columns = FALSE,
+                left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                    which = "row",
+                                                    simple_anno_size = unit(4, "mm"),
+                                                    annotation_name_side = "bottom",
+                                                    gap = unit(0.5, 'mm')),
+                top_annotation = HeatmapAnnotation(df = virulence_class_annotation,
+                                                   which = "col", 
+                                                   simple_anno_size = unit(4, "mm"), 
+                                                   annotation_name_side = "left", 
+                                                   gap = unit(1, 'mm')), 
+                heatmap_legend_param = list(at = c(1, 0), 
+                                            labels = c("Presence", "Absence"),
+                                            title = " ",
+                                            color_bar = "discrete"))
+      }
+    } else {
+      Heatmap(Virulence_Res_Genes_matrix, 
+              column_names_gp = gpar(fontsize = 4), 
+              row_names_gp = gpar(fontsize = 4), 
+              width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
+              height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
+              col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+              cluster_rows = FALSE,  
+              top_annotation = HeatmapAnnotation(df = virulence_class_annotation,
+                                                 which = "col", 
+                                                 simple_anno_size = unit(4, "mm"), 
+                                                 annotation_name_side = "left", 
+                                                 gap = unit(1, 'mm')), 
+              heatmap_legend_param = list(at = c(1, 0), 
+                                          labels = c("Presence", "Absence"),
+                                          title = " ",
+                                          color_bar = "discrete"))
+    }
+  }
+}
+```
+<br>
+
+[Back to index](#index)
+
+## Plasmids {#plasmid}
+<br>
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$plasmids$run_plasmid_prediction == TRUE) {
+  plasmids_data <- read_tsv(file = "Plasmids/Plasmids_ABRicate_plasmidfinder.tsv", show_col_types = FALSE) %>% 
+      slice(-n())
+  if (nrow(plasmids_data) == 0) {
+    cat("No plasmids found in any of the draft genomes.")
+  } else {
+    pander(cat("Following table(s) show(s) plasmids by screening the draft genomes against PlasmidFinder by using [ABRicate](https://github.com/tseemann/abricate). Any hit with coverage below", toString(wombat_config_json$plasmids$abricate$mincov), "% and identity below", toString(wombat_config_json$plasmids$abricate$minid), "% was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+  }
+}
+```
+<br>
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$plasmids$run_plasmid_prediction == TRUE) {
+  plasmids_data <- read_tsv(file = "Plasmids/Plasmids_ABRicate_plasmidfinder.tsv", show_col_types = FALSE) %>% 
+      slice(-n())
+  if (nrow(plasmids_data) > 0) {
+    Create_DT(x = plasmids_data, filter = "top", caption = '')
+  }
+}
+```
+<br>
+
+[Back to index](#index)
+
+## Pangenome analysis {#pangenome}
+<br>
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$pangenome$run_pangenome == TRUE) {
+  pander(cat("Following charts show pangenome analysis with minimum", toString(wombat_config_json$pangenome$minid),
+  "% identity for blastp using [Roary](https://pubmed.ncbi.nlm.nih.gov/26198102).", "  \n", "<br>"))
+}
+
+if(wombat_config_json$pangenome$run_pangenome == TRUE) {
+  Pangenome_genes_summary <- 
+    read_delim(file = "Roary_pangenome/summary_statistics.txt", delim = "\t", col_names = FALSE, escape_double = FALSE, trim_ws = TRUE, show_col_types = FALSE) %>% 
+    filter(`X3` != "0" ) %>%
+    mutate(across(where(is_character), as_factor)) %>% 
+    slice(., 1:(n() - 1)) %>% 
+    mutate(percentage = `X3`/sum(`X3`)*100)  %>% 
+    mutate(across(percentage, round, 0))
+  
+  #First figure: pangenome summary statistics pie chart
+  Pangenome_genes_summary %>%  ggplot(data = ., 
+                                             aes(x = "", y = .[[3]], fill = .[[1]])) +
+    geom_bar(stat = "identity", width = 1, color="white") +
+    coord_polar("y", start = 0) + 
+    labs(fill = "") +
+    scale_fill_brewer(palette = "Blues") +
+    theme_minimal() +
+    ggtitle("Breakdown of genes in percentage") +
+    theme(
+      axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      panel.border = element_blank(),
+      panel.grid = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.x = element_blank(),
+      plot.title = element_text(size = 12, hjust = 0.5, face = "bold"),
+  ) +
+    geom_label(aes(label = percentage),
+               color = "black",
+               position = position_stack(vjust = 0.5),
+               show.legend = FALSE)
+}
+```
+<br>
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$pangenome$run_pangenome == TRUE) {
+  #Second figure: pangenome frequency
+  Pangenome_frequency <- 
+    readr::read_csv(file = "Roary_pangenome/gene_presence_absence.csv", show_col_types = FALSE) %>% 
+    dplyr::mutate(across(where(is_character), as_factor)) %>% 
+    dplyr::select(.data = ., c(1, 15:last_col())) 
+
+  Pangenome_frequency_Genomes <-
+    Pangenome_frequency %>% 
+    select(-1) %>% 
+    dplyr::mutate(across(where(is_character), as_factor)) %>% 
+    dplyr::mutate(across(where(is.factor), as.numeric)) %>% 
+    mutate_all(~ +(. > 0)) %>% 
+    dplyr::transmute(Genomes = rowSums(., na.rm = TRUE))
+
+  Pangenome_frequency$Genomes <- Pangenome_frequency_Genomes$Genomes
+  
+  Pangenome_frequency %>% 
+    ggplot(data = ., aes(x = Genomes)) +
+    geom_bar(stat = "count") +
+    theme_classic() +
+    ggtitle("Frequency of genes versus the number of genomes") +
+    labs(x = "Number of genomes", y = "Number of genes") +
+    theme(
+      legend.position = "right",
+      plot.title = element_text(size = 12, hjust = 0.5, face = "bold"),
+  )
+}
+```
+<br>
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$pangenome$run_pangenome == TRUE) {
+  #Third figure: phylogenetic tree
+  tree <- ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
+  ggtree(tree, size=1/5) + #Size refers to thickness of branches
+    ggtitle("Phylogenetic tree based on presence/absence of accesory genes") +
+    geom_tiplab(size=4,
+                align=FALSE,  #Align tree labels to the end of each leaf
+                linesize=0.5) + #line size of line if align = TRUE
+    geom_treescale(offset = -0.2) +
+    theme(plot.title = element_text(size = 12, hjust = 0.5, face = "bold")) +
+    coord_cartesian(clip="off") #prevents labels from being clipped off
+}
+```
+<br>
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+
+if(wombat_config_json$pangenome$run_pangenome == TRUE) {
+  #Foruth figure: pangenome with phylogenetic tree 
+  cat("Binary heatmap shows the presence (dark grey) and absence (white) of genes. Phylogeny for each isolate is shown on the left and was constructed based on accesory genes from the pangenome.", "<br>")
+  pangenome <- read_delim(file = "Roary_pangenome/gene_presence_absence.Rtab", delim = "\t", show_col_types = FALSE) %>%
+  mutate(across(where(is_character), as_factor)) %>%
+  t(.)  %>%
+  as.data.frame()
+
+  names(pangenome) <- pangenome[1,]
+  pangenome <- as.matrix(pangenome[-1,])
+  class(pangenome) <- "numeric"
+
+  tree <- ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
+  tree_graph <- ggtree(tree, size=1/5) + #Size refers to thickness of branches
+    geom_tiplab(size=4,
+                align=FALSE,  #Align tree labels to the end of each leaf
+                linesize=0.5) + #line size of line if align = TRUE
+    geom_treescale(offset = -0.2)
+
+  phylo.heatmap(as.phylo(tree_graph),
+                pangenome,
+                colors=colorRampPalette(colors=c("white","grey"))(2),
+                labels=F,
+                pts=FALSE, #draw tip labs in tree
+                lwd=2, #thickness of lines in tree
+                split=c(0.5,1) #space for tree and matrix
+              )
+}
+```
+<br>
+
+[Back to index](#index)
+
+## Genomic variants {#variants}
+<br>
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+if(wombat_config_json$MLST$run_mlst == TRUE) {
+  cat("Following table shows genomic variants in each draft genome against the reference genome you indicated using [Snippy](https://github.com/tseemann/snippy).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
+  Genomic_variants <- 
+    read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
+    relocate(Sample) %>%
+    mutate(Sample = as.factor(Sample)) %>%
+    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+} else {
+  Genomic_variants <- 
+    read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
+    relocate(Sample)
+}
+Create_DT(x = Genomic_variants, filter = "top", caption = '')
+```
+<br>
+
+[Back to index](#index)
+
+## Summary report {#summary}
+<br>
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+cat("Following table shows summary information for each draft genome.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
+summary_draft_genome <- 
+  read_tsv(file = "wombat_report.csv", show_col_types = FALSE) %>% 
+  relocate(Sample) %>% 
+  rename(`Clonal Complex` = clonal_complex) %>%
+  mutate(across(where(is_character), as_factor))
+
+Create_DT(x = summary_draft_genome, filter = "top", caption = '')
+```
+<br>
+
+[Back to index](#index)
+
+## How to citate {#citation}
+<br>
+Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. __Wombat__ (2022). Available at [https://github.com/JoseBarbero/Wombat](https://github.com/JoseBarbero/Wombat)
+<br>
+<br>
+
+
+Following packages and tools were used in Wombat:
+
+| Package/Tool      | Reference   | 
+|-------------------|-------------|
+| Trimmomatic       | [A.M. Bolger et al., 2014](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4103590/)   |
+| Prinseq           | [R. Schmieder and R. Edwards, 2011](https://www.ncbi.nlm.nih.gov/pubmed/21278185)   |
+| FLASH             | [T. Magoc and S. Salzberg, 2011](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3198573/) |
+| SPAdes            | [A. Bankevich et al., 2012](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519/) |
+| QUAST             | [A. Gurevich et al., 2013](https://www.ncbi.nlm.nih.gov/pubmed/23422339) |
+| progressiveMauve  | [A.E. Darling et al., 2010](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0011147) |
+| mlst              | [T. Seemann](https://github.com/tseemann/mlst) |
+| Abricate          | [T. Seemann](https://github.com/tseemann/abricate) |
+| BLAST             | [Z. Zhang et al., 2000](https://www.ncbi.nlm.nih.gov/pubmed/10890397)
+| AMRFinderPlus     | [M. Feldgarden et al., 2019](https://journals.asm.org/doi/10.1128/AAC.00483-19) |
+| Prokka            | [T. Seemann, 2014](https://www.ncbi.nlm.nih.gov/pubmed/24642063) |
+| DFAST             | [Y. Tanizawa et al., 2018](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5860143/) |
+| Roary             | [A.J. Page et al., 2015](https://www.ncbi.nlm.nih.gov/pubmed/26198102) |
+| snippy            | [T. Seemann](https://github.com/tseemann/snippy) |
+| rmarkdown         | [Allaire et al., 2021](https://cran.r-project.org/web/packages/rmarkdown/index.html) |
+| tidyverse         | [Wickham et al., 2019](https://tidyverse.tidyverse.org/) |
+| ComplexHeatmap    | [Gu, 2016](https://www.bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html) |
+| DT                | [Xie et al., 2021](https://cran.r-project.org/web/packages/DT/index.html) |
+| ggrepel           | [Slowikowski, 2021](https://cran.r-project.org/web/packages/ggrepel/) |
+| plotly            | [Sievert, 2020](https://cran.r-project.org/web/packages/plotly/index.html) |
+| rjson             | [Couture-Beil, 2018](https://cran.r-project.org/web/packages/rjson/index.html) |
+| scales            | [Wickham and Seidel, 2020](https://cran.r-project.org/web/packages/scales/index.html) |
+| viridis           | [Garnier et al., 2021](https://cran.r-project.org/web/packages/viridis/index.html) |
+
+[Back to index](#index)
