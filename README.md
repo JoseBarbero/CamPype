@@ -26,7 +26,7 @@ CamPYpe is a pipeline for the analysis of Illumina paired-end sequencing data an
     $ sudo apt-get install ttf-dejavu
     ```
 
-IMPORTANT. After installing or updating CamPy, we recommend you to update the databases of AMRFinder, Prokka and ABRicate by running:
+IMPORTANT. After installing or updating CamPYpe, we recommend you to update the databases of AMRFinder, Prokka and ABRicate by running:
  ```
  conda activate wombat
  amrfinder -u
