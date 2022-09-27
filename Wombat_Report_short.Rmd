@@ -87,7 +87,7 @@ Create_DT <- function(x, caption = caption, filter = "none"){
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(wombat_config_json$MLST$run_mlst == TRUE) {
   if(wombat_config_json$MLST$include_cc == TRUE) {
-    cat("Following table shows the Sequence Type (ST), MLST allelic profile and Clonal Complex (CC) for each isolate using [mlst](https://github.com/tseemann/mlst).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
+    cat("Following table shows the Sequence Type (ST), MLST allelic profile and Clonal Complex (CC) for each isolate using [mlst](https://github.com/tseemann/mlst) and the [PubMLST database](https://www.pubmlst.org).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
     MLST <- 
       read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
       mutate(across(where(is_character), as_factor)) %>% 
@@ -1314,7 +1314,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 }
 ```
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=35}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=22}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     Virulence_Genes_PA <- 
@@ -1446,7 +1446,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 ```
 <br>
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=35}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     pander(cat("Following table shows virulence genes by screening the draft genomes against the inhouse VFDB database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below __50__ % was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
@@ -1471,7 +1471,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 }
 ``` 
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=10}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     Virulence_Genes_PA <- 
@@ -1508,8 +1508,8 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
         Virulence_Res_Genes_matrix$Sample <- NULL
       
         Heatmap(Virulence_Res_Genes_matrix,
-                column_names_gp = gpar(fontsize = 4),
-                row_names_gp = gpar(fontsize = 4),
+                column_names_gp = gpar(fontsize = 6),
+                row_names_gp = gpar(fontsize = 6),
                 width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
                 height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
                 col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
@@ -1548,8 +1548,8 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
         Virulence_Res_Genes_matrix$Sample <- NULL
       
         Heatmap(Virulence_Res_Genes_matrix,
-                column_names_gp = gpar(fontsize = 4),
-                row_names_gp = gpar(fontsize = 4),
+                column_names_gp = gpar(fontsize = 6),
+                row_names_gp = gpar(fontsize = 6),
                 width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
                 height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
                 col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
@@ -1572,8 +1572,8 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
       }
     } else {
       Heatmap(Virulence_Res_Genes_matrix, 
-              column_names_gp = gpar(fontsize = 4), 
-              row_names_gp = gpar(fontsize = 4), 
+              column_names_gp = gpar(fontsize = 6), 
+              row_names_gp = gpar(fontsize = 6), 
               width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
               height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
               col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
@@ -1698,7 +1698,7 @@ if(wombat_config_json$pangenome$run_pangenome == TRUE) {
 ```
 <br>
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=10}
 if(wombat_config_json$pangenome$run_pangenome == TRUE) {
   #Third figure: phylogenetic tree
   tree <- ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
@@ -1714,10 +1714,9 @@ if(wombat_config_json$pangenome$run_pangenome == TRUE) {
 ```
 <br>
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
-
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=9}
 if(wombat_config_json$pangenome$run_pangenome == TRUE) {
-  #Foruth figure: pangenome with phylogenetic tree 
+  #Fourth figure: pangenome with phylogenetic tree 
   cat("Binary heatmap shows the presence (dark grey) and absence (white) of genes. Phylogeny for each isolate is shown on the left and was constructed based on accesory genes from the pangenome.", "<br>")
   pangenome <- read_delim(file = "Roary_pangenome/gene_presence_absence.Rtab", delim = "\t", show_col_types = FALSE) %>%
   mutate(across(where(is_character), as_factor)) %>%
