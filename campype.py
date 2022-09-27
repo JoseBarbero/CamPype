@@ -8,7 +8,7 @@ import re
 import logging
 import copy
 import sys
-import wombat_config as cfg
+import campype_config as cfg
 import requests
 import json
 from terminal_banner import Banner
@@ -16,19 +16,9 @@ from subprocess import call
 from Bio import SeqIO
 from io import StringIO
 
-def welcome(wombat_img):
-    img_file = open(wombat_img)
-    welcome_banner =    "   _       __     __                             __       \n"\
-                        "  | |     / /__  / /________  ____ ___  ___     / /_____  \n"\
-                        "  | | /| / / _ \/ / ___/ __ \/ __ `__ \/ _ \   / __/ __ \ \n"\
-                        "  | |/ |/ /  __/ / /__/ /_/ / / / / / /  __/  / /_/ /_/ / \n"\
-                        "  |__/|__/\___/_/\___/\____/_/ /_/ /_/\___/   \__/\____/  \n"\
-                        "      _       __                __          __    __\n"\
-                        "     | |     / /___  ____ ___  / /_  ____ _/ /_  / /\n"\
-                        "     | | /| / / __ \/ __ `__ \/ __ \/ __ `/ __/ / / \n"\
-                        "     | |/ |/ / /_/ / / / / / / /_/ / /_/ / /_  /_/  \n"\
-                        "     |__/|__/\____/_/ /_/ /_/_.___/\__,_/\__/ (_)   \n"    
-    print(Banner(str("".join(img_file.readlines())+"\n"+welcome_banner)))
+def welcome(banner_img):
+    img_file = open(banner_img)
+    print(Banner(str("".join(img_file.readlines()))))
 
 def read_input_files(indexfile):
     """
@@ -969,7 +959,7 @@ def refactor_gff_from_dfast(gff_input, gff_output, gff_roary_format):
 
         
 
-def roary_call(input_files, output_dir, wombat_output_folder):
+def roary_call(input_files, output_dir, campype_output_folder):
     """
     Roary call.
     
@@ -988,7 +978,7 @@ def roary_call(input_files, output_dir, wombat_output_folder):
     arguments.extend(input_files)
     ex_state = call(arguments)
     # Set Roary output directory name
-    for root, dirs, _files in os.walk(wombat_output_folder):
+    for root, dirs, _files in os.walk(campype_output_folder):
         for dirname in dirs:
             if dirname.startswith("Roary_pangenome_"):
                 files = os.listdir(root+"/"+dirname)
@@ -1267,7 +1257,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     readsqclen = np.mean([info_post_QC[sample]["R1LenMean"], info_post_QC[sample]["R2LenMean"]])
                     
                     # "DepthCov (X)": Number of times each nucleotide position in the draft genome has a read that align to that position.
-                        depthcov = round((info_post_QC[sample]["R1Reads"] * info_post_QC[sample]["R1LenMean"] + info_post_QC[sample]["R2Reads"] * info_post_QC[sample]["R2LenMean"])/ genome_len, 0)
+                    depthcov = round((info_post_QC[sample]["R1Reads"] * info_post_QC[sample]["R1LenMean"] + info_post_QC[sample]["R2Reads"] * info_post_QC[sample]["R2LenMean"])/ genome_len, 0)
 
                     if cfg.config["merge_reads"]:
                         # "JoinReads": Total combined reads.
@@ -1438,13 +1428,13 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     new_colums_order = [*df_1st_column_block, *df_2nd_column_block, "Total ("+str(total_occurrences)+")", *df_3rd_column_block]
     
     csv_report = csv_report.reindex(columns=new_colums_order)
-    csv_report.to_csv(out_dir+"/wombat_report.csv", sep="\t", index=False)
+    csv_report.to_csv(out_dir+"/campype_report.csv", sep="\t", index=False)
 
 
 if __name__ == "__main__":
 
     # Welcome
-    welcome("resources/wombat_ascii.txt")
+    welcome("resources/campype_ascii.txt")
 
     # Get config file parameters
     annotator = cfg.config["annotation"]["annotator"]
@@ -1452,15 +1442,15 @@ if __name__ == "__main__":
     # Create output directories
     now = datetime.datetime.now()
 
-    # Get reference files from wombat_config.py
+    # Get reference files from campype_config.py
     adapters_file =  cfg.config["trim_adaptors"]["adapters_reference_file"]
     reference_genome_file = cfg.config["reference_genome"]["file"]
     proteins_file = cfg.config["virulence_genes"]["blast"]["proteins_reference_file"]
     
     output_folder = sys.argv[1]
 
-    # Generate json config file from wombat_config.py
-    with open(output_folder+"/wombat_config.json", 'w') as json_file:
+    # Generate json config file from campype_config.py
+    with open(output_folder+"/campype_config.json", 'w') as json_file:
         json.dump(cfg.config, json_file)
 
     trimmomatic_dir = output_folder+"/tmp_Trimmomatic_filtering"
@@ -2061,7 +2051,7 @@ if __name__ == "__main__":
         print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
         print("Roary input files:", roary_input_files)
         step_counter += 1
-        roary_call(input_files=roary_input_files, output_dir=roary_dir, wombat_output_folder=output_folder)
+        roary_call(input_files=roary_input_files, output_dir=roary_dir, campype_output_folder=output_folder)
 
         if cfg.config["MLST"]["run_mlst"]:
             # Roary plots call

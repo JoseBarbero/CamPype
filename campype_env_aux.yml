@@ -1,4 +1,4 @@
-name: wombatR
+name: campypeR
 channels:
   - conda-forge
 dependencies:
