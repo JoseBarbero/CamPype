@@ -1,6 +1,0 @@
-name: wombatR
-channels:
-  - conda-forge
-dependencies:
-  - r-base=4.1
-  - r-rmarkdown=2.14

@@ -1,0 +1,15 @@
+#!/bin/bash
+echo "This update will overwrite your configuration files. We encourage you to save a copy of them before you update CamPype."
+echo "(Configuration file formats may change with every update so we cannot keep them)"
+read -p "Are you sure you want to remove your configuration files? (y/n)" -n 1 -r
+echo    
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    git reset --hard HEAD
+    git pull
+    conda remove --name campype --all
+    conda remove --name campypeR --all
+    conda env create -f campype_env.yml 
+    conda env create -f campype_env_aux.yml 
+fi
+echo "CamPype has been updated"

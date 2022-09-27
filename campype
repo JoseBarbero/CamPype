@@ -1,0 +1,38 @@
+#!/bin/bash
+conda activate campype
+
+OUTDIR=$(python -c "import campype_config as cfg; print(cfg.config['output_directory'])")
+OUTDIR=$(pwd OUTDIR)/CamPype_OUTPUT_`date "+%Y%m%d_%H%M%S"`
+
+mkdir -p $OUTDIR
+cp input_files.csv $OUTDIR/
+cp campype_config.py $OUTDIR/
+
+python campype.py $OUTDIR "$@" 2>&1 | tee $OUTDIR/campype.log
+# Run only if previous is successfully completed
+if [ ${PIPESTATUS[0]} -eq 0 ]; then
+    
+    # Print status
+    python -c "from terminal_banner import Banner; print(Banner('\nGenerating HTML report.\n'), flush=True)" "$@" 2>&1 | tee -a $OUTDIR/campype.log
+    
+    FASTAMODE=$(python -c "import campype_config as cfg; print(cfg.config['assembled_genomes'])")
+    if [ $? -eq 0 ]; then
+        if [ $FASTAMODE == "True" ]; then
+            conda activate campypeR
+            Rscript -e "rmarkdown::render('CamPype_Report_short.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/campype.log
+        else
+            conda activate campypeR
+            Rscript -e "rmarkdown::render('CamPype_Report_long.Rmd', params = list(directory = '$OUTDIR'), output_dir= '$OUTDIR')" "$@" 2>&1 | tee -a $OUTDIR/campype.log
+        fi
+        
+        if [ $? -eq 0 ]; then
+            conda activate campype
+            python -c "from terminal_banner import Banner; print(Banner('\nDONE\n'), flush=True)" "$@" 2>&1 | tee -a $OUTDIR/campype.log
+        fi
+        
+        conda activate campype
+
+        rm $OUTDIR/campype_config.json
+        
+    fi
+fi

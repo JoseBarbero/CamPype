@@ -1,6 +1,6 @@
-# CamPYpe
+# CamPype
 
-CamPYpe is a pipeline for the analysis of Illumina paired-end sequencing data and/or whole bacterial genomes. The development of the workflow is mainly intended for the analysis of <em>Campylobacter jejuni/coli</em> genomes, although any other bacterial genus can be analyzed as well. CamPYpe is specially designed for users without knowledge of bioinformatics or programming, so the ease of installation and execution are the fundamentals of its development. Moreover, CamPYpe is a user-customizable workflow that allows you to select the analysis and the tools you are interested in.
+CamPype is a pipeline for the analysis of Illumina paired-end sequencing data and/or whole bacterial genomes. The development of the workflow is mainly intended for the analysis of <em>Campylobacter jejuni/coli</em> genomes, although any other bacterial genus can be analyzed as well. CamPype is specially designed for users without knowledge of bioinformatics or programming, so the ease of installation and execution are the fundamentals of its development. Moreover, CamPype is a user-customizable workflow that allows you to select the analysis and the tools you are interested in.
 
 ![scheme](https://user-images.githubusercontent.com/58036036/180643838-d771f326-3ef9-465e-b591-b5e9df792aec.png)
 
@@ -8,27 +8,27 @@ CamPYpe is a pipeline for the analysis of Illumina paired-end sequencing data an
 
 1. Clone this repository
     ```bash
-    $ git clone https://github.com/JoseBarbero/Wombat.git
+    $ git clone https://github.com/JoseBarbero/CamPype.git
     ```
-1. Go to CamPYpe's directory
+1. Go to CamPype's directory
     ```bash
-    $ cd Wombat
+    $ cd CamPype
     ```
 1. Create the environment with conda
     ```bash
     $ conda config --append channels conda-forge
     $ conda config --append channels bioconda
-    $ conda env create -f wombatenv.yml 
-    $ conda env create -f wombatenv_aux.yml 
+    $ conda env create -f campype_env.yml 
+    $ conda env create -f campype_env_aux.yml 
     ```
 1. *(On Ubuntu systems you may find missing font problems running Mauve. We recommend you to install the required fonts just in case.)
     ```bash
     $ sudo apt-get install ttf-dejavu
     ```
 
-IMPORTANT. After installing or updating CamPYpe, we recommend you to update the databases of AMRFinder, Prokka and ABRicate by running:
+IMPORTANT. After installing or updating CamPype, we recommend you to update the databases of AMRFinder, Prokka and ABRicate by running:
  ```
- conda activate wombat
+ conda activate campype
  amrfinder -u
  prokka --setupdb
  abricate --setupdb
@@ -36,7 +36,7 @@ IMPORTANT. After installing or updating CamPYpe, we recommend you to update the 
  
 ## Set input files and configuration
 
-1.  Set input files in Wombat/input_files.csv (tab as separator):
+1.  Set input files in CamPype/input_files.csv (tab as separator):
 
     | Samples        | Forward           | Reverse  | Genus  | Species  |
     | ------------- |:-------------:|:-----:|:-----:|:-----:|
@@ -55,15 +55,15 @@ IMPORTANT. After installing or updating CamPYpe, we recommend you to update the 
 
 1. Activate the environment
     ```bash
-    $ conda activate wombat
+    $ conda activate campype
     ```
-1. Go to CamPYpe's directory
+1. Go to CamPype's directory
     ```bash
-    $ cd your/path/to/Wombat
+    $ cd your/path/to/CamPype
     ```
 1. Run the workflow
     ```bash
-    $ bash -i wombat
+    $ bash -i campype
     ```
 1. \(*) You can deactivate the environment when you are finished
     ```bash
@@ -71,67 +71,67 @@ IMPORTANT. After installing or updating CamPYpe, we recommend you to update the 
     ```
 
 ## Output
-The results of CamPYpe are stored in very detailed directories for each analysis, with separate subdirectories for each tool and isolate. Los files will be generated for analysis tracking due to execution error. An interactive HTML summary report will be generated at the end of the analysis to simplify the task of data visualization and interpretation. This HTML file can be opened on any Web browser. An example of report can be found here.
+The results of CamPype are stored in very detailed directories for each analysis, with separate subdirectories for each tool and isolate. Los files will be generated for analysis tracking due to execution error. An interactive HTML summary report will be generated at the end of the analysis to simplify the task of data visualization and interpretation. This HTML file can be opened on any Web browser. An example of report can be found here.
 
-You can generate the report after CamPYpe analysis by executing the following command in the Linux terminal:
+You can generate the report after CamPype analysis by executing the following command in the Linux terminal:
 * For raw fastq reads as input:
 ```
-Rscript -e "rmarkdown::render('Wombat_Report_long.Rmd', params = list(directory = '~/path/to/data'))"
+Rscript -e "rmarkdown::render('CamPype_Report_long.Rmd', params = list(directory = '~/path/to/data'))"
 ```
 * For assembled genomes as input:
 ```
-Rscript -e "rmarkdown::render('Wombat_Report_short.Rmd', params = list(directory = '~/path/to/data'))"
+Rscript -e "rmarkdown::render('CamPype_Report_short.Rmd', params = list(directory = '~/path/to/data'))"
 ```
-In both cases, you will have to change ```'~/path/to/data'``` with the corresponding path of the CamPYpe output directory containing the output files required to create the summary report.
+In both cases, you will have to change ```'~/path/to/data'``` with the corresponding path of the CamPype output directory containing the output files required to create the summary report.
 
 
-## How to update CamPYpe (Linux)
+## How to update CamPype (Linux)
 
-We recommend to update CamPYpe when newer versions are launched:
+We recommend to update CamPype when newer versions are launched:
 
-1. Make sure you are not in CamPYpe conda environment
+1. Make sure you are not in CamPype conda environment
     ```bash
     $ conda deactivate
     ```
-1. Save a copy of your configuration files. Updating CamPYpe will overwrite you configuration files because this files properties may change with newer versions of CamPYpe.
+1. Save a copy of your configuration files. Updating CamPype will overwrite you configuration files because this files properties may change with newer versions of CamPype.
 
-1. Run ./updatewombat
+1. Run ./updatecampype
     ```bash
-    $ ./updatewombat
+    $ ./updatecampype
     ```
-You should answer YES to the first question (Are you sure you want to remove your configuration files?) to update configuration files and YES to the second question (Proceed ([y]/n)?) to update all the packages and tools included in CamPYpe. This might take several minutes.
+You should answer YES to the first question (Are you sure you want to remove your configuration files?) to update configuration files and YES to the second question (Proceed ([y]/n)?) to update all the packages and tools included in CamPype. This might take several minutes.
 
 
-## How to uninstall CamPYpe (Linux)
+## How to uninstall CamPype (Linux)
 
-1. Make sure you are not in CamPYpe conda environment
+1. Make sure you are not in CamPype conda environment
     ```bash
     $ conda deactivate
     ```
-1. Every file in CamPYpe directory will be deleted. Make sure you don't have anything important in this directory (results, data, etc).
+1. Every file in CamPype directory will be deleted. Make sure you don't have anything important in this directory (results, data, etc).
 
-1. Run ./uninstallwombat
+1. Run ./uninstallcampype
     ```bash
-    $ ./uninstallwombat
+    $ ./uninstallcampype
     ```
 
 ## FAQ
 1. Prokka stops running with this error:
 ```
-Could not run command: cat \/home\/Wombat_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.faa | parallel --gnu --plain -j 8 --block 313 --recstart '>' --pipe blastp -query - -db /home/instalador/anaconda3/envs/wombat/db/kingdom/Bacteria/IS -evalue 1e-30 -qcov_hsp_perc 90 -num_threads 1 -num_descriptions 1 -num_alignments 1 -seg no > \/home\/Wombat_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.blast 2> /dev/null
+Could not run command: cat \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.faa | parallel --gnu --plain -j 8 --block 313 --recstart '>' --pipe blastp -query - -db /home/instalador/anaconda3/envs/campype/db/kingdom/Bacteria/IS -evalue 1e-30 -qcov_hsp_perc 90 -num_threads 1 -num_descriptions 1 -num_alignments 1 -seg no > \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.blast 2> /dev/null
 ```
 
-Run ```prokka --setupdb``` first and execute CamPYpe again.
+Run ```prokka --setupdb``` first and execute CamPype again.
 
 2.  ABRicate can't find any gen and this message appears: ```BLAST Database error: Error pre-fetching sequence data```
 
-Run ```abricate --setupdb``` first and execute CamPYpe again.
+Run ```abricate --setupdb``` first and execute CamPype again.
 
 
 ## Citation
-Please cite CamPYpe whenever you use it as:
+Please cite CamPype whenever you use it as:
 
-Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. CamPYpe. Availabe at [https://github.com/JoseBarbero/Wombat](https://github.com/JoseBarbero/Wombat)
+Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. CamPype. Available at [https://github.com/JoseBarbero/CamPype](https://github.com/JoseBarbero/CamPype)
 
 
 ## Contact:
