@@ -78,7 +78,7 @@ Create_DT <- function(x, caption = caption, filter = "none"){
 * #### [Pangenome analysis](#pangenome)
 * #### [Genomic variants](#variants)
 * #### [Summary report](#summary)
-* #### [How to citate](#citation)
+* #### [How to cite](#citation)
 
 <br>
 
@@ -2139,7 +2139,7 @@ Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 
 [Back to index](#index)
 
-## How to citate {#citation}
+## How to cite {#citation}
 <br>
 Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. __CamPype__ (2022). Available at [https://github.com/JoseBarbero/CamPype](https://github.com/JoseBarbero/CamPype)
 <br>
@@ -2164,14 +2164,21 @@ Following packages and tools were used in CamPype:
 | DFAST             | [Y. Tanizawa et al., 2018](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5860143/) |
 | Roary             | [A.J. Page et al., 2015](https://www.ncbi.nlm.nih.gov/pubmed/26198102) |
 | snippy            | [T. Seemann](https://github.com/tseemann/snippy) |
-| rmarkdown         | [Allaire et al., 2021](https://cran.r-project.org/web/packages/rmarkdown/index.html) |
-| tidyverse         | [Wickham et al., 2019](https://tidyverse.tidyverse.org/) |
-| ComplexHeatmap    | [Gu, 2016](https://www.bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html) |
-| DT                | [Xie et al., 2021](https://cran.r-project.org/web/packages/DT/index.html) |
+| ape               | [Paradis and Schliep, 2019](https://https://cran.r-project.org/web/packages/ape/index.html) |
+| complexHeatmap    | [Gu et al., 2016](https://www.bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html) |
+| cowplot           | [Wilke, 2020](https://cran.r-project.org/web/packages/cowplot/index.html) |
+| dplyr             | [Wickham et al., 2022](https://cran.r-project.org/package=dplyr) |
+| DT                | [Xie et al., 2022](https://cran.r-project.org/web/packages/DT/index.html) |
+| ggplot2           | [Wickham, 2016](https://cran.r-project.org/package=ggplot2) |
 | ggrepel           | [Slowikowski, 2021](https://cran.r-project.org/web/packages/ggrepel/) |
+| ggtree            | [Yu et al., 2017](https://www.bioconductor.org/packages/ggtree) |
+| pander            | [Daróczi and Tsegelskyi, 2022](https://cran.r-project.org/package=pander) |
+| phytools          | [Revell, 2012](https://cran.r-project.org/package=phytools) |
 | plotly            | [Sievert, 2020](https://cran.r-project.org/web/packages/plotly/index.html) |
-| rjson             | [Couture-Beil, 2018](https://cran.r-project.org/web/packages/rjson/index.html) |
-| scales            | [Wickham and Seidel, 2020](https://cran.r-project.org/web/packages/scales/index.html) |
+| rjson             | [Couture-Beil, 2022](https://cran.r-project.org/web/packages/rjson/index.html) |
+| rmarkdown         | [Allaire et al., 2022](https://cran.r-project.org/web/packages/rmarkdown/index.html) |
+| scales            | [Wickham and Seidel, 2022](https://cran.r-project.org/web/packages/scales/index.html) |
 | viridis           | [Garnier et al., 2021](https://cran.r-project.org/web/packages/viridis/index.html) |
+| tidyverse         | [Wickham et al., 2019](https://tidyverse.tidyverse.org/) |
 
 [Back to index](#index)
