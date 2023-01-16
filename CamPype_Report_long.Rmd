@@ -31,7 +31,6 @@ if (!require('DT')) install.packages('DT', repos = "http://cran.us.r-project.org
 if (!require('ape')) install.packages('ape', repos = "http://cran.us.r-project.org"); library('ape')
 if (!require('plotly')) install.packages('plotly', repos = "http://cran.us.r-project.org"); library('plotly')
 if (!require('rjson')) install.packages('rjson', repos = "http://cran.us.r-project.org"); library('rjson')
-if (!require('viridis')) install.packages('viridis', repos = "http://cran.us.r-project.org"); library('viridis')
 if (!require('scales')) install.packages('scales', repos = "http://cran.us.r-project.org"); library('scales')
 if (!require('ggrepel')) install.packages('ggrepel', repos = "http://cran.us.r-project.org"); library('ggrepel')
 if (!require('rmarkdown')) install.packages('rmarkdown', repos = "http://cran.us.r-project.org"); library('rmarkdown')
@@ -2178,7 +2177,6 @@ Following packages and tools were used in CamPype:
 | rjson             | [Couture-Beil, 2022](https://cran.r-project.org/web/packages/rjson/index.html) |
 | rmarkdown         | [Allaire et al., 2022](https://cran.r-project.org/web/packages/rmarkdown/index.html) |
 | scales            | [Wickham and Seidel, 2022](https://cran.r-project.org/web/packages/scales/index.html) |
-| viridis           | [Garnier et al., 2021](https://cran.r-project.org/web/packages/viridis/index.html) |
 | tidyverse         | [Wickham et al., 2019](https://tidyverse.tidyverse.org/) |
 
 [Back to index](#index)
