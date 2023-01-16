@@ -18,7 +18,7 @@ params:
  </style>
 
 ```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE, dev='pdf'}
-knitr::opts_chunk$set(dpi = 120, fig.align = "center")
+knitr::opts_chunk$set(dpi = 350, fig.align = "center")
 ```
 
 ```{r, results='asis', setup, include=FALSE, dev='pdf'}
@@ -742,7 +742,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 }
 ```
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350}
 if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     AMR_matrix <- 
@@ -887,7 +887,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 }
 ```
   
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350}
 if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
     AMR_pmut_matrix <- 
@@ -1315,7 +1315,7 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 ```
 
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=22}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350, fig.width=22}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('abricate' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     Virulence_Genes_PA <- 
@@ -1447,7 +1447,7 @@ if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 ```
 <br>
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=35}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350, fig.width=35}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     pander(cat("Following table shows virulence genes by screening the draft genomes against the inhouse VFDB database using [BLAST](https://pubmed.ncbi.nlm.nih.gov/10890397). Any hit with identity below __50__ % was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
@@ -1472,7 +1472,7 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 }
 ``` 
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=10}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350, fig.width=10}
 if(wombat_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('blast' %in% wombat_config_json$virulence_genes$virulence_genes_predictor_tool) {
     Virulence_Genes_PA <- 
@@ -1699,7 +1699,7 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
 ```
 <br>
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=10}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350, fig.width=10}
 if(wombat_config_json$pangenome$run_pangenome == TRUE) {
   #Third figure: phylogenetic tree
   tree <- ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
@@ -1715,7 +1715,7 @@ if(wombat_config_json$pangenome$run_pangenome == TRUE) {
 ```
 <br>
 
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=9}
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350, fig.width=9}
 if(wombat_config_json$pangenome$run_pangenome == TRUE) {
   #Fourth figure: pangenome with phylogenetic tree 
   cat("Binary heatmap shows the presence (dark grey) and absence (white) of genes. Phylogeny for each isolate is shown on the left and was constructed based on accesory genes from the pangenome.", "<br>")
