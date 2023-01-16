@@ -18,7 +18,7 @@ params:
 </style>
 
 ```{r, results='asis', echo=FALSE, message=FALSE, warning=FALSE, dev='pdf'}
-knitr::opts_chunk$set(dpi = 350, fig.align = "center")
+knitr::opts_chunk$set(dpi = 120, fig.align = "center")
 ```
 
 ```{r, results='asis', setup, include=FALSE, dev='pdf'}
