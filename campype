@@ -2,7 +2,14 @@
 conda activate campype
 
 OUTDIR=$(python -c "import campype_config as cfg; print(cfg.config['output_directory'])")
-OUTDIR=$(pwd OUTDIR)/CamPype_OUTPUT_`date "+%Y%m%d_%H%M%S"`
+FOLDER_NAME=$(python -c "import campype_config as cfg; print(cfg.config['custom_output_name'])")
+# If custom name is not provided, use default name
+if [ -z "$FOLDER_NAME" ]; then
+    OUTDIR=$(pwd OUTDIR)/CamPype_OUTPUT_`date "+%Y%m%d_%H%M%S"`
+else
+    # Concatenate OUTDIR and FOLDER_NAME
+    OUTDIR=$(pwd OUTDIR)/$FOLDER_NAME
+fi
 
 mkdir -p $OUTDIR
 cp input_files.csv $OUTDIR/
