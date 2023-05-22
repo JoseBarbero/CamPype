@@ -36,6 +36,35 @@ def read_input_files(indexfile):
         files_data.append((str(row["Samples"]), {"FW": row["Forward"], "RV": row["Reverse"], "Genus": row["Genus"], "Species": row["Species"]}))
     return files_data
 
+def fastqc_call(input_file_fw, input_file_rv, output_dir):
+    """
+    FastQC call.
+    
+    Arguments:
+        input_file_fw {string} -- Forward input file (and route).
+        input_file_rv {string} -- Reverse input file (and route).
+        output_dir {string} -- Output directory.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    arguments = ["fastqc", input_file_fw, input_file_rv, "-o", output_dir, "-q"]
+    return call(arguments)
+
+def multiqc_call(fastqc_dir, output_dir):
+    """
+    MultiQC call.
+    
+    Arguments:
+        fastqc_dir {string} -- FastQC output directory.
+        output_dir {string} -- MultiQC output directory.
+    
+    Returns:
+        {int} -- Execution state (0 if everything is all right)
+    """
+    arguments = ["multiqc", fastqc_dir, "-o", output_dir]
+    return call(arguments)
+
 
 def trimmomatic_call(input_file1, input_file2, phred, trimfile,
                     paired_out_file1, paired_out_file2, unpaired_out_file1, unpaired_out_file2):
@@ -1438,7 +1467,7 @@ if __name__ == "__main__":
 
     # Get config file parameters
     annotator = cfg.config["annotation"]["annotator"]
-
+    fasta_mode = cfg.config["assembled_genomes"]
     # Create output directories
     now = datetime.datetime.now()
 
@@ -1458,6 +1487,8 @@ if __name__ == "__main__":
         prinseq_dir = output_folder+"/Trimmomatic_and_Prinseq_filtering"
     else:
         prinseq_dir = output_folder+"/Prinseq_filtering"
+    fastqc_dir = output_folder+"/fastq_quality_control"
+    multiqc_dir = fastqc_dir+"/multiqc"
     flash_dir = output_folder+"/Flash_read_extension"
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Draft_genomes"
@@ -1494,6 +1525,9 @@ if __name__ == "__main__":
     if cfg.config["plasmids"]["run_plasmid_prediction"]:
         os.mkdir(plasmid_dir)
 
+    if not fasta_mode:
+        os.mkdir(fastqc_dir)
+        os.mkdir(multiqc_dir)
 
     os.mkdir(prinseq_dir)
     os.mkdir(spades_dir)
@@ -1536,8 +1570,6 @@ if __name__ == "__main__":
     summary_post_qc = {}
     summary_post_flash = {}
 
-    fasta_mode = cfg.config["assembled_genomes"]
-
     compressed_mode = False
     decompressed_samples_fw = dict()
     decompressed_samples_rv = dict()
@@ -1573,7 +1605,31 @@ if __name__ == "__main__":
                     print("WRONG INPUT FORMAT:", sample_fw)
                     print("Input must be a valid fasta format file.")
     
+    # Run quality control (FastQC and MultiQC)
+    if not fasta_mode:
+    
+        print(Banner(f"\nFastq reads quality control analysis: FastQC\n"), flush=True)
 
+        for sample_basename, data in read_input_files("input_files.csv"):
+            
+            sample_fw = data["FW"]
+            sample_rv = data["RV"]    
+            
+            # Fastqc needs the output directory to exist
+            os.mkdir(fastqc_dir+"/"+sample_basename)
+
+            # FastQC call
+            fastqc_call(sample_fw, sample_rv, fastqc_dir+"/"+sample_basename)
+            print(f"Analysis complete for {sample_fw}", flush=True)
+            print(f"Analysis complete for {sample_rv}", flush=True)
+
+        # MultiQC call
+        print(Banner(f"\nMerge FastQC reports into a single report: MultiQC\n"), flush=True)
+        multiqc_call(fastqc_dir, multiqc_dir)
+        print(Banner(f"\nDONE\n"), flush=True)
+            
+
+    # Reference file processing
     if reference_genome_file:
         reference_genome_filename = reference_genome_file.split("/")[-1]
         reference_genome_basename = reference_genome_filename.split(".")[-2]
