@@ -9,6 +9,7 @@ config = {
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
     "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
+    "species_identification": False, # Skip sequence classification if you already know the species of the samples. Default: False
     "trim_adaptors":{
       "run_trim_adaptors": True, # Remove adapter sequences from reads if set to True. Otherwise, set to False. Default: True
       "adapters_reference_file": "reference_files/adapters_and_sequences.fa"   # You can edit this file with any sequence you want to filter
@@ -59,7 +60,7 @@ config = {
             "minid": 60 # Minimum DNA % identity for considering a virulence gene as present. Default: 90
         },
         "blast": {
-            "proteins_reference_file": "reference_files/custom_VFDB.txt", # A FASTA database must be indicated if "predictor_tool" above is set to blast. You can modigy this inhouse database with any selected protein sequence you want to scan.
+            "proteins_reference_file": "reference_files/Campylobacter_custom_VFDB.txt", # A FASTA database must be indicated if "predictor_tool" above is set to blast. You can modigy this inhouse database with any selected protein sequence you want to scan.
             "soft_masking": True, # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
             "presence_absence_matrix": { # Parameters for blast matrix construction
                 "mincov": 80, # Minimum % protein cover for considering a virulence gene as present. Default: 90

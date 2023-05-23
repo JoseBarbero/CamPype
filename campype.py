@@ -31,11 +31,15 @@ def read_input_files(indexfile):
         files_data {list of tuples} -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number).
     """
     files_df = pd.read_csv(indexfile, sep="\t")
+    # Replace nans with empty strings
+    files_df = files_df.fillna("")
     files_data = []
     for _, row in files_df.iterrows():
-        files_data.append((str(row["Samples"]), {"FW": row["Forward"], "RV": row["Reverse"], "Genus": row["Genus"], "Species": row["Species"]}))
+        files_data.append((str(row["Samples"]), {"FW": str(row["Forward"]), 
+                                                 "RV": str(row["Reverse"]), 
+                                                 "Genus": str(row["Genus"]), 
+                                                 "Species": str(row["Species"])}))
     return files_data
-
 
 def trimmomatic_call(input_file1, input_file2, phred, trimfile,
                     paired_out_file1, paired_out_file2, unpaired_out_file1, unpaired_out_file2):
@@ -114,7 +118,61 @@ def refactor_prinseq_output(input_dir, sample):
             call(arguments, stdout=open(value+".gz", 'w'))
     return filenames
 
+def kraken_call(db_file, output_file, fw_file, rv_file=None):
+    """
+    Kraken call.
 
+    Arguments:
+        db_file {string} -- Kraken database file.
+        output_file {string} -- Output file (report).
+        fw_file {string} -- Forward file (from Prinseq if we are working in fastq mode)
+        rv_file {string} -- Reverse prinseq file (from Prinseq if we are working in fastq mode)
+    """
+
+    # If we don't have reverse reads then we are working with the assembled genome
+    if rv_file:
+        arguments = ["kraken2", "--db", db_file, "--paired", fw_file, rv_file, "--output", "-", "--report", output_file]
+    else:
+        arguments = ["kraken2", "--db", db_file, fw_file, "--output", "-", "--report", output_file]
+
+    call(arguments)
+
+    # Get genus and species from kraken output file
+    kraken_report_columns = ["Percentage", "Reads_clade_covered", "Reads_clade_assigned", "TaxRank", "NCBI_taxID", "Scientific_name"]
+    sample_report_df = pd.read_csv(output_file, sep="\t", header=None, names=kraken_report_columns)
+    # Only keep rows with species information
+    sample_report_df = sample_report_df[sample_report_df["TaxRank"] == "S"]
+    # Keep only the first row (the one with the highest percentage)
+    sample_report_df = sample_report_df.head(1)
+
+    genus = sample_report_df["Scientific_name"].values[0].split(" ")[0]
+    species = sample_report_df["Scientific_name"].values[0].split(" ")[1]
+
+    return genus, species
+
+def kraken_report_unification(kraken_reports, output_file):
+    """
+    Creates a report unifying reports from every sample.
+    
+    Arguments:
+        kraken_reports {list} -- List of tuples of kraken reports (sample, report file).
+        output_file {string} -- Output file.
+    """
+    kraken_report_columns = ["Percentage", "Reads_clade_covered", "Reads_clade_assigned", "TaxRank", "NCBI_taxID", "Scientific_name"]
+    combined_report_df = pd.DataFrame(columns=["Sample", "Species", "Species_percentage"])
+    for sample, sample_report in kraken_reports:
+        sample_report_df = pd.read_csv(sample_report, sep="\t", header=None, names=kraken_report_columns)
+        # Only keep rows with species information
+        sample_report_df = sample_report_df[sample_report_df["TaxRank"] == "S"]
+        # Keep only the first row (the one with the highest percentage)
+        sample_report_df = sample_report_df.head(1)
+        # Add to combined report
+        combined_report_df = combined_report_df.append({"Sample": sample, "Species": sample_report_df["Scientific_name"].values[0], "Species_percentage": sample_report_df["Percentage"].values[0]}, ignore_index=True)
+    
+    # Export report to tsv
+    combined_report_df.to_csv(output_file, sep="\t", index=False, header=True)
+    
+    
 def flash_call(input_file_1, input_file_2, output_filename, output_dir):
     """Flash call.
     
@@ -784,7 +842,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
     gene_presence_absence = gene_presence_absence.append(capA_row, ignore_index=True)
     gene_presence_absence = gene_presence_absence[gene_presence_absence["Protein"] != "capA_ORF1"]
     gene_presence_absence = gene_presence_absence[gene_presence_absence["Protein"] != "capA_ORF2"]
-    gene_presence_absence["DATABASE"] = "custom_VFDB"
+    gene_presence_absence["DATABASE"] = "Campylobacter_custom_VFDB"
 
     # Sort rows
     gene_presence_absence = gene_presence_absence.sort_values(by=["Type", "Protein"])
@@ -1172,7 +1230,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, info_post_flash, mlst_file, vir_matrix_file, snippy_summary, custom_VFDB, amrfinder_matrix_file=False, reference_genome_basename=None):
+def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, kraken_combined_report, info_post_flash, mlst_file, vir_matrix_file, snippy_summary, custom_VFDB, amrfinder_matrix_file=False, reference_genome_basename=None):
     """
     Creates the final report.
     
@@ -1185,6 +1243,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         out_dir {string} -- Output directory.
         infro_pre_QC {dict} -- Prinseq information before running QC.
         info_post_QC {dict} -- Prinseq information after running QC.
+        kraken_combined_report {string} -- Kraken report file.
         info_post_flash {dict} -- Prinseq information after running flash.
         mlst_file {string} -- MLST results file.
         vir_matrix_file {string} -- Matrix file containing virulence genes information.
@@ -1212,6 +1271,13 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
                     "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
                     "rRNAs", "tRNAs"]
+    
+    if cfg.config["species_identification"]:
+        df_columns.insert(df_columns.index("ST"), "Species")
+        df_columns.insert(df_columns.index("ST"), "Species_percentage")
+
+        # Get species information (header is included in the tsv)
+        kraken_report_df = pd.read_csv(kraken_combined_report, sep="\t", header=0)
 
     if amrfinder_matrix_file:
         amr_data = pd.read_csv(amrfinder_matrix_file, sep="\t", skipfooter=1, engine="python")
@@ -1269,7 +1335,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     else:
                         joinreads = 0
                         joinreadslen = 0
-                
+
                 # "ContigLen": Average contig length (bp) (> 500bp).
                 contig_len_summatory = 0
                 contig_counter = 0
@@ -1277,6 +1343,16 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     contig_len_summatory += len(record.seq)
                     contig_counter += 1
                 avg_contig_len = contig_len_summatory/contig_counter
+                
+                # Kraken data
+                if cfg.config["species_identification"]:
+                    # "Species": Species name.
+                    species = kraken_report_df.loc[kraken_report_df["Sample"] == sample]["Species"].values[0]
+                    
+                    # "Species_percentage": Percentage of species.
+                    species_percentage = kraken_report_df.loc[kraken_report_df["Sample"] == sample]["Percentage"].values[0]
+            
+
             else:
                 # "ContigLen": Average contig length (bp) (> 500bp).
                 contig_len_summatory = 0
@@ -1287,6 +1363,11 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                 avg_contig_len = contig_len_summatory/contig_counter
                 if not fasta_mode:
                     reads = readlen = readsqc = readsqclen = joinreads = joinreadslen = depthcov = 0
+                
+                # Kraken data for reference genome
+                if cfg.config["species_identification"]:
+                    species = ""
+                    species_percentage = ""
 
             # Column ST (MLST)
             if cfg.config["MLST"]["run_mlst"]:
@@ -1353,6 +1434,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     with open(annotation_dir+"/"+sample+"/"+sample+".faa") as faa_file:
                         # Column 'Hypothetical_proteins'
                         hy_prot = faa_file.read().count("hypothetical protein")
+
             if fasta_mode:  
                 report_dict = { "Sample": sample, 
                             "Contigs": n_contigs, 
@@ -1388,6 +1470,11 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "CRISPRs": crisprs,
                             "rRNAs": rrnas,
                             "tRNAs": trnas}
+            
+            # Kraken
+            if cfg.config["species_identification"]:
+                report_dict["Species"] = species
+                report_dict["Species_percentage"] = species_percentage
 
             # Columna 20 y siguientes. Se obtendrán a partir del archivo AMR_genes_AMRFinder_matrix.txt. Se copiarán las columnas 2 y siguientes, de forma que se corresponda la información de cada cepa.
             if amrfinder_matrix_file:
@@ -1397,7 +1484,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             df_1st_column_block = [*report_dict.keys()]
             df_2nd_column_block = []
             
-            occurrences = 0     # Total number of occurrences of that category in custom_VFDB.txt
+            occurrences = 0     # Total number of occurrences of that category in Campylobacter_custom_VFDB.txt
             total_occurrences = 0
             if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
                 # Information from VF_matrix
@@ -1458,6 +1545,8 @@ if __name__ == "__main__":
         prinseq_dir = output_folder+"/Trimmomatic_and_Prinseq_filtering"
     else:
         prinseq_dir = output_folder+"/Prinseq_filtering"
+    kraken_dir = output_folder+"/Kraken_identification"
+    kraken_unified_report = kraken_dir+"/bacteria_identification.tab"
     flash_dir = output_folder+"/Flash_read_extension"
     spades_dir = output_folder+"/SPAdes_assembly"
     contigs_dir = output_folder+"/Draft_genomes"
@@ -1495,6 +1584,8 @@ if __name__ == "__main__":
         os.mkdir(plasmid_dir)
 
     os.mkdir(prinseq_dir)
+    if cfg.config["species_identification"]:
+        os.mkdir(kraken_dir)
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
     os.mkdir(mauve_dir)
@@ -1538,6 +1629,17 @@ if __name__ == "__main__":
     compressed_mode = False
     decompressed_samples_fw = dict()
     decompressed_samples_rv = dict()
+
+    # Check if any of the input files does not have species/genus information
+    abort_flag = False
+    for sample_basename, data in read_input_files("input_files.csv"):
+        if not data["Genus"] or not data["Species"]:
+            if not cfg.config["species_identification"]:
+                print("ERROR: Please, fill in the genus and species information for sample", sample_basename, "or set species_identification parameter to True in campype_config.py")
+                abort_flag = True
+    if abort_flag:
+        sys.exit(1)
+
     # Checking correct input files format in fasta mode
     for sample_basename, data in read_input_files("input_files.csv"):
         sample_fw = data["FW"]
@@ -1641,6 +1743,7 @@ if __name__ == "__main__":
     # Workflow Starts (for standard samples)
     sample_counter = 0
     samples_basenames = [] # Keeping track of them
+    kraken_reports = []
     n_samples = len(read_input_files("input_files.csv"))
 
     for sample_basename, data in read_input_files("input_files.csv"):
@@ -1649,7 +1752,6 @@ if __name__ == "__main__":
         sample_rv = data["RV"]
         genus = data["Genus"]
         species = data["Species"]
-        organism = genus+" "+species
 
         step_counter = 1 # Just to let the user know the number of each step
         sample_counter += 1
@@ -1691,6 +1793,28 @@ if __name__ == "__main__":
             # Prinseq output files refactor
             print("\nRefactoring prinseq output files\n", flush=True)
             prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
+
+            # Kraken call
+            if cfg.config["species_identification"]:
+                print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Kraken\n"), flush=True)
+                
+                kraken_db_file = "./db/minikraken-DB/minikraken_8GB_20200312"
+                
+                # Check if database exists
+                if not os.path.exists(kraken_db_file):
+                    print("ERROR: Kraken database file does not exist.")
+                    sys.exit(1)
+                kraken_out_report_file = kraken_dir+"/"+sample_basename+".tab"
+                kraken_genus, kraken_species = kraken_call(db_file=kraken_db_file, 
+                                                           output_file=kraken_out_report_file, 
+                                                           fw_file=prinseq_files["R1"], 
+                                                           rv_file=prinseq_files["R2"])
+                kraken_reports.append((sample_basename, kraken_out_report_file))
+                if not genus or not species:
+                    genus = kraken_genus
+                    species = kraken_species
+                step_counter += 1
+
 
             # Flash call
             if cfg.config["merge_reads"]:
@@ -1751,6 +1875,27 @@ if __name__ == "__main__":
             min_contig_threshold = cfg.config["min_contig_len"]
             # If in fasta mode, we just skip everything until this point
             sample_contigs = data["FW"]
+
+            # Kraken call
+            if cfg.config["species_identification"]:
+                print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Kraken\n"), flush=True)
+                
+                kraken_db_file = "./db/minikraken-DB/minikraken_8GB_20200312"
+                
+                # Check if database exists
+                if not os.path.exists(kraken_db_file):
+                    print("ERROR: Kraken database file does not exist.")
+                    sys.exit(1)
+
+                kraken_out_report_file = kraken_dir+"/"+sample_basename+".tab" 
+                kraken_genus, kraken_species = kraken_call(db_file=kraken_db_file, 
+                                                           output_file=kraken_out_report_file, 
+                                                           fw_file=sample_fw)
+                if not genus or not species:
+                    genus = kraken_genus
+                    species = kraken_species
+                kraken_reports.append((sample_basename, kraken_out_report_file))
+                step_counter += 1
             
         # Reordering contigs by a reference genome with MauveCM
         if cfg.config["reference_genome"]["file"]:
@@ -1797,7 +1942,7 @@ if __name__ == "__main__":
                         contigs_file=draft_contigs,
                         output_dir=dfast_dir+"/"+sample_basename,
                         sample_basename=sample_basename,
-                        organism=organism)
+                        organism=genus+" "+species)
                 step_counter += 1
 
                 refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", 
@@ -1842,6 +1987,10 @@ if __name__ == "__main__":
                         output_dir=snps_dir+"/"+sample_basename,
                         prefix=sample_basename)
             snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
+
+    # Kraken combined report
+    if cfg.config["species_identification"]:
+        kraken_report_unification(kraken_reports, kraken_unified_report)
 
     # Prokka summary
     if cfg.config["annotation"]["run_annotation"] and cfg.config["annotation"]["annotator"] == "prokka":
@@ -2077,6 +2226,7 @@ if __name__ == "__main__":
                         output_folder,
                         summary_pre_qc,
                         summary_post_qc,
+                        kraken_unified_report,
                         summary_post_flash,
                         mlst_dir+"/MLST_and_CC.txt",
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
@@ -2093,6 +2243,7 @@ if __name__ == "__main__":
                         output_folder, 
                         summary_pre_qc, 
                         summary_post_qc, 
+                        kraken_unified_report,
                         summary_post_flash,
                         mlst_dir+"/MLST_and_CC.txt",
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
