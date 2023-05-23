@@ -42,7 +42,7 @@ def read_input_files(indexfile):
     return files_data
 
 def trimmomatic_call(input_file1, input_file2, phred, trimfile,
-                    paired_out_file1, paired_out_file2, unpaired_out_file1, unpaired_out_file2):
+                    paired_out_file1, paired_out_file2, unpaired_out_file1, unpaired_out_file2, threads=None):
     """
     Trimmomatic call.
     
@@ -61,6 +61,8 @@ def trimmomatic_call(input_file1, input_file2, phred, trimfile,
     """
     arguments = ["trimmomatic", "PE", phred, input_file1, input_file2, \
                 paired_out_file1, unpaired_out_file1, paired_out_file2, unpaired_out_file2, trimfile]
+    if threads:
+        arguments.extend(["-threads", str(threads)])
     return call(arguments)
 
 
@@ -118,7 +120,7 @@ def refactor_prinseq_output(input_dir, sample):
             call(arguments, stdout=open(value+".gz", 'w'))
     return filenames
 
-def kraken_call(db_file, output_file, fw_file, rv_file=None):
+def kraken_call(db_file, output_file, fw_file, rv_file=None, threads=None):
     """
     Kraken call.
 
@@ -134,6 +136,9 @@ def kraken_call(db_file, output_file, fw_file, rv_file=None):
         arguments = ["kraken2", "--db", db_file, "--paired", fw_file, rv_file, "--output", "-", "--report", output_file]
     else:
         arguments = ["kraken2", "--db", db_file, fw_file, "--output", "-", "--report", output_file]
+
+    if threads:
+        arguments.extend(["--threads", str(threads)])
 
     call(arguments)
 
@@ -173,7 +178,7 @@ def kraken_report_unification(kraken_reports, output_file):
     combined_report_df.to_csv(output_file, sep="\t", index=False, header=True)
     
     
-def flash_call(input_file_1, input_file_2, output_filename, output_dir):
+def flash_call(input_file_1, input_file_2, output_filename, output_dir, threads=None):
     """Flash call.
     
     Arguments:
@@ -186,10 +191,13 @@ def flash_call(input_file_1, input_file_2, output_filename, output_dir):
         {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["flash", input_file_1, input_file_2, "-o", output_filename, "-d", output_dir]
+
+    if threads:
+        arguments.extend(["--threads", str(threads)])
     return call(arguments)
 
 
-def spades_call(forward_sample, reverse_sample, sample, out_dir, merged_sample=None):
+def spades_call(forward_sample, reverse_sample, sample, out_dir, merged_sample=None, threads=None):
     """
     Spades call
     
@@ -211,6 +219,10 @@ def spades_call(forward_sample, reverse_sample, sample, out_dir, merged_sample=N
     if cfg.config["assembly"]["k"]:
         arguments.extend(["-k", str(cfg.config["assembly"]["k"])])
     arguments.extend(["-o", out_dir+"/"+sample])
+
+    if threads:
+        arguments.extend(["--threads", str(threads)])
+
     return call(arguments)
 
 
@@ -262,7 +274,7 @@ def shorten_loci(original_file):
     os.remove(original_file)
     shutil.move(corrected_file, original_file)
 
-def snippy_call(reference_genome, contigs, output_dir, prefix):
+def snippy_call(reference_genome, contigs, output_dir, prefix, threads=None):
     """
     Snippy call. (SNP identifier)
     
@@ -276,6 +288,10 @@ def snippy_call(reference_genome, contigs, output_dir, prefix):
         {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["snippy", "--ref", reference_genome, "--ctgs", contigs, "--outdir", output_dir, "--prefix", prefix, "--report"]    
+
+    if threads:
+        arguments.extend(["--cpus", str(threads)])
+
     return call(arguments)
 
 
@@ -348,7 +364,7 @@ def get_reads_length(input_file):
     return len(first_record.seq)
 
 
-def quast_call(input_file, output_dir, min_contig_len):
+def quast_call(input_file, output_dir, min_contig_len, threads=None):
     """
     Quast call.
     
@@ -361,6 +377,10 @@ def quast_call(input_file, output_dir, min_contig_len):
         {int} -- Execution state (0 if everything is all right)
     """
     arguments = ["quast", input_file, "-o", output_dir, "--min-contig", str(min_contig_len), "--no-icarus", "--silent"]
+
+    if threads:
+        arguments.extend(["--threads", str(threads)])
+
     return call(arguments)
 
 
@@ -379,7 +399,7 @@ def quast_report_unification(input_dir, samples, output_dir):
     final_df.to_csv(output_dir+"/quality_assembly_report.tsv", sep="\t")
 
 
-def mlst_call(input_dir, reference_file, output_dir, output_filename):
+def mlst_call(input_dir, reference_file, output_dir, output_filename, threads=None):
     """
     MLST call for every fasta file in input_dir.
     
@@ -403,6 +423,10 @@ def mlst_call(input_dir, reference_file, output_dir, output_filename):
                 input_filenames.append(input_dir+"/"+filename)
     input_filenames.append(reference_file)
     arguments = ["mlst", *input_filenames]
+
+    if threads:
+        arguments.extend(["--threads", str(threads)])
+
     return call(arguments, stdout=output_file)
 
 
@@ -446,7 +470,7 @@ def mlst_postprocessing(mlst_file, output_file):
     output_data.to_csv(output_file, index=False, sep="\t")
 
 
-def abricate_call(input_dir, output_dir, output_filename, database, mincov=False, minid=False, gene_matrix_file=False, samples=False):
+def abricate_call(input_dir, output_dir, output_filename, database, mincov=False, minid=False, gene_matrix_file=False, samples=False, threads=None):
     """
     ABRicate call.
     
@@ -479,6 +503,9 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
         arguments.extend(["--mincov", str(mincov)])
     if minid:
         arguments.extend(["--minid", str(minid)])
+
+    if threads:
+        arguments.extend(["--threads", str(threads)])
     
     with open(tmp_file, "w") as initial_file:
         state = call(arguments, stdout=initial_file)
@@ -544,7 +571,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
 
 
 
-def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, ref_genome_basename, annotation_dir, gff_dir, genus, db_name, output_dir):
+def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, ref_genome_basename, annotation_dir, gff_dir, genus, db_name, output_dir, threads=None):
     has_header = False
 
     samples = samples_basenames.copy()
@@ -557,16 +584,19 @@ def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, ref_genom
             # Ref genome sample starts by + so that roary can place it first
             if sample == ref_genome_basename:             
                 gff_file = "+"+sample
-
-            call([  "amrfinder",
-                    "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
-                    "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
-                    "-g", gff_dir+"/"+gff_file+".gff", 
-                    "--organism", genus, 
-                    "--plus", 
-                    "-i", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["minid"]/100),
-                    "-c", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["mincov"]/100),
-                    "-o", output_dir+"/"+sample+".txt"])
+            arguments = ["amrfinder",
+                        "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
+                        "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
+                        "-g", gff_dir+"/"+gff_file+".gff", 
+                        "--organism", genus, 
+                        "--plus", 
+                        "-i", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["minid"]/100),
+                        "-c", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["mincov"]/100),
+                        "-o", output_dir+"/"+sample+".txt"]
+            if threads:
+                arguments.extend(["--threads", str(threads)])
+                
+            call(arguments)
 
             # Group all the results in a single file        
             with open(output_dir+"/"+sample+".txt") as in_file:
@@ -653,7 +683,7 @@ def amrfinder_get_point_mutations(amrfinder_file, output_file):
         res_file.write("'-' means no point mutation found")
     
 
-def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name):
+def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast_database_output, blast_output_folder, blast_output_name, threads=None):
     """
     Blast call.
     
@@ -685,10 +715,14 @@ def blast_call(proteins_file_ori, proteins_file_dest, contigs_files_paths, blast
           "-out", blast_db_path, "-title", "DNA_Database"])
 
     # Call tblastn
-    tblastn_state = call(["tblastn", "-db", blast_db_path, "-query", proteins_file_dest,
-                        "-soft_masking", str(cfg.config["virulence_genes"]["blast"]["soft_masking"]).lower(),
-                        "-outfmt", "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq",
-                        "-out", blast_output_folder+"/"+blast_output_name])
+    arguments = ["tblastn", "-db", blast_db_path, "-query", proteins_file_dest,
+                "-soft_masking", str(cfg.config["virulence_genes"]["blast"]["soft_masking"]).lower(),
+                "-outfmt", "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore sseq",
+                "-out", blast_output_folder+"/"+blast_output_name]
+    if threads:
+        arguments.extend(["-num_threads", str(threads)])
+
+    tblastn_state = call(arguments)
 
     # Add header to tblastn output
     with open(blast_output_folder+"/"+blast_output_name, 'r+') as f:
@@ -856,7 +890,7 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
                             str(cfg.config["virulence_genes"]["blast"]["presence_absence_matrix"]["minid"]) + 
                             " % on each sample for considering a virulence gene as present.")
 
-def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", rawproduct=False):
+def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strain, proteins="", rawproduct=False, threads=None):
     """
     Prokka call.
     
@@ -888,6 +922,9 @@ def prokka_call(locus_tag, output_dir, prefix, input_file, genus, species, strai
         arguments.extend(["--proteins", proteins])
     if rawproduct:
         arguments.append("--rawproduct")
+    if threads:
+        arguments.extend(["--cpus", str(threads)])
+
     return call(arguments)
 
 
@@ -945,7 +982,7 @@ def refactor_gff_from_prokka(gff_input, gff_output):
             out_file.write(line)
 
 
-def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
+def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism, threads=None):
     """
     Dfast call.
     
@@ -967,6 +1004,9 @@ def dfast_call(locus_tag, contigs_file, output_dir, sample_basename, organism):
                 "--strain", sample_basename,
                 "--locus_tag_prefix", locus_tag,
                 "--out", output_dir]
+    if threads:
+        arguments.extend(["--cpu", str(threads)])
+
     state = call(arguments)
 
     # Replace default output filenames including string basename
@@ -1017,7 +1057,7 @@ def refactor_gff_from_dfast(gff_input, gff_output, gff_roary_format):
 
         
 
-def roary_call(input_files, output_dir, campype_output_folder):
+def roary_call(input_files, output_dir, campype_output_folder, threads=None):
     """
     Roary call.
     
@@ -1034,6 +1074,9 @@ def roary_call(input_files, output_dir, campype_output_folder):
     if cfg.config["pangenome"]["minid"]:
         arguments.extend(["-i", str(cfg.config["pangenome"]["minid"])])
     arguments.extend(input_files)
+    if threads:
+        arguments.extend(["-p", str(threads)])
+
     ex_state = call(arguments)
     # Set Roary output directory name
     for root, dirs, _files in os.walk(campype_output_folder):
@@ -1630,6 +1673,9 @@ if __name__ == "__main__":
     decompressed_samples_fw = dict()
     decompressed_samples_rv = dict()
 
+    # Number of threads
+    n_threads = cfg.config["n_threads"]
+
     # Check if any of the input files does not have species/genus information
     abort_flag = False
     for sample_basename, data in read_input_files("input_files.csv"):
@@ -1698,7 +1744,8 @@ if __name__ == "__main__":
         print(Banner(f"\nQuast on reference sequence ({reference_genome_basename})\n"), flush=True)
         quast_call( input_file=reference_genome_file,
                     output_dir=assembly_dir+"/"+reference_genome_basename+"/"+quast_sample_dir,
-                    min_contig_len=cfg.config["min_contig_len"])
+                    min_contig_len=cfg.config["min_contig_len"],
+                    threads = n_threads)
 
         if cfg.config["annotation"]["run_annotation"]:    
             # Annotate reference fasta file 
@@ -1710,7 +1757,8 @@ if __name__ == "__main__":
                             contigs_file=reference_genome_file,
                             output_dir=dfast_dir+"/"+reference_genome_basename,
                             sample_basename=reference_genome_basename,
-                            organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"])
+                            organism=cfg.config["reference_genome"]["genus"]+" "+cfg.config["reference_genome"]["species"],
+                            threads = n_threads)
                 refactor_gff_from_dfast(dfast_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
                                         dfast_refactor_dir+"/+"+reference_genome_basename+".gff",
                                         roary_input_dir+"/+"+reference_genome_basename+".gff")
@@ -1729,7 +1777,8 @@ if __name__ == "__main__":
                             species=cfg.config["reference_genome"]["species"],
                             strain=cfg.config["reference_genome"]["strain"],
                             proteins=cfg.config["reference_genome"]["proteins"],
-                            rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"]
+                            rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"],
+                            threads = n_threads
                             )
                 # Set roary input files (renaming to get reference file first)
                 os.rename(annotation_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+".gff",
@@ -1769,7 +1818,8 @@ if __name__ == "__main__":
                                 paired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq",
                                 unpaired_out_file1=trimmomatic_dir+"/"+sample_basename+"_R1_unpaired.fastq",
                                 paired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq",
-                                unpaired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq")
+                                unpaired_out_file2=trimmomatic_dir+"/"+sample_basename+"_R2_unpaired.fastq",
+                                threads = n_threads)
                 step_counter += 1
                 prinseq_input1 = trimmomatic_dir+"/"+sample_basename+"_R1_paired.fastq"
                 prinseq_input2 = trimmomatic_dir+"/"+sample_basename+"_R2_paired.fastq"
@@ -1808,7 +1858,8 @@ if __name__ == "__main__":
                 kraken_genus, kraken_species = kraken_call(db_file=kraken_db_file, 
                                                            output_file=kraken_out_report_file, 
                                                            fw_file=prinseq_files["R1"], 
-                                                           rv_file=prinseq_files["R2"])
+                                                           rv_file=prinseq_files["R2"],
+                                                           threads = n_threads)
                 kraken_reports.append((sample_basename, kraken_out_report_file))
                 if not genus or not species:
                     genus = kraken_genus
@@ -1822,7 +1873,8 @@ if __name__ == "__main__":
                 flash_call(input_file_1=prinseq_files["R1"],
                         input_file_2=prinseq_files["R2"],
                         output_filename=sample_basename,
-                        output_dir=flash_dir+"/"+sample_basename)
+                        output_dir=flash_dir+"/"+sample_basename,
+                        threads = n_threads)
                 step_counter += 1
 
             # Quality reports
@@ -1853,12 +1905,14 @@ if __name__ == "__main__":
                             reverse_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".notCombined_2.fastq",
                             sample=sample_basename,
                             out_dir=spades_dir,
-                            merged_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq",)
+                            merged_sample=flash_dir+"/"+sample_basename+"/"+sample_basename+".extendedFrags.fastq",
+                            threads = n_threads)
             else:
                 spades_call(forward_sample=prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R1.fastq",
                             reverse_sample=prinseq_dir+"/"+sample_basename+"/"+sample_basename+"_R2.fastq",
                             sample=sample_basename,
-                            out_dir=spades_dir)
+                            out_dir=spades_dir,
+                            threads = n_threads)
             step_counter += 1
 
             # Get minimum contig length
@@ -1890,7 +1944,8 @@ if __name__ == "__main__":
                 kraken_out_report_file = kraken_dir+"/"+sample_basename+".tab" 
                 kraken_genus, kraken_species = kraken_call(db_file=kraken_db_file, 
                                                            output_file=kraken_out_report_file, 
-                                                           fw_file=sample_fw)
+                                                           fw_file=sample_fw,
+                                                           threads = n_threads)
                 if not genus or not species:
                     genus = kraken_genus
                     species = kraken_species
@@ -1929,7 +1984,8 @@ if __name__ == "__main__":
         print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Quast\n"), flush=True)
         quast_call( input_file=draft_contigs,
                     output_dir=assembly_dir+"/"+sample_basename+"/"+quast_sample_dir,
-                    min_contig_len=min_contig_threshold)
+                    min_contig_len=min_contig_threshold,
+                    threads = n_threads)
         step_counter += 1
 
         if cfg.config["annotation"]["run_annotation"]:
@@ -1942,7 +1998,8 @@ if __name__ == "__main__":
                         contigs_file=draft_contigs,
                         output_dir=dfast_dir+"/"+sample_basename,
                         sample_basename=sample_basename,
-                        organism=genus+" "+species)
+                        organism=genus+" "+species,
+                    threads = n_threads)
                 step_counter += 1
 
                 refactor_gff_from_dfast(dfast_dir+"/"+sample_basename+"/"+sample_basename+".gff", 
@@ -1963,7 +2020,8 @@ if __name__ == "__main__":
                             species=species,
                             strain=sample_basename,
                             proteins=cfg.config["reference_genome"]["proteins"],
-                            rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"])
+                            rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"],
+                            threads = n_threads)
                 step_counter += 1
                 if cfg.config["antimicrobial_resistance_genes"]["run_antimicrobial_resistance_genes_prediction"]:
                     if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
@@ -1985,7 +2043,8 @@ if __name__ == "__main__":
             snippy_call(reference_genome=ref_genome,
                         contigs=draft_contigs,
                         output_dir=snps_dir+"/"+sample_basename,
-                        prefix=sample_basename)
+                        prefix=sample_basename,
+                        threads = n_threads)
             snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
 
     # Kraken combined report
@@ -2014,7 +2073,8 @@ if __name__ == "__main__":
         mlst_call(input_dir=draft_contigs_dir,  
                 reference_file=reference_genome_file,
                 output_dir=mlst_dir,
-                output_filename=mlst_out_file)
+                output_filename=mlst_out_file,
+                threads = n_threads)
         if cfg.config["MLST"]["include_cc"]:
             # MLST postprocessing
             mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
@@ -2038,7 +2098,8 @@ if __name__ == "__main__":
                             mincov=cfg.config["virulence_genes"]["abricate"]["mincov"],
                             minid=cfg.config["virulence_genes"]["abricate"]["minid"],
                             gene_matrix_file=vf_matrix_file,
-                            samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+                            samples=samples_basenames+[cfg.config["reference_genome"]["strain"]],
+                            threads = n_threads)
                 
                 # Concatenate every ABRicate output in a single file
                 with open(vir_dir+"/"+global_vf_output_file, "a") as global_file, open(vir_dir+"/"+vf_output_file, "r") as current_file:
@@ -2089,7 +2150,8 @@ if __name__ == "__main__":
                         contigs_files_paths=contig_files+[ref_genome], 
                         blast_database_output=dna_database_blast+"/DNA_database.fna", 
                         blast_output_folder=blast_proteins_dir,
-                        blast_output_name=blast_output_name)
+                        blast_output_name=blast_output_name,
+                        threads = n_threads)
             blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
                                 database_file=blast_proteins_dir+"/"+proteins_database_name,
                                 output_folder=blast_proteins_dir,
@@ -2110,7 +2172,8 @@ if __name__ == "__main__":
                     mincov=cfg.config["plasmids"]["abricate"]["mincov"],
                     minid=cfg.config["plasmids"]["abricate"]["minid"],
                     gene_matrix_file=plasmids_matrix_file,
-                    samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+                    samples=samples_basenames+[cfg.config["reference_genome"]["strain"]],
+                    threads = n_threads)
 
         # Delete plasmids_matrix_file if it contains only one line
         with open(plasmid_dir+"/"+plasmids_matrix_file, 'r') as f:
@@ -2146,7 +2209,8 @@ if __name__ == "__main__":
                             mincov=cfg.config["antimicrobial_resistance_genes"]["abricate"]["mincov"],
                             minid=cfg.config["antimicrobial_resistance_genes"]["abricate"]["minid"],
                             gene_matrix_file=amr_matrix_file,
-                            samples=samples_basenames+[cfg.config["reference_genome"]["strain"]])
+                            samples=samples_basenames+[cfg.config["reference_genome"]["strain"]],
+                            threads = n_threads)
 
                 # Concatenate every ABRicate output in a single file
                 with open(amr_analysis_dir_abr+"/"+global_amr_output_file, "a") as global_file, open(amr_analysis_dir_abr+"/"+amr_output_file, "r") as current_file:
@@ -2190,7 +2254,9 @@ if __name__ == "__main__":
             amrfinder_resume_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
             amrfinder_point_mutations_file = amr_analysis_dir_amrfinder+"/AMR_point_mutations_AMRFinder_matrix.tsv"
 
-            amrfinder_call(amrfinder_out_file, amrfinder_resume_file, samples_basenames, reference_genome_basename, annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder)
+            amrfinder_call(amrfinder_out_file, amrfinder_resume_file, samples_basenames, reference_genome_basename, 
+                           annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder,
+                           threads = n_threads)
             amrfinder_get_point_mutations(amrfinder_out_file, amrfinder_point_mutations_file)
 
     # Roary call
@@ -2198,7 +2264,8 @@ if __name__ == "__main__":
         print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
         print("Roary input files:", roary_input_files)
         step_counter += 1
-        roary_call(input_files=roary_input_files, output_dir=roary_dir, campype_output_folder=output_folder)
+        roary_call(input_files=roary_input_files, output_dir=roary_dir, 
+                   campype_output_folder=output_folder, threads = n_threads)
 
         if cfg.config["MLST"]["run_mlst"]:
             # Roary plots call
