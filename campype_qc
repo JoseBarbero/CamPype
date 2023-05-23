@@ -1,0 +1,14 @@
+#!/bin/bash
+conda activate campype
+
+OUTDIR=$(python -c "import campype_config as cfg; print(cfg.config['output_directory'])")
+FOLDER_NAME=$(python -c "import campype_config as cfg; print(cfg.config['custom_output_name'])")
+# If custom name is not provided, use default name
+if [ -z "$FOLDER_NAME" ]; then
+    OUTDIR=$OUTDIR/CamPype_OUTPUT_`date "+%Y%m%d_%H%M%S"`
+else
+    # Concatenate OUTDIR and FOLDER_NAME
+    OUTDIR=$OUTDIR/$FOLDER_NAME
+fi
+mkdir -p $OUTDIR
+python campype_qc.py $OUTDIR "$@" 2>&1 | tee $OUTDIR/campype_qc.log
