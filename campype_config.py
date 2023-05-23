@@ -26,11 +26,11 @@ config = {
     },
     "min_contig_len": 200,
     "MLST": {
-        "run_mlst": True, # Set this to True or False if you want to run the MLST step
-        "include_cc": True # Will match sequences types (ST) will clonal complexes (CC) using the PubMLST Campylobacter database (internet connection is required). You should set this option to False if you are analysing other genus.
+        "run_mlst": True, # Set this to True or False if you want to run the MLST step. Default: True
+        "include_cc": True # Will match sequences types (ST) will clonal complexes (CC) using the PubMLST Campylobacter database (internet connection is required). You should set this option to False if you are analysing other genus. Default: True
     },
     "annotation": {
-        "run_annotation": True, # Set this to True or False if you want to run the annotation step
+        "run_annotation": True, # Set this to True or False if you want to run the annotation step. Default: True
         "annotator": "prokka",  # Set this to "prokka" or "dfast"
         "prokka": {
             "rawproduct": True, # Do not clean up product annotation if set to True. Otherwise, set to False. Default: True
@@ -38,32 +38,32 @@ config = {
         },
     },
     "antimicrobial_resistance_genes":{
-        "run_antimicrobial_resistance_genes_prediction": True, #Set this to True or False if you want to search for antimicrobial resistance genes or not.
-        "antimicrobial_resistance_genes_predictor_tool": ["abricate", "amrfinder"], # Select as many tools as desired to identify virulence genes: abricate and/or amrfinder. Keep in mind that abricate uses BLASTn and AMRFinder uses blastp. Be aware to run genome annotation if using AMRFinder! 
+        "run_antimicrobial_resistance_genes_prediction": True, #Set this to True or False if you want to search for antimicrobial resistance genes or not. Default: True
+        "antimicrobial_resistance_genes_predictor_tool": ["abricate", "amrfinder"], # Select as many tools as desired to identify virulence genes: abricate and/or amrfinder. Keep in mind that abricate uses BLASTn and AMRFinder uses blastp. Be aware to run genome annotation if using AMRFinder! Default: ["abricate", "amrfinder"] 
         "abricate": {
-            "antimicrobial_resistance_databases": ["argannot", "card", "megares", "ncbi", "resfinder"], # Select as many databases as desired from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or/and resfinder. Remember, ABRicate uses blastn. Default: ["card", "ncbi"]
-            "mincov": 80, # Minimum DNA % coverage for considering a virulence gene as present. Default: 90
-            "minid": 60 # Minimum DNA % identity for considering a virulence gene as present. Default: 90
+            "antimicrobial_resistance_databases": ["argannot", "card", "megares", "ncbi", "resfinder"], # Select as many databases as desired from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or/and resfinder. Remember, ABRicate uses blastn. Default: ["argannot", "card", "megares", "ncbi", "resfinder"]
+            "mincov": 80, # Minimum DNA % coverage for considering a virulence gene as present. Default: 80
+            "minid": 60 # Minimum DNA % identity for considering a virulence gene as present. Default: 60
         },
         "amrfinder": {
-            "mincov": 80, # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-100). Default: 90
-            "minid": 60 # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-100). Default: 90
+            "mincov": 80, # Minimum coverage of reference protein sequence for for considering an antimicrobial resistance gene (0-100). Default: 80
+            "minid": 60 # Minimum proportion identical translated AA residues for considering an antimicrobial resistance gene (0-100). Default: 60
         }
     },
     "virulence_genes":{
-        "run_virulence_genes_prediction": True, #Set this to True or False if you want to search for virulence genes or not.
+        "run_virulence_genes_prediction": True, #Set this to True or False if you want to search for virulence genes or not. Default: True
         "virulence_genes_predictor_tool": ["abricate", "blast"], # Select as many tools as desired to identify virulence genes: abricate and/or blast. Keep in mind that abricate uses BLASTn and our BLAST against an inhouse database uses tBLASTn. Default: ["abricate", "blast"].
         "abricate": {
             "virulence_factors_databases": ["vfdb"], # Select as many databases as desired from ABRicate to identify virulence factors: vfdb or/and ecoli_vf. Remember, ABRicate uses blastn. Default: ["vfdb"]
-            "mincov": 80, # Minimum DNA % coverage for considering a virulence gene as present. Default: 90
-            "minid": 60 # Minimum DNA % identity for considering a virulence gene as present. Default: 90
+            "mincov": 80, # Minimum DNA % coverage for considering a virulence gene as present. Default: 80
+            "minid": 60 # Minimum DNA % identity for considering a virulence gene as present. Default: 60
         },
         "blast": {
             "proteins_reference_file": "reference_files/custom_VFDB.txt", # A FASTA database must be indicated if "predictor_tool" above is set to blast. You can modigy this inhouse database with any selected protein sequence you want to scan.
             "soft_masking": True, # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
             "presence_absence_matrix": { # Parameters for blast matrix construction
-                "mincov": 80, # Minimum % protein cover for considering a virulence gene as present. Default: 90
-                "minid": 60 # Minimum % protein identity for considering a virulence gene as present. Default: 90
+                "mincov": 80, # Minimum % protein cover for considering a virulence gene as present. Default: 80
+                "minid": 60 # Minimum % protein identity for considering a virulence gene as present. Default: 60
             }
         }
     },
@@ -71,16 +71,16 @@ config = {
         "run_plasmid_prediction": True, #Set this to True or False if you want to search for plasmids or not.
         "abricate": {
             "mincov": 80, # Minimum DNA % coverage for considering a plasmid as present. Default: 80
-            "minid": 60 # Minimum DNA % identity for considering a plasmid as present. Default: 80
+            "minid": 60 # Minimum DNA % identity for considering a plasmid as present. Default: 60
         }
     },
     "run_variant_calling": True, # Set this to True or False if you want to run the variant calling step
     "pangenome":{
-        "run_pangenome": True, # Set this to True or False if you want to run the pangenome construction step. Remember that "run_annotation" must be to True to allow the pangenome construction
+        "run_pangenome": True, # Set this to True or False if you want to run the pangenome construction step. Remember that "run_annotation" must be to True to allow the pangenome construction. Default: True
         "no_split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
         "minid": 95  # Minimum percentage identity for blastp (1-100). Default: 95
     },
     "summary_report":{
-        "include_reference": True, # Set this to True to include the reference genome in the summary report.
+        "include_reference": True, # Set this to True to include the reference genome in the summary report. Default: True
     }
 }
