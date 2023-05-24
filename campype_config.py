@@ -1,7 +1,6 @@
 config = {
     "output_directory": ".",    # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.)
     "custom_output_name": "", # Custom name for the output directory. Default (if this parameter is empty): "CamPype_OUTPUT_YYYYMMDD_HHMMSS"
-    "n_threads": None,   # Number of threads to use. Default: None (takes threads defined by default by each tool)
     "reference_genome": {   # OPTIONAL (if you don't want to use it, just leave every parameter empty)
         "file": "reference_files/NCTC11168.fasta",    # Required if you want to reorder genome contigs against a reference genome and search for SNPs
         "genus": "Campylobacter",   
