@@ -2056,7 +2056,7 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
     geom_tiplab(size=4,
                 align=FALSE,  #Align tree labels to the end of each leaf
                 linesize=0.5) + #line size of line if align = TRUE
-    geom_treescale(offset = -0.2) +
+    geom_treescale(offset = -0.3) +
     theme(plot.title = element_text(size = 12, hjust = 0.5, face = "bold")) +
     coord_cartesian(clip="off") #prevents labels from being clipped off
 }
@@ -2069,29 +2069,30 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
   #Foruth figure: pangenome with phylogenetic tree 
   cat("Binary heatmap shows the presence (dark grey) and absence (white) of genes. Phylogeny for each isolate is shown on the left and was constructed based on accesory genes from the pangenome.", "<br>")
   pangenome <- read_delim(file = "Roary_pangenome/gene_presence_absence.Rtab", delim = "\t", show_col_types = FALSE) %>%
-  mutate(across(where(is_character), as_factor)) %>%
+  mutate(across(where(is.character), as.factor)) %>%
   t(.)  %>%
   as.data.frame()
 
   names(pangenome) <- pangenome[1,]
   pangenome <- as.matrix(pangenome[-1,])
-  class(pangenome) <- "numeric"
 
   tree <- ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
   tree_graph <- ggtree(tree, size=1/5) + #Size refers to thickness of branches
     geom_tiplab(size=4,
                 align=FALSE,  #Align tree labels to the end of each leaf
                 linesize=0.5) + #line size of line if align = TRUE
-    geom_treescale(offset = -0.2)
-
-  phylo.heatmap(as.phylo(tree_graph),
-                pangenome,
-                colors=colorRampPalette(colors=c("white","grey"))(2),
-                labels=F,
-                pts=FALSE, #draw tip labs in tree
-                lwd=2, #thickness of lines in tree
-                split=c(0.5,1) #space for tree and matrix
-              )
+    geom_treescale(offset = -0.3)
+    
+    gheatmap(p = tree_graph, 
+           data = pangenome,
+           offset = 1.5, 
+           width = 10,
+           colnames = FALSE,
+           font.size = 10,
+           ) + 
+    scale_fill_manual(breaks=c("1", "0"),
+                      values=c("grey", "white")) +
+    theme(legend.position = 'none')
 }
 ```
 <br>
