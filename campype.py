@@ -172,7 +172,9 @@ def kraken_report_unification(kraken_reports, output_file):
         # Keep only the first row (the one with the highest percentage)
         sample_report_df = sample_report_df.head(1)
         # Add to combined report
-        combined_report_df = combined_report_df.append({"Sample": sample, "Species": sample_report_df["Scientific_name"].values[0], "Species_percentage": sample_report_df["Percentage"].values[0]}, ignore_index=True)
+        scientific_name = sample_report_df["Scientific_name"].values[0].strip() # Kraken uses spaces to represent the hierarchy so we need to strip them
+        species_percentage = sample_report_df["Percentage"].values[0]
+        combined_report_df = combined_report_df.append({"Sample": sample, "Species": scientific_name, "Species_percentage": species_percentage}, ignore_index=True)
     
     # Export report to tsv
     combined_report_df.to_csv(output_file, sep="\t", index=False, header=True)
@@ -1321,6 +1323,9 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
 
         # Get species information (header is included in the tsv)
         kraken_report_df = pd.read_csv(kraken_combined_report, sep="\t", header=0)
+        # Sample and Species columns are strings
+        kraken_report_df["Sample"] = kraken_report_df["Sample"].astype(str)
+        kraken_report_df["Species"] = kraken_report_df["Species"].astype(str)
 
     if amrfinder_matrix_file:
         amr_data = pd.read_csv(amrfinder_matrix_file, sep="\t", skipfooter=1, engine="python")
@@ -1393,7 +1398,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     species = kraken_report_df.loc[kraken_report_df["Sample"] == sample]["Species"].values[0]
                     
                     # "Species_percentage": Percentage of species.
-                    species_percentage = kraken_report_df.loc[kraken_report_df["Sample"] == sample]["Percentage"].values[0]
+                    species_percentage = kraken_report_df.loc[kraken_report_df["Sample"] == sample]["Species_percentage"].values[0]
             
 
             else:
@@ -2356,8 +2361,6 @@ if __name__ == "__main__":
                     if os.path.exists(fastqfile):
                         call(["gzip", fastqfile])
         
-
-
     # Gzip flash fastq files to reduce the output size
     for root, dirnames, filenames in os.walk(flash_dir, topdown=False):
         for dirname in dirnames:
