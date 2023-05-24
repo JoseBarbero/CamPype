@@ -39,7 +39,10 @@ if [ ${PIPESTATUS[0]} -eq 0 ]; then
         
         conda activate campype
 
-        rm $OUTDIR/campype_config.json
+        # rm $OUTDIR/campype_config.json
         
     fi
+else
+    # Remove fastq files from output directory in case of failure (if there are any)
+    rm $OUTDIR/*.fastq.gz
 fi
