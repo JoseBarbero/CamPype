@@ -496,9 +496,6 @@ def abricate_call(input_dir, output_dir, output_filename, database, mincov=False
             if filename.endswith(".fasta"):
                 input_filenames.append(input_dir+"/"+filename)
 
-    # Reference file
-    input_filenames.append(cfg.config["reference_genome"]["file"])
-
     arguments = ["abricate", *input_filenames, "--db", database]
     
     if mincov:
@@ -573,11 +570,10 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
 
 
 
-def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, ref_genome_basename, annotation_dir, gff_dir, genus, db_name, output_dir, threads=None):
+def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, annotation_dir, gff_dir, genus, db_name, output_dir, ref_genome_basename=None, threads=None):
     has_header = False
 
-    samples = samples_basenames.copy()
-    samples.append(ref_genome_basename)
+    samples = samples_basenames
 
     with open(amrfinder_out_file, "w") as global_file:
         for sample in samples:
@@ -955,7 +951,6 @@ def prokka_summary(prokka_files, output_file):
             row = {'Sample': prokka_file.split("/")[-1].split(".")[0]}
             for line in prokka_f.readlines():
                 row[line.split(":")[0]] = line[:-1].split(":")[1][1:]
-            print(row)
         summary_df = summary_df.append(row, ignore_index = True)
 
     # Export to tsv
@@ -1302,6 +1297,9 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     
     if cfg.config["MLST"]["run_mlst"]:
         mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
+        # Sample column (index) is a string
+        mlst_data.index = mlst_data.index.astype(str)
+
     if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
         vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
         vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
@@ -1549,18 +1547,22 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                 report_dict.update(virulence_dict)
 
 
-            if cfg.config["run_variant_calling"]:
+            if cfg.config["run_variant_calling"] and cfg.config["reference_genome"]["file"]:
                 #Snippy block 
                 if sample != reference_genome_basename:
                     snippy_data = pd.read_csv(snippy_summary, sep="\t", dtype={'Sample':str})
                     snippy_data.set_index("Sample", inplace=True)
                     df_3rd_column_block = [*snippy_data.columns]
                     report_dict.update(snippy_data.loc[sample].to_dict())
+            else:
+                df_3rd_column_block = None
 
 
             csv_report = csv_report.append(report_dict, ignore_index=True)
         
-    new_colums_order = [*df_1st_column_block, *df_2nd_column_block, "Total ("+str(total_occurrences)+")", *df_3rd_column_block]
+    new_colums_order = [*df_1st_column_block, *df_2nd_column_block, "Total ("+str(total_occurrences)+")"]
+    if df_3rd_column_block:
+        new_colums_order += df_3rd_column_block
     
     csv_report = csv_report.reindex(columns=new_colums_order)
     csv_report.to_csv(out_dir+"/campype_report.csv", sep="\t", index=False)
@@ -1720,8 +1722,8 @@ if __name__ == "__main__":
         else:
             if fasta_mode:
                 if not sample_fw.split(".")[-1] in ["fasta", "fa", "fna"]:
-                    print("WRONG INPUT FORMAT:", sample_fw)
-                    print("Input must be a valid fasta format file.")
+                    print("WRONG INPUT FORMAT:", sample_fw, flush=True)
+                    print("Input must be a valid fasta format file.", flush=True)
             
 
     # Reference file processing
@@ -1857,7 +1859,7 @@ if __name__ == "__main__":
                 
                 # Check if database exists
                 if not os.path.exists(kraken_db_file):
-                    print("ERROR: Kraken database file does not exist.")
+                    print("ERROR: Kraken database file does not exist.", flush=True)
                     sys.exit(1)
                 kraken_out_report_file = kraken_dir+"/"+sample_basename+".tab"
                 kraken_genus, kraken_species = kraken_call(db_file=kraken_db_file, 
@@ -1943,7 +1945,7 @@ if __name__ == "__main__":
                 
                 # Check if database exists
                 if not os.path.exists(kraken_db_file):
-                    print("ERROR: Kraken database file does not exist.")
+                    print("ERROR: Kraken database file does not exist.", flush=True)
                     sys.exit(1)
 
                 kraken_out_report_file = kraken_dir+"/"+sample_basename+".tab" 
@@ -1967,7 +1969,12 @@ if __name__ == "__main__":
             step_counter += 1
             draft_contigs_dir = mauve_dir
         else:
-            draft_contigs = contigs_dir+"/"+sample_basename+".fasta"
+            if fasta_mode:
+                draft_contigs = sample_contigs
+                # Copy contigs to contigs_dir
+                shutil.copyfile(draft_contigs, contigs_dir+"/"+sample_basename+".fasta")
+            else:
+                draft_contigs = contigs_dir+"/"+sample_basename+".fasta"
             draft_contigs_dir = contigs_dir
 
 
@@ -2036,21 +2043,25 @@ if __name__ == "__main__":
         
 
         if cfg.config["run_variant_calling"]:
-            # SNPs identification (SNIPPY)
             print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): SNIPPY\n"), flush=True)
-            step_counter += 1
-            reference_genome_filename = reference_genome_file.split("/")[-1]
-            reference_genome_basename = reference_genome_filename.split(".")[-2]
-            if cfg.config["reference_genome"]["proteins"]:
-                ref_genome = cfg.config["reference_genome"]["proteins"]
+            if reference_genome_file:
+                # SNPs identification (SNIPPY)
+                step_counter += 1
+                reference_genome_filename = reference_genome_file.split("/")[-1]
+                reference_genome_basename = reference_genome_filename.split(".")[-2]
+                if cfg.config["reference_genome"]["proteins"]:
+                    ref_genome = cfg.config["reference_genome"]["proteins"]
+                else:
+                    ref_genome = cfg.config["reference_genome"]["file"]
+                snippy_call(reference_genome=ref_genome,
+                            contigs=draft_contigs,
+                            output_dir=snps_dir+"/"+sample_basename,
+                            prefix=sample_basename,
+                            threads = n_threads)
+                snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
             else:
-                ref_genome = cfg.config["reference_genome"]["file"]
-            snippy_call(reference_genome=ref_genome,
-                        contigs=draft_contigs,
-                        output_dir=snps_dir+"/"+sample_basename,
-                        prefix=sample_basename,
-                        threads = n_threads)
-            snippy_output_files.append(snps_dir+"/"+sample_basename+"/"+sample_basename+".txt")
+                # We cannot run SNIPPY without a reference genome
+                print("ERROR: You must provide a reference genome to run SNIPPY.", flush=True)
 
     # Kraken combined report
     if cfg.config["species_identification"]:
@@ -2063,9 +2074,11 @@ if __name__ == "__main__":
         prokka_summary(prokka_summary_input_files, prokka_summary_outfile)
 
     # Snippy summary
-    if cfg.config["run_variant_calling"]:
+    if cfg.config["run_variant_calling"] and reference_genome_file:
         snippy_summary_outfile = snps_dir+"/Genomic_variants_summary.tsv"
         snippy_summary(snippy_output_files, snippy_summary_outfile)
+    else:
+        snippy_summary_outfile = None
 
     # Quast report unification
     quast_report_unification(assembly_dir, samples_basenames, assembly_dir)
@@ -2096,6 +2109,9 @@ if __name__ == "__main__":
                 step_counter += 1
                 vf_output_file = "Virulence_genes_ABRicate_"+vf_database+".tsv"
                 vf_matrix_file = "Virulence_genes_ABRicate_"+vf_database+"_matrix.tsv"
+                abricate_samples_basenames = samples_basenames
+                if cfg.config["reference_genome"]["strain"]:
+                    abricate_samples_basenames.append(cfg.config["reference_genome"]["strain"])        
                 abricate_call(input_dir=draft_contigs_dir,
                             output_dir=vir_dir,
                             output_filename=vf_output_file,
@@ -2103,7 +2119,7 @@ if __name__ == "__main__":
                             mincov=cfg.config["virulence_genes"]["abricate"]["mincov"],
                             minid=cfg.config["virulence_genes"]["abricate"]["minid"],
                             gene_matrix_file=vf_matrix_file,
-                            samples=samples_basenames+[cfg.config["reference_genome"]["strain"]],
+                            samples=abricate_samples_basenames,
                             threads = n_threads)
                 
                 # Concatenate every ABRicate output in a single file
@@ -2138,8 +2154,8 @@ if __name__ == "__main__":
         if "blast" in cfg.config["virulence_genes"]["virulence_genes_predictor_tool"]:
             print(Banner(f"\nStep {step_counter}: Virulence genes (BLAST against inhouse database)\n"), flush=True)
             step_counter += 1
-            contig_files = ([os.path.join(draft_contigs_dir, f) for f in os.listdir(draft_contigs_dir)])
-            contig_files.append(cfg.config["reference_genome"]["file"])
+            # Every fasta file in draft_contigs_dir is a sample
+            contig_files = ([os.path.join(draft_contigs_dir, f) for f in os.listdir(draft_contigs_dir) if f.endswith(".fasta")])
 
             blast_output_name = "BLAST_inhouse_VFDB.txt"
             proteins_file = cfg.config["virulence_genes"]["blast"]["proteins_reference_file"]
@@ -2150,9 +2166,16 @@ if __name__ == "__main__":
             if not os.path.exists(dna_database_blast):
                 os.mkdir(dna_database_blast)
 
+            blast_contigs_files_paths = contig_files
+            blast_samples_basenames = samples_basenames
+            if cfg.config["reference_genome"]["file"]:
+                ref_genome = cfg.config["reference_genome"]["file"]
+                blast_contigs_files_paths.append(ref_genome)
+                blast_samples_basenames.append(reference_genome_basename)
+
             blast_call( proteins_file_ori=proteins_file, 
                         proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
-                        contigs_files_paths=contig_files+[ref_genome], 
+                        contigs_files_paths=blast_contigs_files_paths, 
                         blast_database_output=dna_database_blast+"/DNA_database.fna", 
                         blast_output_folder=blast_proteins_dir,
                         blast_output_name=blast_output_name,
@@ -2160,7 +2183,7 @@ if __name__ == "__main__":
             blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
                                 database_file=blast_proteins_dir+"/"+proteins_database_name,
                                 output_folder=blast_proteins_dir,
-                                samples=samples_basenames+[reference_genome_basename])
+                                samples=blast_samples_basenames)
 
             
     # ABRicate call (Plasmids)
@@ -2170,6 +2193,9 @@ if __name__ == "__main__":
         plasmids_matrix_file = "Plasmids_ABRicate_plasmidfinder_matrix.tsv"
         print(Banner(f"\nStep {step_counter}: Plasmids (ABRicate: "+plasmids_database+")\n"), flush=True)
         step_counter += 1
+        abricate_samples_basenames = samples_basenames
+        if cfg.config["reference_genome"]["strain"]:
+            abricate_samples_basenames.append(cfg.config["reference_genome"]["strain"])
         abricate_call(input_dir=draft_contigs_dir,
                     output_dir=plasmid_dir,
                     output_filename=plasmids_output_file,
@@ -2177,7 +2203,7 @@ if __name__ == "__main__":
                     mincov=cfg.config["plasmids"]["abricate"]["mincov"],
                     minid=cfg.config["plasmids"]["abricate"]["minid"],
                     gene_matrix_file=plasmids_matrix_file,
-                    samples=samples_basenames+[cfg.config["reference_genome"]["strain"]],
+                    samples=abricate_samples_basenames,
                     threads = n_threads)
 
         # Delete plasmids_matrix_file if it contains only one line
@@ -2207,6 +2233,8 @@ if __name__ == "__main__":
                 step_counter += 1
                 amr_output_file = "AMR_ABRicate_"+amr_db+".tsv"
                 amr_matrix_file = "AMR_genes_ABRicate_"+amr_db+"_matrix.tsv"
+                if cfg.config["reference_genome"]["strain"]:
+                    abricate_samples_basenames.append(cfg.config["reference_genome"]["strain"])
                 abricate_call(input_dir=draft_contigs_dir, 
                             output_dir=amr_analysis_dir_abr,
                             output_filename=amr_output_file,
@@ -2214,7 +2242,7 @@ if __name__ == "__main__":
                             mincov=cfg.config["antimicrobial_resistance_genes"]["abricate"]["mincov"],
                             minid=cfg.config["antimicrobial_resistance_genes"]["abricate"]["minid"],
                             gene_matrix_file=amr_matrix_file,
-                            samples=samples_basenames+[cfg.config["reference_genome"]["strain"]],
+                            samples=abricate_samples_basenames,
                             threads = n_threads)
 
                 # Concatenate every ABRicate output in a single file
@@ -2253,21 +2281,26 @@ if __name__ == "__main__":
             elif annotator == "dfast":
                 gff_dir = dfast_refactor_dir
             else:
-                print("Specified annotator("+annotator+") is not valid.")
+                print("Specified annotator("+annotator+") is not valid.", flush=True)
 
             amrfinder_out_file = amr_analysis_dir_amrfinder+"/AMR_AMRFinder.tsv"
             amrfinder_resume_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
             amrfinder_point_mutations_file = amr_analysis_dir_amrfinder+"/AMR_point_mutations_AMRFinder_matrix.tsv"
 
-            amrfinder_call(amrfinder_out_file, amrfinder_resume_file, samples_basenames, reference_genome_basename, 
+            amrfinder_samples = samples_basenames
+            if cfg.config["reference_genome"]["file"]:
+                amrfinder_samples.append(reference_genome_basename)
+            else:
+                reference_genome_basename = None
+            amrfinder_call(amrfinder_out_file, amrfinder_resume_file, samples_basenames, 
                            annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder,
+                           ref_genome_basename=reference_genome_basename,
                            threads = n_threads)
             amrfinder_get_point_mutations(amrfinder_out_file, amrfinder_point_mutations_file)
 
     # Roary call
     if cfg.config["pangenome"]["run_pangenome"]:
         print(Banner(f"\nStep {step_counter}: Roary\n"), flush=True)
-        print("Roary input files:", roary_input_files)
         step_counter += 1
         roary_call(input_files=roary_input_files, output_dir=roary_dir, 
                    campype_output_folder=output_folder, threads = n_threads)
@@ -2289,7 +2322,7 @@ if __name__ == "__main__":
             if "amrfinder" in cfg.config["antimicrobial_resistance_genes"]["antimicrobial_resistance_genes_predictor_tool"]:
                 amrfinder_matrix_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
     
-    if cfg.config["summary_report"]["include_reference"]:
+    if cfg.config["summary_report"]["include_reference"] or not cfg.config["reference_genome"]["file"]:
         generate_report(samples_basenames,
                         prinseq_dir,
                         assembly_dir,
