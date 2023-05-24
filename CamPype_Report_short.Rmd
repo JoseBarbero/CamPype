@@ -1728,7 +1728,7 @@ if(wombat_config_json$pangenome$run_pangenome == TRUE) {
                 linesize=0.5) + #line size of line if align = TRUE
     geom_treescale(offset = -0.3)
 
-    gheatmap(p = tree_graph, 
+  gheatmap(p = tree_graph, 
            data = pangenome,
            offset = 1.5, 
            width = 10,
