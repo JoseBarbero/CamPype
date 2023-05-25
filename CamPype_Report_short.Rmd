@@ -1792,10 +1792,6 @@ Following packages and tools were used in CamPype:
 
 | Package/Tool             | Reference   | 
 |--------------------------|-------------|
-| Trimmomatic v0.39        | [A.M. Bolger et al., 2014](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4103590/)   |
-| Prinseq v0.20.4          | [R. Schmieder and R. Edwards, 2011](https://www.ncbi.nlm.nih.gov/pubmed/21278185)   |
-| FLASH v1.2.11            | [T. Magoc and S. Salzberg, 2011](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3198573/) |
-| SPAdes v3.14.0           | [A. Bankevich et al., 2012](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3342519/) |
 | QUAST v5.0.2             | [A. Gurevich et al., 2013](https://www.ncbi.nlm.nih.gov/pubmed/23422339) |
 | progressiveMauve v2.4.0  | [A.E. Darling et al., 2010](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0011147)
 | mlst v2.17.6             | [T. Seemann](https://github.com/tseemann/mlst) |
