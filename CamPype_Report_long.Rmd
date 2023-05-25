@@ -1274,7 +1274,11 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                                       which = "row",
                                                                       simple_anno_size = unit(4, "mm"),
                                                                       annotation_name_side = "bottom",
-                                                                      gap = unit(0.5, 'mm'))
+                                                                      gap = unit(0.5, 'mm')),
+                                  heatmap_legend_param = list(at = c(1), 
+                                                         labels = c("Presence"),
+                                                         title = " ",
+                                                         color_bar = "discrete")
                           )
        } else { # 1 and 0 values
           pmut_heatmap <- Heatmap(pmut_heatmap,
@@ -1325,7 +1329,11 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                                       which = "row",
                                                                       simple_anno_size = unit(4, "mm"),
                                                                       annotation_name_side = "bottom",
-                                                                      gap = unit(0.5, 'mm'))
+                                                                      gap = unit(0.5, 'mm')),
+                                  heatmap_legend_param = list(at = c(1), 
+                                                         labels = c("Presence"),
+                                                         title = " ",
+                                                         color_bar = "discrete")
                           )
        } else { # 1 and 0 values
           pmut_heatmap <- Heatmap(pmut_heatmap,
@@ -1368,7 +1376,12 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                                      which = "col",
                                                                      simple_anno_size = unit(4, "mm"),
                                                                      annotation_name_side = "left",
-                                                                     gap = unit(1, 'mm')))
+                                                                     gap = unit(1, 'mm')),
+                                  heatmap_legend_param = list(at = c(1), 
+                                                         labels = c("Presence"),
+                                                         title = " ",
+                                                         color_bar = "discrete")
+                          )
        } else { # 1 and 0 values
           pmut_heatmap <- Heatmap(pmut_heatmap,
                           name = " ",
@@ -1541,7 +1554,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
         select(c("RESISTANCE")) %>%
         as.data.frame
       
-      if(DBs[i] == "card" | DBs[i] == "ncbi"){
+      if(DBs[i] == "card" | DBs[i] == "ncbi") {
         top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
                                                     which = "col", 
                                                     simple_anno_size = unit(4, "mm"), 
@@ -1569,7 +1582,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
           Anti_Res_Genes_matrix$Sample <- NULL
           
-          if(DBs[i] == "card" | DBs[i] == "ncbi"){
+          if(DBs[i] == "card" | DBs[i] == "ncbi") {
             top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
                                                        which = "col", 
                                                        simple_anno_size = unit(4, "mm"), 
@@ -1579,80 +1592,152 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
             top_annotation = NULL
           }
           
-          draw(
-            Heatmap(Anti_Res_Genes_matrix, 
-                    width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                    height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
-                    column_title = paste("Database = ", DBs[i], sep = ""),
-                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                    cluster_rows = FALSE,
-                    cluster_columns = FALSE,
-                    top_annotation = top_annotation, 
-                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                        which = "row",
-                                                        simple_anno_size = unit(4, "mm"),
-                                                        annotation_name_side = "bottom",
-                                                        gap = unit(0.5, 'mm')),
-                    heatmap_legend_param = list(at = c(1, 0), 
-                                                labels = c("Presence", "Absence"),
-                                                title = " ",
-                                                color_bar = "discrete")
-          ))
+          if (all(Anti_Res_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
+            draw(
+              Heatmap(as.matrix(Anti_Res_Genes_matrix), 
+                      width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                      height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+                      column_title = paste("Database = ", DBs[i], sep = ""),
+                      col = "#63BE7B",
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      top_annotation = top_annotation, 
+                      left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                          which = "row",
+                                                          simple_anno_size = unit(4, "mm"),
+                                                          annotation_name_side = "bottom",
+                                                          gap = unit(0.5, 'mm'))
+                      heatmap_legend_param = list(at = c(1), 
+                                                  labels = c("Presence"),
+                                                  title = " ",
+                                                  color_bar = "discrete"))
+            )
+          } else { # 1 and 0 values
+            draw(
+              Heatmap(as.matrix(Anti_Res_Genes_matrix), 
+                      width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                      height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+                      column_title = paste("Database = ", DBs[i], sep = ""),
+                      col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      top_annotation = top_annotation, 
+                      left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                          which = "row",
+                                                          simple_anno_size = unit(4, "mm"),
+                                                          annotation_name_side = "bottom",
+                                                          gap = unit(0.5, 'mm')),
+                      heatmap_legend_param = list(at = c(1, 0), 
+                                             labels = c("Presence", "Absence"),
+                                             title = " ",
+                                             color_bar = "discrete"))
+            )
+          } 
+          
         } else { 
           Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
-        Anti_Res_Genes_matrix <- tibble::rownames_to_column(Anti_Res_Genes_matrix, "Sample")
+          Anti_Res_Genes_matrix <- tibble::rownames_to_column(Anti_Res_Genes_matrix, "Sample")
         
-        Anti_Res_Genes_matrix_mlst <- Anti_Res_Genes_matrix  %>% 
-          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+          Anti_Res_Genes_matrix_mlst <- Anti_Res_Genes_matrix  %>% 
+            left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
 
-        mlst_annotation <- Anti_Res_Genes_matrix_mlst %>% 
-          select(., ST) %>%
-          mutate(across(c(ST),
-                        factor))  %>%
-          as.data.frame
+          mlst_annotation <- Anti_Res_Genes_matrix_mlst %>% 
+            select(., ST) %>%
+            mutate(across(c(ST),
+                          factor))  %>%
+            as.data.frame
         
-        Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
+          Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
           rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
           Anti_Res_Genes_matrix$Sample <- NULL
 
-          draw(
-            Heatmap(Anti_Res_Genes_matrix, 
-                    width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                    height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
-                    column_title = paste("Database = ", DBs[i], sep = ""),
-                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                    cluster_rows = FALSE,
-                    cluster_columns = FALSE,
-                    top_annotation = top_annotation, 
-                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                        which = "row",
-                                                        simple_anno_size = unit(4, "mm"),
-                                                        annotation_name_side = "bottom",
-                                                        gap = unit(0.5, 'mm')),
-                    heatmap_legend_param = list(at = c(1, 0), 
-                                                labels = c("Presence", "Absence"),
-                                                title = " ",
-                                                color_bar = "discrete")
-            ))
+          if (all(Anti_Res_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
+             draw(
+                Heatmap(as.matrix(Anti_Res_Genes_matrix), 
+                        width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                        height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+                        column_title = paste("Database = ", DBs[i], sep = ""),
+                        col = "#63BE7B",
+                        cluster_rows = FALSE,
+                        cluster_columns = FALSE,
+                        top_annotation = top_annotation, 
+                        left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                            which = "row",
+                                                            simple_anno_size = unit(4, "mm"),
+                                                            annotation_name_side = "bottom",
+                                                            gap = unit(0.5, 'mm'))
+                         heatmap_legend_param = list(at = c(1), 
+                                                     labels = c("Presence"),
+                                                     title = " ",
+                                                     color_bar = "discrete"))
+              )
+          } else { # 1 and 0 values
+            draw(
+                Heatmap(as.matrix(Anti_Res_Genes_matrix), 
+                        width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                        height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+                        column_title = paste("Database = ", DBs[i], sep = ""),
+                        col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                        cluster_rows = FALSE,
+                        cluster_columns = FALSE,
+                        top_annotation = top_annotation, 
+                        left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                            which = "row",
+                                                            simple_anno_size = unit(4, "mm"),
+                                                            annotation_name_side = "bottom",
+                                                            gap = unit(0.5, 'mm')),
+                        heatmap_legend_param = list(at = c(1, 0), 
+                                               labels = c("Presence", "Absence"),
+                                               title = " ",
+                                               color_bar = "discrete"))
+              )
+          }
+
+        } else {
+          if (all(Anti_Res_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
+            draw(
+              Heatmap(as.matrix(Anti_Res_Genes_matrix), 
+                      width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                      height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+                      column_title = paste("Database = ", DBs[i], sep = ""),
+                      col = "#63BE7B",
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      top_annotation = top_annotation, 
+                      left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                          which = "row",
+                                                          simple_anno_size = unit(4, "mm"),
+                                                          annotation_name_side = "bottom",
+                                                          gap = unit(0.5, 'mm'))
+                       heatmap_legend_param = list(at = c(1), 
+                                                   labels = c("Presence"),
+                                                   title = " ",
+                                                   color_bar = "discrete"))
+            )
+          } else { # 1 and 0 values
+            draw(
+              Heatmap(as.matrix(Anti_Res_Genes_matrix), 
+                      width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
+                      height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+                      column_title = paste("Database = ", DBs[i], sep = ""),
+                      col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                      cluster_rows = FALSE,
+                      cluster_columns = FALSE,
+                      top_annotation = top_annotation, 
+                      left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                          which = "row",
+                                                          simple_anno_size = unit(4, "mm"),
+                                                          annotation_name_side = "bottom",
+                                                          gap = unit(0.5, 'mm')),
+                      heatmap_legend_param = list(at = c(1, 0), 
+                                             labels = c("Presence", "Absence"),
+                                             title = " ",
+                                             color_bar = "discrete"))
+            )
+          }
         }
-      } else {
-        draw(
-          Heatmap(Anti_Res_Genes_matrix,
-                  width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                  height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),                  
-                  column_title = paste("Database = ", DBs[i], sep = ""),
-                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                  cluster_rows = FALSE,
-                  cluster_columns = FALSE,
-                  top_annotation = top_annotation, 
-                  heatmap_legend_param = list(at = c(1, 0), 
-                                              labels = c("Presence", "Absence"),
-                                              title = " ",
-                                              color_bar = "discrete")
-          )
-        )
+        cat(' \n \n')
       }
-      cat(' \n \n')
     }
   }
 }
@@ -2145,7 +2230,7 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
            font.size = 10,
            ) + 
     scale_fill_manual(breaks=c("1", "0"),
-                      values=c("grey", "white")) +
+                      values=c("darkgrey", "white")) +
     theme(legend.position = 'none')
 }
 ```
