@@ -48,7 +48,7 @@ IMPORTANT. After installing or updating CamPype, we recommend you to update the 
     
 1. Set your own running parameters and tools to run in "workflow_config.py" file. 
 
-1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. I you want to use a different bacteria, we recommend you to deactivate the option ```include_cc``` and use abricate for virulence genes searching or use your own database with BLAST instead.
+1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. If you want to use a different bacteria, we recommend you to deactivate the option ```include_cc``` and use abricate for virulence genes searching or use your own database with BLAST instead.
 
 
 ## Running the workflow
@@ -104,6 +104,10 @@ You should answer YES to the first question (Are you sure you want to remove you
 
 ## How to uninstall CamPype (Linux)
 
+1. Go to CamPype's directory
+    ```bash
+    $ cd your/path/to/CamPype
+    ```
 1. Make sure you are not in CamPype conda environment
     ```bash
     $ conda deactivate
