@@ -2294,7 +2294,7 @@ if __name__ == "__main__":
                 amrfinder_samples.append(reference_genome_basename)
             else:
                 reference_genome_basename = None
-            amrfinder_call(amrfinder_out_file, amrfinder_resume_file, samples_basenames, 
+            amrfinder_call(amrfinder_out_file, amrfinder_resume_file, amrfinder_samples, 
                            annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder,
                            ref_genome_basename=reference_genome_basename,
                            threads = n_threads)
