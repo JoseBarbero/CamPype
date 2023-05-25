@@ -1798,19 +1798,21 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
 ## Genomic variants {#variants}
 <br>
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
-if(campype_config_json$MLST$run_mlst == TRUE) {
-  cat("Following table shows genomic variants in each draft genome against the reference genome you indicated using [Snippy](https://github.com/tseemann/snippy).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
-  Genomic_variants <- 
-    read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
-    relocate(Sample) %>%
-    mutate(Sample = as.factor(Sample)) %>%
-    left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
-} else {
-  Genomic_variants <- 
-    read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
-    relocate(Sample)
+if (campype_config_json$reference_genome$file != "" & campype_config_json$run_variant_calling == TRUE) {
+  if(campype_config_json$MLST$run_mlst == TRUE) {
+    cat("Following table shows genomic variants in each draft genome against the reference genome you indicated using [Snippy](https://github.com/tseemann/snippy).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
+    Genomic_variants <- 
+      read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
+      relocate(Sample) %>%
+      mutate(Sample = as.factor(Sample)) %>%
+      left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+  } else {
+    Genomic_variants <- 
+      read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
+      relocate(Sample)
+  }
+  Create_DT(x = Genomic_variants, filter = "top", caption = '')
 }
-Create_DT(x = Genomic_variants, filter = "top", caption = '')
 ```
 <br>
 
