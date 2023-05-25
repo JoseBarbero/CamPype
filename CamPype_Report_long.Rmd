@@ -1366,11 +1366,6 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                                      simple_anno_size = unit(4, "mm"),
                                                                      annotation_name_side = "left",
                                                                      gap = unit(1, 'mm')),
-                                  left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                                      which = "row",
-                                                                      simple_anno_size = unit(4, "mm"),
-                                                                      annotation_name_side = "bottom",
-                                                                      gap = unit(0.5, 'mm')),
                                   heatmap_legend_param = list(at = c(1, 0), 
                                                               labels = c("Presence", "Absence "),
                                                               title = " ",
@@ -1385,12 +1380,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                                        which = "col",
                                                                        simple_anno_size = unit(4, "mm"),
                                                                        annotation_name_side = "left",
-                                                                       gap = unit(1, 'mm')),
-                                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                                        which = "row",
-                                                                        simple_anno_size = unit(4, "mm"),
-                                                                        annotation_name_side = "bottom",
-                                                                        gap = unit(0.5, 'mm')))
+                                                                       gap = unit(1, 'mm')))
           }
       }
     pmut_heatmap
