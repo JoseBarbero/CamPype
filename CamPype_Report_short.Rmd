@@ -1484,90 +1484,145 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
           rownames(Virulence_Genes_matrix) <- Virulence_Genes_matrix$Sample
           Virulence_Genes_matrix$Sample <- NULL
         
-          draw(
-            Heatmap(Virulence_Genes_matrix, 
-                    width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                    height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
-                    column_title = paste("Database = ", DBs[i], sep = ""),
-                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                    cluster_rows = FALSE,
-                    cluster_columns = FALSE,
-                    top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                       which = "col", 
-                                                       simple_anno_size = unit(4, "mm"), 
-                                                       annotation_name_side = "left", 
-                                                       gap = unit(1, 'mm')), 
-                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                        which = "row",
-                                                        simple_anno_size = unit(4, "mm"),
-                                                        annotation_name_side = "bottom",
-                                                        gap = unit(0.5, 'mm')),
-                    heatmap_legend_param = list(at = c(1, 0), 
-                                                labels = c("Presence", "Absence"),
-                                                title = " ",
-                                                color_bar = "discrete")
-          ))
+          if (all(Virulence_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
+             draw(
+                Heatmap(Virulence_Genes_matrix, 
+                        width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                        height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                        column_title = paste("Database = ", DBs[i], sep = ""),
+                        col = "#63BE7B",
+                        cluster_rows = FALSE,
+                        cluster_columns = FALSE,
+                        left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                            which = "row",
+                                                            simple_anno_size = unit(4, "mm"),
+                                                            annotation_name_side = "bottom",
+                                                            gap = unit(0.5, 'mm')),
+                        heatmap_legend_param = list(at = c(1), 
+                                               labels = c("Presence"),
+                                               title = " ",
+                                               color_bar = "discrete")
+             ))  
+          } else { # 1 and 0 values
+            draw(
+                Heatmap(Virulence_Genes_matrix, 
+                       width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                       height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                       column_title = paste("Database = ", DBs[i], sep = ""),
+                       col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                       cluster_rows = FALSE,
+                       cluster_columns = FALSE,
+                       left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                           which = "row",
+                                                           simple_anno_size = unit(4, "mm"),
+                                                           annotation_name_side = "bottom",
+                                                           gap = unit(0.5, 'mm')),
+                       heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete")
+            ))
+          }
+          
         } else{
           Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
-        Virulence_Genes_matrix <- tibble::rownames_to_column(Virulence_Genes_matrix, "Sample")
+          Virulence_Genes_matrix <- tibble::rownames_to_column(Virulence_Genes_matrix, "Sample")
         
-        Virulence_Genes_matrix_mlst <- Virulence_Genes_matrix  %>% 
-          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+          Virulence_Genes_matrix_mlst <- Virulence_Genes_matrix  %>% 
+            left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
 
-        mlst_annotation <- Virulence_Genes_matrix_mlst %>% 
-          select(., ST) %>%
-          mutate(across(c(ST),
-                        factor))  %>%
-          as.data.frame
+          mlst_annotation <- Virulence_Genes_matrix_mlst %>% 
+            select(., ST) %>%
+            mutate(across(c(ST),
+                          factor))  %>%
+            as.data.frame
         
-        Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
+          Virulence_Genes_matrix <- as.data.frame(Virulence_Genes_matrix)
           rownames(Virulence_Genes_matrix) <- Virulence_Genes_matrix$Sample
           Virulence_Genes_matrix$Sample <- NULL
         
-          draw(
-            Heatmap(Virulence_Genes_matrix, 
-                    width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                    height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
-                    column_title = paste("Database = ", DBs[i], sep = ""),
-                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                    cluster_rows = FALSE,
-                    cluster_columns = FALSE,
-                    top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                       which = "col", 
-                                                       simple_anno_size = unit(4, "mm"), 
-                                                       annotation_name_side = "left", 
-                                                       gap = unit(1, 'mm')), 
-                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                        which = "row",
-                                                        simple_anno_size = unit(4, "mm"),
-                                                        annotation_name_side = "bottom",
-                                                        gap = unit(0.5, 'mm')),
-                    heatmap_legend_param = list(at = c(1, 0), 
-                                                labels = c("Presence", "Absence"),
-                                                title = " ",
-                                                color_bar = "discrete")
-            )
-          )
+          if (all(Virulence_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
+             draw(
+                Heatmap(Virulence_Genes_matrix, 
+                        width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                        height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                        column_title = paste("Database = ", DBs[i], sep = ""),
+                        col = "#63BE7B",
+                        cluster_rows = FALSE,
+                        cluster_columns = FALSE,
+                        left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                            which = "row",
+                                                            simple_anno_size = unit(4, "mm"),
+                                                            annotation_name_side = "bottom",
+                                                            gap = unit(0.5, 'mm')),
+                        heatmap_legend_param = list(at = c(1), 
+                                               labels = c("Presence"),
+                                               title = " ",
+                                               color_bar = "discrete")
+             ))  
+          } else { # 1 and 0 values
+            draw(
+                Heatmap(Virulence_Genes_matrix, 
+                       width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                       height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                       column_title = paste("Database = ", DBs[i], sep = ""),
+                       col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                       cluster_rows = FALSE,
+                       cluster_columns = FALSE,
+                       left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                           which = "row",
+                                                           simple_anno_size = unit(4, "mm"),
+                                                           annotation_name_side = "bottom",
+                                                           gap = unit(0.5, 'mm')),
+                       heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete")
+            ))
+          }
+          
         }           
       } else {
-        draw(
-          Heatmap(Virulence_Genes_matrix,
-                  width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                  height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),                  
-                  column_title = paste("Database = ", DBs[i], sep = ""),
-                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                  cluster_rows = FALSE,
-                  cluster_columns = FALSE,
-                  top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                     which = "col", 
-                                                     simple_anno_size = unit(4, "mm"), 
-                                                     annotation_name_side = "left", 
-                                                     gap = unit(1, 'mm')), 
-                  heatmap_legend_param = list(at = c(1, 0), 
+        if (all(Virulence_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
+           draw(
+                Heatmap(Virulence_Genes_matrix, 
+                        width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                        height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                        column_title = paste("Database = ", DBs[i], sep = ""),
+                        col = "#63BE7B",
+                        cluster_rows = FALSE,
+                        cluster_columns = FALSE,
+                        left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                            which = "row",
+                                                            simple_anno_size = unit(4, "mm"),
+                                                            annotation_name_side = "bottom",
+                                                            gap = unit(0.5, 'mm')),
+                        heatmap_legend_param = list(at = c(1), 
+                                               labels = c("Presence"),
+                                               title = " ",
+                                               color_bar = "discrete")
+             ))  
+        } else { # 1 and 0 values
+          draw(
+                Heatmap(Virulence_Genes_matrix, 
+                       width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
+                       height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+                       column_title = paste("Database = ", DBs[i], sep = ""),
+                       col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                       cluster_rows = FALSE,
+                       cluster_columns = FALSE,
+                       left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                           which = "row",
+                                                           simple_anno_size = unit(4, "mm"),
+                                                           annotation_name_side = "bottom",
+                                                           gap = unit(0.5, 'mm')),
+                       heatmap_legend_param = list(at = c(1, 0), 
                                               labels = c("Presence", "Absence"),
                                               title = " ",
                                               color_bar = "discrete")
           ))
+        }
+          
       }
       cat(' \n \n')
     }
