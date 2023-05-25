@@ -1823,8 +1823,8 @@ cat("Following table shows summary information for each draft genome.", "  \n", 
 summary_draft_genome <- 
   read_tsv(file = "campype_report.csv", show_col_types = FALSE) %>% 
   relocate(Sample) %>% 
-  rename(`Clonal Complex` = clonal_complex) %>%
-  rename(`Species percentage` = Species_percentage) %>% 
+  rename(`Clonal Complex` =  any_of("clonal_complex")) %>%
+  rename(`Species percentage` = any_of("Species_percentage")) %>% 
   mutate(across(where(is_character), as_factor))
 
 Create_DT(x = summary_draft_genome, filter = "top", caption = '')
