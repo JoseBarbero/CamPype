@@ -2145,8 +2145,8 @@ Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. __CamPype__ (2022). Avail
 
 Following packages and tools were used in CamPype:
 
-| Package/Tool      | Reference   | 
-|-------------------|-------------|
+| Package/Tool             | Reference   | 
+|--------------------------|-------------|
 | Trimmomatic v0.39        | [A.M. Bolger et al., 2014](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4103590/)   |
 | Prinseq v0.20.4          | [R. Schmieder and R. Edwards, 2011](https://www.ncbi.nlm.nih.gov/pubmed/21278185)   |
 | FLASH v1.2.11            | [T. Magoc and S. Salzberg, 2011](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3198573/) |
