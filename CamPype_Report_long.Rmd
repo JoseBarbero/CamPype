@@ -82,7 +82,7 @@ Create_DT <- function(x, caption = caption, filter = "none"){
 ### Before QC
 Following tables show, by sample, the number, mean length and length standard deviation of R1 and R2 reads.
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(campype_config_json$trim_adaptors == TRUE) {
+if(campype_config_json$trim_adaptors$run_trim_adaptors == TRUE) {
   BeforeQC <- 
   read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_beforeQC.tsv") %>% 
   mutate(Sample = factor(Sample))
@@ -180,7 +180,7 @@ if(campype_config_json$trim_adaptors$run_trim_adaptors == TRUE) {
 
 Following tables show, by sample, the number, mean length and length standard deviation of R1 and R2 reads.
 ```{r warning=FALSE, message=FALSE, echo=FALSE}
-if(campype_config_json$trim_adaptors == TRUE) {
+if(campype_config_json$trim_adaptors$run_trim_adaptors == TRUE) {
   AfterQC <- 
   read_tsv(file = "Trimmomatic_and_Prinseq_filtering/reads_statistics_afterQC.tsv") %>% 
   mutate(Sample = factor(Sample))
