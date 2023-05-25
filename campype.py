@@ -824,6 +824,8 @@ def blast_postprocessing(blast_file, database_file, output_folder, samples):
 
     # Sort rows
     blast_output = blast_output.sort_values(by=["Protein type", "Protein", "Sample"])
+    # Sample column must be a string
+    blast_output["Sample"] = blast_output["Sample"].astype(str)
 
     # Export to tsv
     blast_output.to_csv(output_folder+"/Virulence_genes_BLAST_processed.tsv", sep="\t",index=False)    
@@ -860,7 +862,6 @@ def get_presence_absence_matrix(samples, genes_type, blast_df, p_a_matrix_file):
                 new_row[sample] = 0
         gene_presence_absence = gene_presence_absence.append(new_row, ignore_index=True)
     
-
     # capA special distinction (the protein is split in two fragments)
     capA_row = {"Protein": "capA", "Type": genes_type["capA_ORF1"].lower()}
     orf1_df = gene_presence_absence[gene_presence_absence["Protein"] == "capA_ORF1"]
@@ -2109,7 +2110,7 @@ if __name__ == "__main__":
                 step_counter += 1
                 vf_output_file = "Virulence_genes_ABRicate_"+vf_database+".tsv"
                 vf_matrix_file = "Virulence_genes_ABRicate_"+vf_database+"_matrix.tsv"
-                abricate_samples_basenames = samples_basenames
+                abricate_samples_basenames = samples_basenames.copy()
                 if cfg.config["reference_genome"]["strain"]:
                     abricate_samples_basenames.append(cfg.config["reference_genome"]["strain"])        
                 abricate_call(input_dir=draft_contigs_dir,
@@ -2166,8 +2167,8 @@ if __name__ == "__main__":
             if not os.path.exists(dna_database_blast):
                 os.mkdir(dna_database_blast)
 
-            blast_contigs_files_paths = contig_files
-            blast_samples_basenames = samples_basenames
+            blast_contigs_files_paths = contig_files.copy()
+            blast_samples_basenames = samples_basenames.copy()
             if cfg.config["reference_genome"]["file"]:
                 ref_genome = cfg.config["reference_genome"]["file"]
                 blast_contigs_files_paths.append(ref_genome)
@@ -2193,7 +2194,7 @@ if __name__ == "__main__":
         plasmids_matrix_file = "Plasmids_ABRicate_plasmidfinder_matrix.tsv"
         print(Banner(f"\nStep {step_counter}: Plasmids (ABRicate: "+plasmids_database+")\n"), flush=True)
         step_counter += 1
-        abricate_samples_basenames = samples_basenames
+        abricate_samples_basenames = samples_basenames.copy()
         if cfg.config["reference_genome"]["strain"]:
             abricate_samples_basenames.append(cfg.config["reference_genome"]["strain"])
         abricate_call(input_dir=draft_contigs_dir,
@@ -2233,6 +2234,7 @@ if __name__ == "__main__":
                 step_counter += 1
                 amr_output_file = "AMR_ABRicate_"+amr_db+".tsv"
                 amr_matrix_file = "AMR_genes_ABRicate_"+amr_db+"_matrix.tsv"
+                abricate_samples_basenames = samples_basenames.copy()
                 if cfg.config["reference_genome"]["strain"]:
                     abricate_samples_basenames.append(cfg.config["reference_genome"]["strain"])
                 abricate_call(input_dir=draft_contigs_dir, 
@@ -2287,7 +2289,7 @@ if __name__ == "__main__":
             amrfinder_resume_file = amr_analysis_dir_amrfinder+"/AMR_genes_AMRFinder_matrix.tsv"
             amrfinder_point_mutations_file = amr_analysis_dir_amrfinder+"/AMR_point_mutations_AMRFinder_matrix.tsv"
 
-            amrfinder_samples = samples_basenames
+            amrfinder_samples = samples_basenames.copy()
             if cfg.config["reference_genome"]["file"]:
                 amrfinder_samples.append(reference_genome_basename)
             else:
