@@ -18,7 +18,7 @@ from io import StringIO
 
 def welcome(banner_img):
     img_file = open(banner_img)
-    print(Banner(str("".join(img_file.readlines()))))
+    print(Banner(str("".join(img_file.readlines()))), flush=True)
 
 def read_input_files(indexfile):
     """
@@ -467,6 +467,8 @@ def mlst_postprocessing(mlst_file, output_file):
 
 
         output_data = output_data.append(pd.DataFrame([new_row], columns=col_names), ignore_index=True)
+        # Sample column is a string
+        output_data["Sample"] = output_data["Sample"].astype(str)
         print('MLST post processing:')
         print(output_data)
     output_data.to_csv(output_file, index=False, sep="\t")
@@ -1316,7 +1318,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
                     "rRNAs", "tRNAs"]
     
-    if cfg.config["species_identification"]:
+    if cfg.config["species_identification"]["run_species_identification"]:
         df_columns.insert(df_columns.index("ST"), "Species")
         df_columns.insert(df_columns.index("ST"), "Species_percentage")
 
@@ -1392,7 +1394,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                 avg_contig_len = contig_len_summatory/contig_counter
                 
                 # Kraken data
-                if cfg.config["species_identification"]:
+                if cfg.config["species_identification"]["run_species_identification"]:
                     # "Species": Species name.
                     species = kraken_report_df.loc[kraken_report_df["Sample"] == sample]["Species"].values[0]
                     
@@ -1412,7 +1414,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     reads = readlen = readsqc = readsqclen = joinreads = joinreadslen = depthcov = 0
                 
                 # Kraken data for reference genome
-                if cfg.config["species_identification"]:
+                if cfg.config["species_identification"]["run_species_identification"]:
                     species = ""
                     species_percentage = ""
 
@@ -1519,7 +1521,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "tRNAs": trnas}
             
             # Kraken
-            if cfg.config["species_identification"]:
+            if cfg.config["species_identification"]["run_species_identification"]:
                 report_dict["Species"] = species
                 report_dict["Species_percentage"] = species_percentage
 
@@ -1635,7 +1637,7 @@ if __name__ == "__main__":
         os.mkdir(plasmid_dir)
 
     os.mkdir(prinseq_dir)
-    if cfg.config["species_identification"]:
+    if cfg.config["species_identification"]["run_species_identification"]:
         os.mkdir(kraken_dir)
     os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
@@ -1688,7 +1690,7 @@ if __name__ == "__main__":
     abort_flag = False
     for sample_basename, data in read_input_files("input_files.csv"):
         if not data["Genus"] or not data["Species"]:
-            if not cfg.config["species_identification"]:
+            if not cfg.config["species_identification"]["run_species_identification"]:
                 print("ERROR: Please, fill in the genus and species information for sample", sample_basename, "or set species_identification parameter to True in campype_config.py")
                 abort_flag = True
     if abort_flag:
@@ -1853,10 +1855,10 @@ if __name__ == "__main__":
             prinseq_files = refactor_prinseq_output(prinseq_dir+"/"+sample_basename, sample_basename)
 
             # Kraken call
-            if cfg.config["species_identification"]:
+            if cfg.config["species_identification"]["run_species_identification"]:
                 print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Kraken\n"), flush=True)
                 
-                kraken_db_file = "./db/minikraken-DB/minikraken_8GB_20200312"
+                kraken_db_file = cfg.config["species_identification"]["species_identification_database"]
                 
                 # Check if database exists
                 if not os.path.exists(kraken_db_file):
@@ -1939,7 +1941,7 @@ if __name__ == "__main__":
             sample_contigs = data["FW"]
 
             # Kraken call
-            if cfg.config["species_identification"]:
+            if cfg.config["species_identification"]["run_species_identification"]:
                 print(Banner(f"\nStep {step_counter} for sequence {sample_counter}/{n_samples} ({sample_basename}): Kraken\n"), flush=True)
                 
                 kraken_db_file = "./db/minikraken-DB/minikraken_8GB_20200312"
@@ -2065,7 +2067,7 @@ if __name__ == "__main__":
                 print("ERROR: You must provide a reference genome to run SNIPPY.", flush=True)
 
     # Kraken combined report
-    if cfg.config["species_identification"]:
+    if cfg.config["species_identification"]["run_species_identification"]:
         kraken_report_unification(kraken_reports, kraken_unified_report)
 
     # Prokka summary
