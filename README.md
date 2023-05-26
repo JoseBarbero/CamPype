@@ -140,11 +140,11 @@ You should answer YES to the first question (Are you sure you want to remove you
 Could not run command: cat \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.faa | parallel --gnu --plain -j 8 --block 313 --recstart '>' --pipe blastp -query - -db /home/instalador/anaconda3/envs/campype/db/kingdom/Bacteria/IS -evalue 1e-30 -qcov_hsp_perc 90 -num_threads 1 -num_descriptions 1 -num_alignments 1 -seg no > \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.blast 2> /dev/null
 ```
 
-Run ```prokka --setupdb``` first and execute CamPype again.
+Activate the CamPype's directory ```conda activate campype```, run ```prokka --setupdb``` first, and execute CamPype again.
 
-2.  ABRicate can't find any gen and this message appears: ```BLAST Database error: Error pre-fetching sequence data```
+1. ABRicate can't find any gen and this message appears: ```BLAST Database error: Error pre-fetching sequence data```
 
-Run ```abricate --setupdb``` first and execute CamPype again.
+Activate the CamPype's directory ```conda activate campype```, run ```abricate --setupdb``` first, and execute CamPype again.
 
 
 ## Citation
