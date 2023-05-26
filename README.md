@@ -127,7 +127,7 @@ You should answer YES to the first question (Are you sure you want to remove you
     ```bash
     $ conda deactivate
     ```
-1. $\textcolor{red}{\textsf{Be careful}}$, the CamPype directory and every file within will be removed. Make sure you don't have anything important in this directory (results, data, etc).
+$\textcolor{red}{\textsf{Be careful, the CamPype directory and every file within will be removed. Make sure you don't have anything important in this directory (results, data, etc).}}$
 
 1. Run ./uninstallcampype
     ```bash
@@ -135,14 +135,13 @@ You should answer YES to the first question (Are you sure you want to remove you
     ```
 
 ## FAQ
-1. Prokka stops running with this error:
+* Prokka stops running with this error:
 ```
 Could not run command: cat \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.faa | parallel --gnu --plain -j 8 --block 313 --recstart '>' --pipe blastp -query - -db /home/instalador/anaconda3/envs/campype/db/kingdom/Bacteria/IS -evalue 1e-30 -qcov_hsp_perc 90 -num_threads 1 -num_descriptions 1 -num_alignments 1 -seg no > \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.blast 2> /dev/null
 ```
-
 Activate the CamPype's directory ```conda activate campype```, run ```prokka --setupdb``` first, and execute CamPype again.
 
-1. ABRicate can't find any gen and this message appears: ```BLAST Database error: Error pre-fetching sequence data```
+* ABRicate can't find any gen and this message appears: ```BLAST Database error: Error pre-fetching sequence data```
 
 Activate the CamPype's directory ```conda activate campype```, run ```abricate --setupdb``` first, and execute CamPype again.
 
