@@ -1,7 +1,7 @@
 config = {
-    "output_directory": ".",    # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.)
-    "custom_output_name": "", # Custom name for the output directory. Default (if this parameter is empty): "CamPype_OUTPUT_YYYYMMDD_HHMMSS"
-    "n_threads": None,   # Number of threads to use. Default: None (takes threads defined by default by each tool)
+    "output_directory": "autotest_results",    # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.)
+    "custom_output_name": "config6", # Custom name for the output directory. Default (if this parameter is empty): "CamPype_OUTPUT_YYYYMMDD_HHMMSS"
+    "n_threads": 25,   # Number of threads to use. Default: None (takes threads defined by default by each tool)
     "reference_genome": {   # OPTIONAL (if you don't want to use it, just leave every parameter empty)
         "file": "reference_files/NCTC11168.fasta",    # Required if you want to reorder genome contigs against a reference genome and search for SNPs
         "genus": "Campylobacter",   
@@ -9,8 +9,11 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
-    "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
-    "species_identification": False, # Skip sequence classification if you already know the species of the samples. Default: False
+    "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
+    "species_identification": { 
+        "run_species_identification": False, # Skip sequence classification if you already know the species of the samples. Default: False
+        "species_identification_database": "./db/minikraken-DB/minikraken_8GB_20200312"
+    },
     "trim_adaptors":{
       "run_trim_adaptors": True, # Remove adapter sequences from reads if set to True. Otherwise, set to False. Default: True
       "adapters_reference_file": "reference_files/adapters_and_sequences.fa"   # You can edit this file with any sequence you want to filter
