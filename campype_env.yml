@@ -14,7 +14,7 @@ dependencies:
   - barrnap=0.9=hdfd78af_4
   - bcftools=1.9=h68d8f2e_9
   - bedtools=2.31.0=hf5e1c6e_2
-  - biopython=1.72=py37h14c3975_1000
+  - biopython=1.74=py37h7b6447c_0
   - blast=2.9.0=pl526he19e7b1_7
   - boost-cpp=1.74.0=h9359b55_0
   - brotlipy=0.7.0=py37h540881e_1004
