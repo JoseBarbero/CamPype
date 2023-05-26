@@ -74,7 +74,7 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
     ```bash
     $ campype_qc.py
     ```   
-    A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast interpretation inside the outputdirectoy of CamPype named fastq_quality_control. Check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to interpretate the results.
+    A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast visualization inside the outputdirectoy of CamPype named fastq_quality_control. Check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to understand these results.
     
 1. Once you have set the configuration, run CamPype:
     ```bash
