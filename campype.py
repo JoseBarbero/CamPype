@@ -1971,7 +1971,7 @@ if __name__ == "__main__":
             draft_contigs_dir = mauve_dir
         else:
             if fasta_mode:
-                draft_contigs = sample_contigs.copy()
+                draft_contigs = sample_contigs
                 # Copy contigs to contigs_dir
                 shutil.copyfile(draft_contigs, contigs_dir+"/"+sample_basename+".fasta")
             else:
