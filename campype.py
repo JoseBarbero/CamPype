@@ -539,7 +539,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
     """
 
     abricate_data = pd.read_csv(abricate_file, sep="\t")
-    samples = samples
+    abricate_data["SAMPLE"] = abricate_data["SAMPLE"].astype(str)    # SAMPLE column in abricate_data is a string
     gene_presence_absence = pd.DataFrame(columns=["Gene", *samples, "RESISTANCE", "DATABASE"])
 
     genes_type_ABR = dict(zip(abricate_data["GENE"], abricate_data["RESISTANCE"]))
@@ -2174,13 +2174,29 @@ if __name__ == "__main__":
                 blast_contigs_files_paths.append(ref_genome)
                 blast_samples_basenames.append(reference_genome_basename)
 
-            blast_call( proteins_file_ori=proteins_file, 
-                        proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
-                        contigs_files_paths=blast_contigs_files_paths, 
-                        blast_database_output=dna_database_blast+"/DNA_database.fna", 
-                        blast_output_folder=blast_proteins_dir,
-                        blast_output_name=blast_output_name,
-                        threads = n_threads)
+            # Blast can run out of memory if there are too many threads and fail without any error message
+            blast_state = -1
+            blast_n_threads = n_threads
+            while blast_n_threads > 0:
+                blast_state = blast_call(proteins_file_ori=proteins_file, 
+                                        proteins_file_dest=blast_proteins_dir+"/"+proteins_database_name, 
+                                        contigs_files_paths=blast_contigs_files_paths, 
+                                        blast_database_output=dna_database_blast+"/DNA_database.fna", 
+                                        blast_output_folder=blast_proteins_dir,
+                                        blast_output_name=blast_output_name,
+                                        threads = blast_n_threads)
+
+                if blast_state != 0: 
+                    print("ERROR: BLAST failed. Probably because it ran out of memory.", flush=True)
+                    print("BLAST exit code: ", blast_state, flush=True)
+                    print("Retrying with less threads...", flush=True)
+                    blast_n_threads = int(blast_n_threads/2)
+                else:
+                    break
+            if blast_state != 0:
+                print("ERROR: BLAST failed.", flush=True)
+                sys.exit(1)
+                    
             blast_postprocessing(blast_file=blast_proteins_dir+"/"+blast_output_name,
                                 database_file=blast_proteins_dir+"/"+proteins_database_name,
                                 output_folder=blast_proteins_dir,
