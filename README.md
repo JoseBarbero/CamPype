@@ -127,7 +127,8 @@ You should answer YES to the first question (Are you sure you want to remove you
     ```bash
     $ conda deactivate
     ```
-$\textcolor{red}{\textsf{Be careful, the CamPype directory and every file within will be removed. Make sure you don't have anything important in this directory (results, data, etc).}}$
+$\textcolor{red}{\textsf{Be careful, the CamPype directory and every file within will be removed.}}$ 
+$\textcolor{red}{\textsf{Make sure you don't have anything important in this directory (results, data, etc).}}$
 
 1. Run ./uninstallcampype
     ```bash
