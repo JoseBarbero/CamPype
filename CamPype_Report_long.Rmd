@@ -1111,6 +1111,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
       pivot_longer(data = ., cols = !c(Sample, DATABASE), names_to = "Resistance Class", values_to = "Gene symbol") %>%
       mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>%
       mutate(across(where(is_character), as_factor))
+    AMR_matrix$Sample <- as.character(AMR_matrix$Sample) #NEW
     
     resistance_class_annotation <- AMR_matrix[, c("Resistance Class", "Gene symbol")] %>% 
     distinct() %>% 
@@ -1258,6 +1259,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
       mutate(`Point mutation` = strsplit(as.character(`Point mutation`), ",")) %>% 
       unnest(`Point mutation`) %>%
       mutate(across(where(is_character), as_factor))
+    AMR_pmut_matrix$Sample <- as.character(AMR_pmut_matrix$Sample) #NEW
 
     resistance_class_pmut_annotation <- AMR_pmut_matrix[, c("Resistance Class", "Point mutation")] %>%
       distinct() %>% 
