@@ -1,5 +1,5 @@
 config = {
-    "output_directory": "",    # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.)
+    "output_directory": ".",    # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.)
     "custom_output_name": "", # Custom name for the output directory. Default (if this parameter is empty): "CamPype_OUTPUT_YYYYMMDD_HHMMSS"
     "n_threads": 25,   # Number of threads to use. Default: None (takes threads defined by default by each tool)
     "reference_genome": {   # OPTIONAL (if you don't want to use it, just leave every parameter empty)
