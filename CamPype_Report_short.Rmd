@@ -3434,8 +3434,8 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
     mutate(across(percentage, round, 0))
   
   #First figure: pangenome summary statistics pie chart
-  Pangenome_genes_summary %>%  ggplot(data = ., 
-                                             aes(x = "", y = .[[3]], fill = .[[1]])) +
+  Pangenome_genes_summary %>% ggplot(data = ., 
+                                     aes(x = "", y = .[[3]], fill = .[[1]])) +
     geom_bar(stat = "identity", width = 1, color="white") +
     coord_polar("y", start = 0) + 
     labs(fill = "") +
@@ -3612,7 +3612,7 @@ Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 
 ## How to cite {#citation}
 <br>
-Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. __CamPype__ (2022). Available at [https://github.com/JoseBarbero/CamPype](https://github.com/JoseBarbero/CamPype)
+Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. __CamPype__ (2023). Available at [https://github.com/JoseBarbero/CamPype](https://github.com/JoseBarbero/CamPype)
 <br>
 <br>
 
