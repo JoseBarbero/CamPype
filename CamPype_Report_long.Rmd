@@ -1131,6 +1131,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 
         AMR_heatmap <- AMR_matrix %>%
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
+          distinct() %>%
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
           select(., -`-`) %>%
           remove_rownames %>% 
@@ -1168,6 +1169,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 
         AMR_heatmap <- AMR_matrix %>%
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
+          distinct() %>%
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
           select(., -`-`) %>%
           remove_rownames %>% 
@@ -1196,6 +1198,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
     } else {
       AMR_heatmap <- AMR_matrix %>%
         select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
+        distinct() %>%
         pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
         select(., -`-`) %>%
         remove_rownames %>% 
