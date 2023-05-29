@@ -1962,13 +1962,13 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
     
   gheatmap(p = tree_graph, 
            data = pangenome,
-           offset = 1.5, 
+           offset = 7 
            width = 10,
            colnames = FALSE,
            font.size = 10,
            ) + 
     scale_fill_manual(breaks=c("1", "0"),
-                      values=c("black", "white")) +
+                      values=c("darkblue", "white")) +
     theme(legend.position = 'none')
 }
 ```
