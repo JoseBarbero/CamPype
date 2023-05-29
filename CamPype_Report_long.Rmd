@@ -2320,7 +2320,7 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
            font.size = 10,
            ) + 
     scale_fill_manual(breaks=c("1", "0"),
-                      values=c("darkblue", "white")) +
+                      values=c("black", "white")) +
     theme(legend.position = 'none')
 }
 ```
