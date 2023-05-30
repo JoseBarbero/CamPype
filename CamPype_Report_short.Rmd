@@ -83,16 +83,16 @@ if(campype_config_json$MLST$run_mlst == TRUE) {
     cat("Following table shows the Sequence Type (ST), MLST allelic profile and Clonal Complex (CC) for each isolate using [mlst](https://github.com/tseemann/mlst) and the [PubMLST database](https://www.pubmlst.org).", " \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
     MLST <- 
       read_tsv(file = "MLST/MLST_and_CC.txt", show_col_types = FALSE) %>% 
-      mutate(across(where(is_character), as_factor)) %>% 
-      rename(`Clonal Complex` = clonal_complex)
-    MLST$Sample <- as.character(MLST$Sample) #NEW
+      rename(`Clonal Complex` = clonal_complex) %>%
+      mutate_all(as.character) %>%
+      mutate_if(is.character, ~replace_na(., "Other"))
     Create_DT(x = MLST, filter = "top", caption = '')
-} else {
+  } else {
     cat("Following table shows the Sequence Type (ST) and MLST allelic profile for each isolate using [mlst](https://github.com/tseemann/mlst).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
     MLST <- 
       read_tsv(file = "MLST/MLST.txt", show_col_types = FALSE) %>% #Comprobar cómo queda el archivo cuando include_cc == FALSE
-      mutate(across(where(is_character), as_factor))
-    MLST$Sample <- as.character(MLST$Sample) #NEW
+      mutate_all(as.character) %>%
+      mutate_if(is.character, ~replace_na(., "Other"))
     Create_DT(x = MLST, filter = "top", caption = '')
   }
 } else {
@@ -156,8 +156,26 @@ if(campype_config_json$annotation$run_annotation == TRUE) {
         mutate(across(where(is_character), as_factor))
   }
 }
+
+# Replace Unknown ST or CC by Other
+if ("Clonal Complex" %in% colnames(assembly)) {
+  assembly$`Clonal Complex` <- as.character(assembly$`Clonal Complex`)
+}
+if ("ST" %in% colnames(assembly)) {
+  assembly$ST <- as.character(assembly$ST)
+}
+assembly <- assembly %>%
+  mutate_if(is.character, ~replace_na(., "Other"))
+
+
 assembly$Sample <- as.character(assembly$Sample)
 Create_DT(x = assembly, filter = "top", caption = '')
+```
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+#Reorder MLST df for correct heatmaps annotations
+order_assembly <- assembly$Sample
+MLST <- MLST[match(order_assembly, MLST$Sample), ]
 ```
 
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
@@ -759,7 +777,6 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
       pivot_longer(data = ., cols = !c(Sample, DATABASE), names_to = "Resistance Class", values_to = "Gene symbol") %>%
       mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>%
       mutate(across(where(is_character), as_factor))
-    AMR_matrix$Sample <- as.character(AMR_matrix$Sample) #NEW
     
     resistance_class_annotation <- AMR_matrix[, c("Resistance Class", "Gene symbol")] %>% 
     distinct() %>% 
@@ -772,6 +789,8 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
         
         mlst_annotation <- MLST %>% 
+          mutate_all(as.character) %>%
+          mutate_if(is.character, ~replace_na(., "Other")) %>% 
           select(., ST) %>%
           mutate(across(c(ST),
                         factor))  %>%
@@ -779,7 +798,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 
         AMR_heatmap <- AMR_matrix %>%
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
-          distinct() %>%
+          distinct() %>% #NUEEEVA
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
           select(., -`-`) %>%
           remove_rownames %>% 
@@ -810,6 +829,8 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
         
         mlst_annotation <- MLST %>% 
+          mutate_all(as.character) %>%
+          mutate_if(is.character, ~replace_na(., "Other")) %>% 
           select(., ST, `Clonal Complex`) %>%
           mutate(across(c(ST),
                         factor))  %>%
@@ -817,7 +838,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 
         AMR_heatmap <- AMR_matrix %>%
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
-          distinct() %>%
+          distinct() %>% #NUEEEVA
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
           select(., -`-`) %>%
           remove_rownames %>% 
@@ -846,7 +867,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
     } else {
       AMR_heatmap <- AMR_matrix %>%
         select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
-        distinct() %>%
+        distinct() %>% #NUEEEVA
         pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
         select(., -`-`) %>%
         remove_rownames %>% 
@@ -910,7 +931,6 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
       mutate(`Point mutation` = strsplit(as.character(`Point mutation`), ",")) %>% 
       unnest(`Point mutation`) %>%
       mutate(across(where(is_character), as_factor))
-    AMR_pmut_matrix$Sample <- as.character(AMR_pmut_matrix$Sample) #NEW
 
     resistance_class_pmut_annotation <- AMR_pmut_matrix[, c("Resistance Class", "Point mutation")] %>%
       distinct() %>% 
@@ -1867,8 +1887,8 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
     mutate(across(percentage, round, 0))
   
   #First figure: pangenome summary statistics pie chart
-  Pangenome_genes_summary %>%  ggplot(data = ., 
-                                             aes(x = "", y = .[[3]], fill = .[[1]])) +
+  Pangenome_genes_summary %>% ggplot(data = ., 
+                                     aes(x = "", y = .[[3]], fill = .[[1]])) +
     geom_bar(stat = "identity", width = 1, color="white") +
     coord_polar("y", start = 0) + 
     labs(fill = "") +
@@ -1944,7 +1964,7 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
 
 if(campype_config_json$pangenome$run_pangenome == TRUE) {
   #Foruth figure: pangenome with phylogenetic tree 
-  cat("Binary heatmap shows the presence (dark grey) and absence (white) of genes. Phylogeny for each isolate is shown on the left and was constructed based on accesory genes from the pangenome.", "<br>")
+  cat("Binary heatmap shows the presence (grey) and absence (white) of genes. Phylogeny for each isolate is shown on the left and was constructed based on accesory genes from the pangenome.", "<br>")
   pangenome <- read_delim(file = "Roary_pangenome/gene_presence_absence.Rtab", delim = "\t", show_col_types = FALSE) %>%
   mutate(across(where(is.character), as.factor)) %>%
   t(.)  %>%
@@ -1962,7 +1982,7 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
     
   gheatmap(p = tree_graph, 
            data = pangenome,
-           offset = 7 
+           offset = 7, 
            width = 10,
            colnames = FALSE,
            font.size = 10,
@@ -2027,6 +2047,16 @@ summary_draft_genome <-
   rename(`Species percentage` = any_of("Species_percentage")) %>% 
   mutate(across(where(is_character), as_factor))
 
+# Replace Unknown ST or CC by Other
+if ("Clonal Complex" %in% colnames(summary_draft_genome)) {
+  summary_draft_genome$`Clonal Complex` <- as.character(summary_draft_genome$`Clonal Complex`)
+}
+if ("ST" %in% colnames(summary_draft_genome)) {
+  summary_draft_genome$ST <- as.character(summary_draft_genome$ST)
+}
+summary_draft_genome <- summary_draft_genome %>%
+  mutate_if(is.character, ~replace_na(., "Other"))
+
 Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 ```
 <br>
@@ -2035,7 +2065,7 @@ Create_DT(x = summary_draft_genome, filter = "top", caption = '')
 
 ## How to cite {#citation}
 <br>
-Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. __CamPype__ (2022). Available at [https://github.com/JoseBarbero/CamPype](https://github.com/JoseBarbero/CamPype)
+Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. __CamPype__ (2023). Available at [https://github.com/JoseBarbero/CamPype](https://github.com/JoseBarbero/CamPype)
 <br>
 <br>
 

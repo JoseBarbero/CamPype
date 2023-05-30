@@ -1,9 +1,13 @@
 # CamPype
 
 CamPype is a pipeline for the analysis of Illumina paired-end sequencing data and/or whole bacterial genomes. The development of the workflow is mainly intended for the analysis of <em>Campylobacter jejuni/coli</em> genomes, although any other bacterial genus can be analyzed as well. CamPype is specially designed for users without knowledge of bioinformatics or programming, so the ease of installation and execution are the fundamentals of its development. Moreover, CamPype is a user-customizable workflow that allows you to select the analysis and the tools you are interested in. 
-Here you wil find the schema of CamPype. Software or databases are indicated in boxes, while discontinuous boxes indicate tools that users can deactivate.
 
-![scheme](https://user-images.githubusercontent.com/58036036/180643838-d771f326-3ef9-465e-b591-b5e9df792aec.png)
+
+Here you wil find the schema of CamPype. CamPype allows the user to previously check the quality of sequencing raw data in an independent step to optimize the read filtering analysis. Moreover, bacteria identification can be performed on the filtered fastq reads when raw reads are provided or after genome assembly when contigs are used.
+
+![scheme](https://github.com/JoseBarbero/CamPype/assets/58036036/1589d4a8-cd1a-42eb-be38-f2256086272f)
+Software or databases are indicated in boxes, while discontinuous boxes indicate tools that users can deactivate.
+
 
 ## Installation (Linux)
 
@@ -23,24 +27,19 @@ Here you wil find the schema of CamPype. Software or databases are indicated in 
     $ conda env create -f campype_env_aux.yml 
     ```
     The creation of the conda environments will take some minutes, be patient.
-    
-1. *(On Ubuntu systems you may find missing font problems running Mauve. We recommend you to install the required fonts just in case):
-    ```bash
-    $ sudo apt-get install ttf-dejavu
+
+1. After conda environments were created, update the databases of AMRFinder, Prokka and ABRicate:
+    ```
+    $ conda activate campype
+    $ amrfinder -u
+    $ prokka --setupdb
+    $ abricate --setupdb
     ```
 1. Additionally, CamPype allows you to check for read contamination and determine bacteria taxonomy using Kraken2. The installation of Kraken2 is optional to avoid possible storage limitations as it requires the use of a heavy database that requires high free disk space, but it is not needed for Campype if you are not interested in this analysis. If you want to install this module, at least 8 GB will be occupied to store the MiniKraken_8GB_202003 database. This database is enough for bacteria identification and CamPype performance, but if you have enough disk space, you can download and install "Standard Kraken2 Databases" following the instructions [here](https://lomanlab.github.io/mockcommunity/mc_databases.html) for better sensitivity. To install Kraken2 in CamPype run:
     ```bash
     $ install_kraken.sh
     ```
 
-#### $\textcolor{red}{\textsf{IMPORTANT!!}}$ After installing or updating CamPype, we recommend you to update the databases of AMRFinder, Prokka and ABRicate by running:
-```
-$ conda activate campype
-$ amrfinder -u
-$ prokka --setupdb
-$ abricate --setupdb
-```
- 
 ## Set input files and configuration
 
 CamPype can run on two modes depending on the input files. The FASTQ mode analyses (un)compressed raw reads in fastq format, while the FASTA mode analyses assembled genomes in fasta format.
@@ -57,7 +56,7 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
     
 1. Set the modules you want to run in the CamPype/workflow_config.py file. There you will set your own running parameters for each tool and the select your tools of interest when possible.
 
-1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. If you want to use a different bacteria, we strongly recommend you to adapt the configuration of CamPype as previoys explained. In particular, you must modify the ```reference_genome```, deactivate the option ```include_cc```, use abricate for virulence genes searching or/and use your own virulence genes database with BLAST instead (indicate this accordingly in the CamPype/workflow_config.py file), and deactivate the option ```run_variant_calling```. $\textcolor{red}{\textsf{Be careful if you want to analyse a mix of bacterial species}}$, we recommend you to delete a ```reference_genome``` and deactivate the option ```run_variant_calling```.
+1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. If you want to use a different bacteria, we strongly recommend you to adapt the configuration of CamPype as previously explained. In particular, you must modify the ```reference_genome```, deactivate the option ```include_cc```, and use abricate for virulence genes searching or/and use your own virulence genes database with BLAST instead (indicate this accordingly in the CamPype/workflow_config.py file). $\textcolor{red}{\textsf{Be careful if you want to analyse a mix of bacterial species}}$, we recommend you to delete a ```reference_genome``` and deactivate the option ```run_variant_calling```.
 
 
 ## Running CamPype
@@ -72,14 +71,16 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
     ```
 1. In case you want to run CamPype in the FASTQ mode, we encourage you to perform first a quality control step to check how good are your raw reads and adjust the read quality control filtering step (remember to include the path of the fastq files in the CamPype/input_files.csv file):
     ```bash
-    $ campype_qc.py
+    $ bash -i campype_qc
     ```   
-    A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast visualization inside the outputdirectoy of CamPype named fastq_quality_control. Check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to understand these results.
+    A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast visualization in the directory fastq_quality_control, that will be located inside the output directoy of CamPype named as you indicated in the CamPype/workflow_config.py file. Check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to understand these results.
     
 1. Once you have set the configuration, run CamPype:
     ```bash
     $ bash -i campype
     ```
+    The results will be located in the output directoy of CamPype named as you indicated in the CamPype/workflow_config.py file. If you want to store these results in the same directory where the quality control analysis data are, remember to indicate that directory in the configuration file. 
+    
 1. \(*) You can deactivate the environment when you are finished:
     ```bash
     $ conda deactivate
@@ -137,14 +138,19 @@ $\textcolor{red}{\textsf{Make sure you don't have anything important in this dir
 
 ## FAQ
 * Prokka stops running with this error:
-```
-Could not run command: cat \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.faa | parallel --gnu --plain -j 8 --block 313 --recstart '>' --pipe blastp -query - -db /home/instalador/anaconda3/envs/campype/db/kingdom/Bacteria/IS -evalue 1e-30 -qcov_hsp_perc 90 -num_threads 1 -num_descriptions 1 -num_alignments 1 -seg no > \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.blast 2> /dev/null
-```
-Activate the CamPype's directory ```conda activate campype```, run ```prokka --setupdb``` first, and execute CamPype again.
+  ```
+  Could not run command: cat \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.faa | parallel --gnu --plain -j 8 --block 313 --recstart '>' --pipe blastp -query - -db /home/instalador/anaconda3/envs/campype/db/kingdom/Bacteria/IS -evalue 1e-30 -qcov_hsp_perc 90 -num_threads 1 -num_descriptions 1 -num_alignments 1 -seg no > \/home\/CamPype_OUTPUT_20220511_131550\/Prokka_annotation\/NCTC11168\/NCTC11168\.IS\.tmp\.35844\.blast 2> /dev/null
+  ```
+  Activate the CamPype's directory ```conda activate campype```, run ```prokka --setupdb``` first, and execute CamPype again.
 
 * ABRicate can't find any gen and this message appears: ```BLAST Database error: Error pre-fetching sequence data```
 
-Activate the CamPype's directory ```conda activate campype```, run ```abricate --setupdb``` first, and execute CamPype again.
+  Activate the CamPype's directory ```conda activate campype```, run ```abricate --setupdb``` first, and execute CamPype again.
+
+* If you find missing font problems running Mauve, you should install the required fonts:
+  ```bash
+  $ sudo apt-get install ttf-dejavu
+  ```
 
 
 ## Citation
