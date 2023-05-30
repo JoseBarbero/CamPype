@@ -1299,10 +1299,25 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     if reference_genome_basename:
         ref_assembly_report = pd.read_csv(assembly_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+"_assembly_statistics/"+"report.tsv", sep="\t")
     
-    if cfg.config["MLST"]["run_mlst"] and cfg.config["MLST"]["include_cc"]:
-        mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
-        # Sample column (index) is a string
-        mlst_data.index = mlst_data.index.astype(str)
+    if cfg.config["MLST"]["run_mlst"]:
+        if cfg.config["MLST"]["include_cc"]:
+            mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
+            # Sample column (index) is a string
+            mlst_data.index = mlst_data.index.astype(str)
+        else:
+            # Read only the first 3 columns
+            mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0, usecols=[0,1,2], header=None)
+            mlst_data.columns = ["Genus", "ST"]
+            # Rename index as Sample
+            mlst_data.index.name = "Sample"
+            # Sample column (index) is a string
+            mlst_data.index = mlst_data.index.astype(str)
+            # Filter df to keep only the basename of the index column
+            mlst_data.index = mlst_data.index.str.split("/").str[-1]
+            mlst_data.index = mlst_data.index.str.split(".").str[0]
+            # Print index values
+            print(mlst_data.index.values)
+
 
     if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
         vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
@@ -1420,10 +1435,14 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     species_percentage = ""
 
             # Column ST (MLST)
-            if cfg.config["MLST"]["run_mlst"] and cfg.config["MLST"]["include_cc"]:
-                st = mlst_data.loc[sample]["ST"]
-                # Column clonal_complex (MLST)
-                clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+            if cfg.config["MLST"]["run_mlst"]:
+                if cfg.config["MLST"]["include_cc"]:
+                    st = mlst_data.loc[sample]["ST"]
+                    # Column clonal_complex (MLST)
+                    clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+                else:
+                    st = mlst_data.loc[sample]["ST"]
+                    clonal_complex = None
             else:
                 st = None
                 clonal_complex = None
@@ -1492,7 +1511,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "ContigLen": round(avg_contig_len, 2), 
                             "N50": round(n50, 0),
                             "GC": round(gc, 2),
-                            "ST": st,       # TODO remove if MLST is not run
+                            "ST": st,
                             "clonal_complex": clonal_complex,
                             "CDS": cds,
                             "Hypothetical proteins": round(hy_prot, 0),
@@ -1513,7 +1532,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "N50": round(n50, 0),
                             "GC": round(gc, 2),
                             "DepthCov (X)": round(depthcov, 2),
-                            "ST": st,       # TODO remove if MLST is not run
+                            "ST": st,
                             "clonal_complex": clonal_complex,
                             "CDS": cds,
                             "Hypothetical proteins": round(hy_prot, 0),
@@ -2125,6 +2144,9 @@ if __name__ == "__main__":
         if cfg.config["MLST"]["include_cc"]:
             # MLST postprocessing
             mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
+            mlst_data_file = mlst_dir+"/MLST_and_CC.txt"
+        else:
+            mlst_data_file = mlst_dir+"/"+mlst_out_file
 
     # Virulence genes
     if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
@@ -2379,7 +2401,7 @@ if __name__ == "__main__":
                         summary_post_qc,
                         kraken_unified_report,
                         summary_post_flash,
-                        mlst_dir+"/MLST_and_CC.txt",
+                        mlst_data_file,
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
                         snippy_summary=snippy_summary_outfile,
                         custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
@@ -2396,7 +2418,7 @@ if __name__ == "__main__":
                         summary_post_qc, 
                         kraken_unified_report,
                         summary_post_flash,
-                        mlst_dir+"/MLST_and_CC.txt",
+                        mlst_data_file,
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
                         snippy_summary=snippy_summary_outfile,
                         custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
