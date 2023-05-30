@@ -1,7 +1,7 @@
 config = {
-    "output_directory": ".",    # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.)
-    "custom_output_name": "", # Custom name for the output directory. Default (if this parameter is empty): "CamPype_OUTPUT_YYYYMMDD_HHMMSS"
-    "n_threads": 25,   # Number of threads to use. Default: None (takes threads defined by default by each tool)
+    "output_directory": ".",    # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.). Default: "."
+    "custom_output_name": "", # Custom name for the output directory. Default: "" (if this parameter is empty: "CamPype_OUTPUT_YYYYMMDD_HHMMSS")
+    "n_threads": 28,   # Number of threads to use. Default: None (takes threads defined by default by each tool). Default: 28
     "reference_genome": {   # OPTIONAL (if you don't want to use it, just leave every parameter empty)
         "file": "reference_files/NCTC11168.fasta",    # Required if you want to reorder genome contigs against a reference genome and search for SNPs
         "genus": "Campylobacter",   
@@ -9,14 +9,14 @@ config = {
         "strain": "NCTC11168",
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
-    "assembled_genomes": True, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
+    "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
     "species_identification": { 
-        "run_species_identification": False, # Skip sequence classification if you already know the species of the samples. Default: False
-        "species_identification_database": "./db/minikraken-DB/minikraken_8GB_20200312"
+        "run_species_identification": False, # Skip bacteria classification if you already know the species you are working with. In case, you set it to True and you already indicated the Genus and Species of your genomes in the input_files.csv, the output of this step will not be used in further analysis. Default: False
+        "species_identification_database": "./db/minikraken-DB/minikraken_8GB_20200312" # Location of standardized database for bacteria classification. Default: "./db/minikraken-DB/minikraken_8GB_20200312"
     },
     "trim_adaptors":{
       "run_trim_adaptors": True, # Remove adapter sequences from reads if set to True. Otherwise, set to False. Default: True
-      "adapters_reference_file": "reference_files/adapters_and_sequences.fa"   # You can edit this file with any sequence you want to filter
+      "adapters_reference_file": "reference_files/adapters_and_sequences.fa"   # Location of the sequences to filter. You can edit this file with any sequence you want to filter. Default: "reference_files/adapters_and_sequences.fa"
     },
     "read_qc_filtering": {
         "min_len": 50, # Minimum read length. Default: 50
@@ -32,11 +32,11 @@ config = {
     "min_contig_len": 200,
     "MLST": {
         "run_mlst": True, # Set this to True or False if you want to run the MLST step. Default: True
-        "include_cc": True # Will match sequences types (ST) will clonal complexes (CC) using the PubMLST Campylobacter database (internet connection is required). You should set this option to False if you are analysing other genus. Default: True
+        "include_cc": True # Will assign Sequence Types (ST) to Clonal Complexes (CC) using the PubMLST Campylobacter jejuni/coli database (internet connection is required). You must set this option to False if you are analysing other genus. Default: True
     },
     "annotation": {
         "run_annotation": True, # Set this to True or False if you want to run the annotation step. Default: True
-        "annotator": "prokka",  # Set this to "prokka" or "dfast"
+        "annotator": "prokka",  # Set this to "prokka" or "dfast". Default: prokka
         "prokka": {
             "rawproduct": True, # Do not clean up product annotation if set to True. Otherwise, set to False. Default: True
             "reference_annotation": True    # Use reference genome annotation GenBank file to first annotate from if set to True. Otherwise, set to False. Default: True
@@ -64,7 +64,7 @@ config = {
             "minid": 60 # Minimum DNA % identity for considering a virulence gene as present. Default: 60
         },
         "blast": {
-            "proteins_reference_file": "reference_files/Campylobacter_custom_VFDB.txt", # A FASTA database must be indicated if "predictor_tool" above is set to blast. You can modigy this inhouse database with any selected protein sequence you want to scan.
+            "proteins_reference_file": "reference_files/Campylobacter_custom_VFDB.txt", # A FASTA database must be indicated if "predictor_tool" above is set to blast. You can modify this inhouse Campylobacter spp. database with any selected protein sequence you want to scan or create a new database for other species. Default: "reference_files/Campylobacter_custom_VFDB.txt" 
             "soft_masking": True, # Apply filtering locations as soft masks (i.e., only for finding initial matches) if set to True. Otherwise, set to False. Default: True
             "presence_absence_matrix": { # Parameters for blast matrix construction
                 "mincov": 80, # Minimum % protein cover for considering a virulence gene as present. Default: 80
@@ -73,13 +73,13 @@ config = {
         }
     },
     "plasmids":{
-        "run_plasmid_prediction": True, #Set this to True or False if you want to search for plasmids or not.
+        "run_plasmid_prediction": True, #Set this to True or False if you want to search for plasmids or not. Default: True
         "abricate": {
             "mincov": 80, # Minimum DNA % coverage for considering a plasmid as present. Default: 80
             "minid": 60 # Minimum DNA % identity for considering a plasmid as present. Default: 60
         }
     },
-    "run_variant_calling": True, # Set this to True or False if you want to run the variant calling step
+    "run_variant_calling": True, # Set this to True or False if you want to run the variant calling step. Default: True
     "pangenome":{
         "run_pangenome": True, # Set this to True or False if you want to run the pangenome construction step. Remember that "run_annotation" must be to True to allow the pangenome construction. Default: True
         "no_split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
