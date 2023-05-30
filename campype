@@ -43,6 +43,7 @@ if [ ${PIPESTATUS[0]} -eq 0 ]; then
         
     fi
 else
-    # Remove fastq files from output directory in case of failure (if there are any)
+    # Remove fastq/fasta files from output directory in case of failure (if there are any)
     rm -f $OUTDIR/*.fastq
+    rm -f $OUTDIR/*.fasta
 fi

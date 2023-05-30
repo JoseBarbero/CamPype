@@ -1682,6 +1682,7 @@ if __name__ == "__main__":
     compressed_mode = False
     decompressed_samples_fw = dict()
     decompressed_samples_rv = dict()
+    decompressed_samples = dict()
 
     # Number of threads
     n_threads = cfg.config["n_threads"]
@@ -1701,33 +1702,54 @@ if __name__ == "__main__":
         sample_fw = data["FW"]
         sample_rv = data["RV"]
         
-        # Compressed mode
-        decompressed_samples_fw[sample_basename] = sample_fw
-        decompressed_samples_rv[sample_basename] = sample_rv
-        
-        if sample_fw.split(".")[-1] == "gz":
-            compressed_mode = True
-            if sample_fw.split(".")[-2] == "tar":
-                # Unzip from .tar.gz
-                call("tar -xzf " + sample_fw + " -C " + output_folder, shell=True)
-                call("tar -xzf " + sample_rv + " -C " + output_folder, shell=True)
-                # Get file basename from path
-                decompressed_samples_fw[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq"
-                decompressed_samples_rv[sample_basename] = output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq"
+        if fasta_mode:
+            if sample_fw.split(".")[-1] == "gz":
+                if not sample_fw.split(".")[-2] in ["fasta", "fa", "fna"]:
+                    print("WRONG INPUT FORMAT:", sample_fw, flush=True)
+                    print("Input must be a valid fasta format file.", flush=True)
+                    sys.exit(1)
+                if sample_fw.split(".")[-2] in ["fasta", "fa", "fna"]:
+                    # Mauve needs fasta extension to work, we will copy this files to a new folder with the correct extension
+                    call("cp " + sample_fw + " " + output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fasta", shell=True)
+                    compressed_mode = True # Not exactly compressed mode but we will use this mode to remove the files at the end of the program
+                                        
+                # Decompress files
+                compressed_mode = True
+                if sample_fw.split(".")[-2] == "tar":
+                    # Unzip from .tar.gz
+                    call("tar -xzf " + sample_fw + " -C " + output_folder, shell=True)
+                    call("tar -xzf " + sample_rv + " -C " + output_folder, shell=True)
+                    # Get file basename from path
+                    decompressed_samples[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fasta"
+                else:
+                    # Unzip from .gz
+                    with open(output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fasta", "w") as fw_file:
+                        call("gunzip -c " + sample_fw, stdout=fw_file, shell=True)
+                    decompressed_samples[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fasta"
             else:
-                # Unzip from .gz
-                with open(output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq", "w") as fw_file:
-                    call("gunzip -c " + sample_fw, stdout=fw_file, shell=True)
-                with open(output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq", "w") as rv_file:
-                    call("gunzip -c " + sample_rv, stdout=rv_file, shell=True)
-                decompressed_samples_fw[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq"
-                decompressed_samples_rv[sample_basename] = output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq"
-        else:
-            if fasta_mode:
                 if not sample_fw.split(".")[-1] in ["fasta", "fa", "fna"]:
                     print("WRONG INPUT FORMAT:", sample_fw, flush=True)
                     print("Input must be a valid fasta format file.", flush=True)
-            
+                    sys.exit(1)
+        else:
+            if sample_fw.split(".")[-1] == "gz":
+                compressed_mode = True
+                if sample_fw.split(".")[-2] == "tar":
+                    # Unzip from .tar.gz
+                    call("tar -xzf " + sample_fw + " -C " + output_folder, shell=True)
+                    call("tar -xzf " + sample_rv + " -C " + output_folder, shell=True)
+                    # Get file basename from path
+                    decompressed_samples_fw[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq"
+                    decompressed_samples_rv[sample_basename] = output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq"
+                else:
+                    # Unzip from .gz
+                    with open(output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq", "w") as fw_file:
+                        call("gunzip -c " + sample_fw, stdout=fw_file, shell=True)
+                    with open(output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq", "w") as rv_file:
+                        call("gunzip -c " + sample_rv, stdout=rv_file, shell=True)
+                    decompressed_samples_fw[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fastq"
+                    decompressed_samples_rv[sample_basename] = output_folder + "/" + sample_rv.split("/")[-1].split(".")[0] + ".fastq"
+                
 
     # Reference file processing
     if reference_genome_file:
@@ -1938,7 +1960,10 @@ if __name__ == "__main__":
         else:
             min_contig_threshold = cfg.config["min_contig_len"]
             # If in fasta mode, we just skip everything until this point
-            sample_contigs = data["FW"]
+            if compressed_mode:
+                sample_contigs = decompressed_samples[sample_basename]
+            else:
+                sample_contigs = data["FW"]
 
             # Kraken call
             if cfg.config["species_identification"]["run_species_identification"]:
@@ -2390,10 +2415,14 @@ if __name__ == "__main__":
     # Remove temporal files
     if compressed_mode:
         # Remove decompressed files
-        for key, value in decompressed_samples_fw.items():
-            os.remove(value)
-        for key, value in decompressed_samples_rv.items():
-            os.remove(value)
+        if fasta_mode:
+            for key, value in decompressed_samples.items():
+                os.remove(value)
+        else:
+            for key, value in decompressed_samples_fw.items():
+                os.remove(value)
+            for key, value in decompressed_samples_rv.items():
+                os.remove(value)
 
         # Keep only compressed files in trimmomatic/prinseq folders to reduce the output size
         for root, dirnames, filenames in os.walk(prinseq_dir, topdown=False):
