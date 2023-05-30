@@ -439,7 +439,7 @@ if(campype_config_json$MLST$run_mlst == TRUE) {
       mutate_all(as.character) %>%
       mutate_if(is.character, ~replace_na(., "Other"))
     Create_DT(x = MLST, filter = "top", caption = '')
-} else {
+  } else {
     cat("Following table shows the Sequence Type (ST) and MLST allelic profile for each isolate using [mlst](https://github.com/tseemann/mlst).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
     MLST <- 
       read_tsv(file = "MLST/MLST.txt", show_col_types = FALSE) %>% #Comprobar cómo queda el archivo cuando include_cc == FALSE
