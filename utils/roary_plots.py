@@ -118,24 +118,30 @@ if __name__ == "__main__":
     #<JBA>
     import os
     from io import StringIO
-    mlst_file = "/".join(options.spreadsheet.split("/")[:-2])+"/MLST/MLST_and_CC.txt"
-    mlst_data = pd.read_csv(mlst_file, sep="\t", dtype=str)
-
-    tmptree1 = "tmp_tree.xml" 
-    tmptree2 = "tmp_tree2.xml" 
-    Phylo.write([t], tmptree1, 'newick')
+    # Include parent directory in path
+    import sys
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+    import campype_config as cfg
     
-    with open("tmp_tree.xml") as infile, open(tmptree2, 'w') as outfile:
-        for line in infile:
-            for sample in mlst_data["Sample"]:
-                line = line.replace("+", "")
-                line = line.replace(str(sample)+":", str(sample)+"{"+str(mlst_data.loc[mlst_data["Sample"] == sample]["clonal_complex"].values[0])+"}:").replace(" ", "_")
-            outfile.write(line)
+    if cfg.config["MLST"]["include_cc"]:
+        mlst_file = "/".join(options.spreadsheet.split("/")[:-2])+"/MLST/MLST_and_CC.txt"
+        mlst_data = pd.read_csv(mlst_file, sep="\t", dtype=str)
 
-    t = Phylo.read(tmptree2, 'newick')
-    
-    os.remove(tmptree1)
-    os.remove(tmptree2)
+        tmptree1 = "tmp_tree.xml" 
+        tmptree2 = "tmp_tree2.xml" 
+        Phylo.write([t], tmptree1, 'newick')
+        
+        with open("tmp_tree.xml") as infile, open(tmptree2, 'w') as outfile:
+            for line in infile:
+                for sample in mlst_data["Sample"]:
+                    line = line.replace("+", "")
+                    line = line.replace(str(sample)+":", str(sample)+"{"+str(mlst_data.loc[mlst_data["Sample"] == sample]["clonal_complex"].values[0])+"}:").replace(" ", "_")
+                outfile.write(line)
+
+        t = Phylo.read(tmptree2, 'newick')
+        
+        os.remove(tmptree1)
+        os.remove(tmptree2)
     #</JBA>
     
     # Plot presence/absence matrix against the tree

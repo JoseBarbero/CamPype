@@ -587,12 +587,13 @@ def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, annotatio
             arguments = ["amrfinder",
                         "-n", annotation_dir+"/"+sample+"/"+sample+".fna", 
                         "-p", annotation_dir+"/"+sample+"/"+sample+".faa", 
-                        "-g", gff_dir+"/"+gff_file+".gff", 
-                        "--organism", genus, 
+                        "-g", gff_dir+"/"+gff_file+".gff",
                         "--plus", 
                         "-i", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["minid"]/100),
                         "-c", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["mincov"]/100),
                         "-o", output_dir+"/"+sample+".txt"]
+            if genus == "Campylobacter":
+                arguments.extend(["--organism", genus])
             if threads:
                 arguments.extend(["--threads", str(threads)])
                 
@@ -1298,7 +1299,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     if reference_genome_basename:
         ref_assembly_report = pd.read_csv(assembly_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+"_assembly_statistics/"+"report.tsv", sep="\t")
     
-    if cfg.config["MLST"]["run_mlst"]:
+    if cfg.config["MLST"]["run_mlst"] and cfg.config["MLST"]["include_cc"]:
         mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
         # Sample column (index) is a string
         mlst_data.index = mlst_data.index.astype(str)
@@ -1419,7 +1420,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                     species_percentage = ""
 
             # Column ST (MLST)
-            if cfg.config["MLST"]["run_mlst"]:
+            if cfg.config["MLST"]["run_mlst"] and cfg.config["MLST"]["include_cc"]:
                 st = mlst_data.loc[sample]["ST"]
                 # Column clonal_complex (MLST)
                 clonal_complex = mlst_data.loc[sample]["clonal_complex"]
