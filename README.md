@@ -56,7 +56,7 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
     
 1. Set the modules you want to run in the CamPype/workflow_config.py file. There you will set your own running parameters for each tool and the select your tools of interest when possible.
 
-1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. If you want to use a different bacteria, we strongly recommend you to adapt the configuration of CamPype as previoys explained. In particular, you must modify the ```reference_genome```, deactivate the option ```include_cc```, use abricate for virulence genes searching or/and use your own virulence genes database with BLAST instead (indicate this accordingly in the CamPype/workflow_config.py file), and deactivate the option ```run_variant_calling```. $\textcolor{red}{\textsf{Be careful if you want to analyse a mix of bacterial species}}$, we recommend you to delete a ```reference_genome``` and deactivate the option ```run_variant_calling```.
+1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. If you want to use a different bacteria, we strongly recommend you to adapt the configuration of CamPype as previously explained. In particular, you must modify the ```reference_genome```, deactivate the option ```include_cc```, use abricate for virulence genes searching or/and use your own virulence genes database with BLAST instead (indicate this accordingly in the CamPype/workflow_config.py file), and deactivate the option ```run_variant_calling```. $\textcolor{red}{\textsf{Be careful if you want to analyse a mix of bacterial species}}$, we recommend you to delete a ```reference_genome``` and deactivate the option ```run_variant_calling```.
 
 
 ## Running CamPype
