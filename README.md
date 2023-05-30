@@ -1,9 +1,13 @@
 # CamPype
 
 CamPype is a pipeline for the analysis of Illumina paired-end sequencing data and/or whole bacterial genomes. The development of the workflow is mainly intended for the analysis of <em>Campylobacter jejuni/coli</em> genomes, although any other bacterial genus can be analyzed as well. CamPype is specially designed for users without knowledge of bioinformatics or programming, so the ease of installation and execution are the fundamentals of its development. Moreover, CamPype is a user-customizable workflow that allows you to select the analysis and the tools you are interested in. 
-Here you wil find the schema of CamPype. Software or databases are indicated in boxes, while discontinuous boxes indicate tools that users can deactivate.
 
-![scheme](https://user-images.githubusercontent.com/58036036/180643838-d771f326-3ef9-465e-b591-b5e9df792aec.png)
+
+Here you wil find the schema of CamPype. CamPype allows the user to previously check the quality of sequencing raw data in an independent step to optimize the read filtering analysis. Moreover, bacteria identification can be performed on the filtered fastq reads when raw reads are provided or after genome assembly when contigs are used.
+
+![scheme](https://github.com/JoseBarbero/CamPype/assets/58036036/1589d4a8-cd1a-42eb-be38-f2256086272f)
+Software or databases are indicated in boxes, while discontinuous boxes indicate tools that users can deactivate.
+
 
 ## Installation (Linux)
 
