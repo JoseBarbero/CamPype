@@ -174,8 +174,10 @@ Create_DT(x = assembly, filter = "top", caption = '')
 
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 #Reorder MLST df for correct heatmaps annotations
-order_assembly <- assembly$Sample
-MLST <- MLST[match(order_assembly, MLST$Sample), ]
+if(campype_config_json$MLST$run_mlst == TRUE) {
+  order_assembly <- assembly$Sample
+  MLST <- MLST[match(order_assembly, MLST$Sample), ]
+}
 ```
 
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
@@ -757,8 +759,8 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
       mutate(across(where(is_character), as_factor)) %>% 
       filter(`Element type` == "AMR" & `Element subtype` != "POINT") %>% 
       select(-c("Scope", "Element type", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
+    Create_DT(x = AMR, filter = "top", caption = '')
   }
-  Create_DT(x = AMR, filter = "top", caption = '')
 }
 
 
@@ -788,7 +790,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
       AMR_matrix <- AMR_matrix  %>% 
           left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
         
-        mlst_annotation <- MLST %>% 
+      mlst_annotation <- MLST %>% 
           mutate_all(as.character) %>%
           mutate_if(is.character, ~replace_na(., "Other")) %>% 
           select(., ST) %>%
@@ -796,7 +798,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                         factor))  %>%
           as.data.frame
 
-        AMR_heatmap <- AMR_matrix %>%
+      AMR_heatmap <- AMR_matrix %>%
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
           distinct() %>% #NUEEEVA
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
@@ -897,7 +899,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 #### Point mutations conferring antibiotic resistance
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMRFinder_matrix.tsv") == FALSE) {
-  pander(cat("Resistance caused by point mutations is not included for mixing genus (only for Campylobacter spp.).", "  \n"))
+  pander(cat("Resistance caused by point mutations is only included for *Campylobacter* spp. (not for mixing genus)", "  \n"))
   
 } else { #Point mutations for Campylobacter spp.
   if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
@@ -931,7 +933,7 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
 
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350}
 if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMRFinder_matrix.tsv") == TRUE) {
-
+  
   if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
     if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
       AMR_pmut_matrix <- 
@@ -952,6 +954,14 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
         AMR_pmut_matrix <- AMR_pmut_matrix  %>% 
           left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
         
+        mlst_annotation <- MLST %>% 
+          mutate_all(as.character) %>%
+          mutate_if(is.character, ~replace_na(., "Other")) %>% 
+          select(., ST) %>%
+          mutate(across(c(ST),
+                        factor))  %>%
+          as.data.frame
+        
         pmut_heatmap <- AMR_pmut_matrix %>%
           select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
           distinct() %>%
@@ -960,52 +970,17 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
           column_to_rownames(var="Sample") %>% 
           base::as.matrix()
         
-        if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
-          pmut_heatmap <- Heatmap(pmut_heatmap,
-                                  name = " ",
-                                  col = "#63BE7B",
-                                  cluster_rows = FALSE,
-                                  cluster_columns = FALSE,
-                                  top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
-                                                                     which = "col",
-                                                                     simple_anno_size = unit(4, "mm"),
-                                                                     annotation_name_side = "left",
-                                                                     gap = unit(1, 'mm')),
-                                  left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                                      which = "row",
-                                                                      simple_anno_size = unit(4, "mm"),
-                                                                      annotation_name_side = "bottom",
-                                                                      gap = unit(0.5, 'mm')),
-                                  heatmap_legend_param = list(at = c(1), 
-                                                         labels = c("Presence"),
-                                                         title = " ",
-                                                         color_bar = "discrete")
-                                  )
-          } else { # 1 and 0 values
-            pmut_heatmap <- Heatmap(pmut_heatmap,
-                                    name = " ",
-                                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                                    cluster_rows = FALSE,
-                                    cluster_columns = FALSE,
-                                    top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
-                                                                       which = "col",
-                                                                       simple_anno_size = unit(4, "mm"),
-                                                                       annotation_name_side = "left",
-                                                                       gap = unit(1, 'mm')),
-                                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                                        which = "row",
-                                                                        simple_anno_size = unit(4, "mm"),
-                                                                        annotation_name_side = "bottom",
-                                                                        gap = unit(0.5, 'mm')),
-                                    heatmap_legend_param = list(at = c(1, 0), 
-                                                                labels = c("Presence", "Absence "),
-                                                                title = " ",
-                                                                color_bar = "discrete"))
-            }
-        
         if(campype_config_json$MLST$include_cc == TRUE) {
           AMR_pmut_matrix <- AMR_pmut_matrix  %>%
             left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+          
+          mlst_annotation <- MLST %>% 
+            mutate_all(as.character) %>%
+            mutate_if(is.character, ~replace_na(., "Other")) %>%
+            select(., ST, `Clonal Complex`) %>%
+            mutate(across(c(ST),
+                          factor))  %>%
+            as.data.frame
           
           pmut_heatmap <- AMR_pmut_matrix %>%
             select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
@@ -1056,21 +1031,33 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
                                                                   labels = c("Presence", "Absence "),
                                                                   title = " ",
                                                                   color_bar = "discrete"))
-              }
-          
-          } else {
-            pmut_heatmap <- AMR_pmut_matrix %>%
-              select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
-              distinct() %>%
-              pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
-              select(., -any_of('-')) %>%
-              column_to_rownames(var="Sample") %>% 
-              base::as.matrix()
-            
-            if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
+            }
+        } else { # MLST yes, CC no
+          if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
+            pmut_heatmap <- Heatmap(pmut_heatmap,
+                                    name = " ",
+                                    col = "#63BE7B",
+                                    cluster_rows = FALSE,
+                                    cluster_columns = FALSE,
+                                    top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                                       which = "col",
+                                                                       simple_anno_size = unit(4, "mm"),
+                                                                       annotation_name_side = "left",
+                                                                       gap = unit(1, 'mm')),
+                                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                                        which = "row",
+                                                                        simple_anno_size = unit(4, "mm"),
+                                                                        annotation_name_side = "bottom",
+                                                                        gap = unit(0.5, 'mm')),
+                                    heatmap_legend_param = list(at = c(1),
+                                                                labels = c("Presence"),
+                                                                title = " ",
+                                                                color_bar = "discrete")
+                                    )
+            } else { # 1 and 0 values
               pmut_heatmap <- Heatmap(pmut_heatmap,
                                       name = " ",
-                                      col = "#63BE7B",
+                                      col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                                       cluster_rows = FALSE,
                                       cluster_columns = FALSE,
                                       top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
@@ -1078,30 +1065,60 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
                                                                          simple_anno_size = unit(4, "mm"),
                                                                          annotation_name_side = "left",
                                                                          gap = unit(1, 'mm')),
-                                      heatmap_legend_param = list(at = c(1), 
-                                                                  labels = c("Presence"),
+                                      left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                                          which = "row",
+                                                                          simple_anno_size = unit(4, "mm"),
+                                                                          annotation_name_side = "bottom",
+                                                                          gap = unit(0.5, 'mm')),
+                                      heatmap_legend_param = list(at = c(1, 0),
+                                                                  labels = c("Presence", "Absence "),
                                                                   title = " ",
-                                                                  color_bar = "discrete")
-                                      )
-              } else { # 1 and 0 values
-                pmut_heatmap <- Heatmap(pmut_heatmap,
-                                        name = " ",
-                                        col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                                        cluster_rows = FALSE,
-                                        cluster_columns = FALSE,
-                                        top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
-                                                                           which = "col",
-                                                                           simple_anno_size = unit(4, "mm"),
-                                                                           annotation_name_side = "left",
-                                                                           gap = unit(1, 'mm')),
-                                        heatmap_legend_param = list(at = c(1, 0), 
-                                                                    labels = c("Presence", "Absence "),
-                                                                    title = " ",
-                                                                    color_bar = "discrete"))
-              }
+                                                                  color_bar = "discrete"))
             }
-        pmut_heatmap
-      }
+          }
+        } else { # MLST no
+          pmut_heatmap <- AMR_pmut_matrix %>%
+            select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
+            distinct() %>%
+            pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
+            select(., -any_of('-')) %>%
+            column_to_rownames(var="Sample") %>%
+            base::as.matrix()
+          
+          if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
+            pmut_heatmap <- Heatmap(pmut_heatmap,
+                                    name = " ",
+                                    col = "#63BE7B",
+                                    cluster_rows = FALSE,
+                                    cluster_columns = FALSE,
+                                    top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                                       which = "col",
+                                                                       simple_anno_size = unit(4, "mm"),
+                                                                       annotation_name_side = "left",
+                                                                       gap = unit(1, 'mm')),
+                                    heatmap_legend_param = list(at = c(1), 
+                                                                labels = c("Presence"),
+                                                                color_bar = "discrete")
+                                    )
+            } else { # 1 and 0 values
+              pmut_heatmap <- Heatmap(pmut_heatmap,
+                                      name = " ",
+                                      col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                                      cluster_rows = FALSE,
+                                      cluster_columns = FALSE,
+                                      top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                                         which = "col",
+                                                                         simple_anno_size = unit(4, "mm"),
+                                                                         annotation_name_side = "left",
+                                                                         gap = unit(1, 'mm')),
+                                      heatmap_legend_param = list(at = c(1, 0), 
+                                                                  labels = c("Presence", "Absence "),
+                                                                  title = " ",
+                                                                  color_bar = "discrete"))
+            }
+          }
+          
+      pmut_heatmap
     }
   }
 }
@@ -1120,16 +1137,18 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('argannot' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
-    cat("##### argannot\n\n")
-    Anti_Res_Genes <- 
-      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
-      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-      filter(`DATABASE` == "argannot" ) %>% 
-      select(!c("DATABASE")) %>% 
-      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
-      mutate(across(where(is_character), as_factor))
-    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  if('abricate' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    if('argannot' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+      cat("##### argannot\n\n")
+      Anti_Res_Genes <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+        filter(`DATABASE` == "argannot" ) %>% 
+        select(!c("DATABASE")) %>% 
+        select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
+        mutate(across(where(is_character), as_factor))
+      Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+    }
   }
 }
 ```
@@ -1137,16 +1156,18 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('card' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
-    cat("##### CARD\n\n")
-    Anti_Res_Genes <- 
-      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
-      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-      filter(`DATABASE` == "card" ) %>% 
-      select(!c("DATABASE")) %>% 
-      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
-      mutate(across(where(is_character), as_factor))
-    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  if('abricate' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    if('card' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+      cat("##### CARD\n\n")
+      Anti_Res_Genes <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>%
+        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+        filter(`DATABASE` == "card" ) %>% 
+        select(!c("DATABASE")) %>% 
+        select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
+        mutate(across(where(is_character), as_factor))
+      Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+    }
   }
 }
 ```
@@ -1154,16 +1175,18 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('ecoh' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
-    cat("##### Ecoh\n\n")
-    Anti_Res_Genes <- 
-      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
-      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-      filter(`DATABASE` == "ecoh" ) %>% 
-      select(!c("DATABASE")) %>% 
-      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
-      mutate(across(where(is_character), as_factor))
-    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  if('abricate' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    if('ecoh' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+      cat("##### Ecoh\n\n")
+      Anti_Res_Genes <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>%
+        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+        filter(`DATABASE` == "ecoh" ) %>% 
+        select(!c("DATABASE")) %>% 
+        select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
+        mutate(across(where(is_character), as_factor))
+      Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+    }
   }
 }
 ```
@@ -1171,32 +1194,18 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('megares' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
-    cat("##### Megares\n\n")
-    Anti_Res_Genes <- 
-      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
-      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-      filter(`DATABASE` == "megares" ) %>% 
-      select(!c("DATABASE")) %>% 
-      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
-      mutate(across(where(is_character), as_factor))
-    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
-  }
-}
-```
-```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
-options("scipen" = 100, "digits" = 0)
-if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('ncbi' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
-    cat("##### NCBI\n\n")
-    Anti_Res_Genes <- 
-      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
-      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-      filter(`DATABASE` == "ncbi" ) %>% 
-      select(!c("DATABASE")) %>% 
-      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>% 
-      mutate(across(where(is_character), as_factor))
-    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  if('abricate' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    if('megares' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+      cat("##### Megares\n\n")
+      Anti_Res_Genes <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+        filter(`DATABASE` == "megares" ) %>% 
+        select(!c("DATABASE")) %>% 
+        select_if(function(x) !(all(is.na(x)) | all(x==""))) %>%
+        mutate(across(where(is_character), as_factor))
+      Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+    }
   }
 }
 ```
@@ -1204,16 +1213,37 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
 if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('resfinder' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
-    cat("##### Resfinder\n\n")
-    Anti_Res_Genes <- 
-      read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
-      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-      filter(`DATABASE` == "resfinder" ) %>% 
-      select(!c("DATABASE")) %>% 
-      select_if(function(x) !(all(is.na(x)) | all(x==""))) %>% 
-      mutate(across(where(is_character), as_factor))
-    Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+  if('abricate' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    if('ncbi' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+      cat("##### NCBI\n\n")
+      Anti_Res_Genes <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+        filter(`DATABASE` == "ncbi" ) %>% 
+        select(!c("DATABASE")) %>% 
+        select_if(function(x) !(all(is.na(x)) | all(x==""))) %>% 
+        mutate(across(where(is_character), as_factor))
+      Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+    }
+  }
+}
+```
+
+```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
+if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+  if('abricate' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+    if('resfinder' %in% campype_config_json$antimicrobial_resistance_genes$abricate$antimicrobial_resistance_databases) {
+      cat("##### Resfinder\n\n")
+      Anti_Res_Genes <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/ABRicate/AMR_ABRicate.tsv", show_col_types = FALSE) %>% 
+        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+        filter(`DATABASE` == "resfinder" ) %>% 
+        select(!c("DATABASE")) %>% 
+        select_if(function(x) !(all(is.na(x)) | all(x==""))) %>% 
+        mutate(across(where(is_character), as_factor))
+      Create_DT(x = Anti_Res_Genes, filter = "top", caption = '')
+    }
   }
 }
 ```
@@ -1258,10 +1288,10 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
       
       if(DBs[i] == "card" | DBs[i] == "ncbi") {
         top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                    which = "col", 
-                                                    simple_anno_size = unit(4, "mm"), 
-                                                    annotation_name_side = "left", 
-                                                    gap = unit(1, 'mm'))
+                                           which = "col", 
+                                           simple_anno_size = unit(4, "mm"), 
+                                           annotation_name_side = "left", 
+                                           gap = unit(1, 'mm'))
       } else {
         top_annotation = NULL
       }
@@ -1286,10 +1316,10 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           
           if(DBs[i] == "card" | DBs[i] == "ncbi") {
             top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
-                                                       which = "col", 
-                                                       simple_anno_size = unit(4, "mm"), 
-                                                       annotation_name_side = "left", 
-                                                       gap = unit(1, 'mm'))
+                                               which = "col", 
+                                               simple_anno_size = unit(4, "mm"),
+                                               annotation_name_side = "left", 
+                                               gap = unit(1, 'mm'))
           } else {
             top_annotation = NULL
           }
@@ -1406,15 +1436,10 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                       cluster_rows = FALSE,
                       cluster_columns = FALSE,
                       top_annotation = top_annotation, 
-                      left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                          which = "row",
-                                                          simple_anno_size = unit(4, "mm"),
-                                                          annotation_name_side = "bottom",
-                                                          gap = unit(0.5, 'mm')),
-                       heatmap_legend_param = list(at = c(1), 
-                                                   labels = c("Presence"),
-                                                   title = " ",
-                                                   color_bar = "discrete"))
+                      heatmap_legend_param = list(at = c(1), 
+                                                  labels = c("Presence"),
+                                                  title = " ",
+                                                  color_bar = "discrete"))
             )
           } else { # 1 and 0 values
             draw(
@@ -1426,11 +1451,6 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                       cluster_rows = FALSE,
                       cluster_columns = FALSE,
                       top_annotation = top_annotation, 
-                      left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                          which = "row",
-                                                          simple_anno_size = unit(4, "mm"),
-                                                          annotation_name_side = "bottom",
-                                                          gap = unit(0.5, 'mm')),
                       heatmap_legend_param = list(at = c(1, 0), 
                                              labels = c("Presence", "Absence"),
                                              title = " ",
@@ -1463,40 +1483,43 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 
 #### Select the database {.tabset .tabset-fade .tabset-pills}
 ```{r, results='asis', echo=FALSE}
-if('vfdb' %in% campype_config_json$virulence_genes$abricate$virulence_factors_databases) { 
-  cat('##### VFDB\n\n')
-  options("scipen" = 100, "digits" = 0)
-  if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
-    if('abricate' %in% campype_config_json$virulence_genes$virulence_genes_predictor_tool) {
-      Virulence_Genes <- 
-        read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
-        select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-        filter(`DATABASE` == "vfdb" ) %>% 
-        select(!c("DATABASE")) %>% 
-        mutate(across(where(is_character), as_factor))
-      Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+if('abricate' %in% campype_config_json$virulence_genes$virulence_genes_predictor_tool) {
+  if('vfdb' %in% campype_config_json$virulence_genes$abricate$virulence_factors_databases) { 
+    cat('##### VFDB\n\n')
+    options("scipen" = 100, "digits" = 0)
+    if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+      if('abricate' %in% campype_config_json$virulence_genes$virulence_genes_predictor_tool) {
+        Virulence_Genes <- 
+          read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
+          select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+          filter(`DATABASE` == "vfdb" ) %>% 
+          select(!c("DATABASE")) %>% 
+          mutate(across(where(is_character), as_factor))
+        Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+      }
     }
   }
 }
 ```
 
 ```{r, results='asis', echo=FALSE}
-if('ecoli_vf' %in% campype_config_json$virulence_genes$abricate$virulence_factors_databases) { 
-  cat('##### ecoli_vf\n\n')
-  options("scipen" = 100, "digits" = 0)
-  if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
-  if('abricate' %in% campype_config_json$virulence_genes$virulence_genes_predictor_tool) {
-    Virulence_Genes <- 
-      read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
-      select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
-      filter(`DATABASE` == "ecoli_vf" ) %>% 
-      select(!c("DATABASE")) %>% 
-      mutate(across(where(is_character), as_factor))
-    Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+if('abricate' %in% campype_config_json$virulence_genes$virulence_genes_predictor_tool) {
+  if('ecoli_vf' %in% campype_config_json$virulence_genes$abricate$virulence_factors_databases) { 
+    cat('##### ecoli_vf\n\n')
+    options("scipen" = 100, "digits" = 0)
+    if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
+      if('abricate' %in% campype_config_json$virulence_genes$virulence_genes_predictor_tool) {
+        Virulence_Genes <- 
+          read_tsv(file = "Virulence_genes/Virulence_genes_ABRicate.tsv", show_col_types = FALSE) %>% 
+          select(!c("COVERAGE", "COVERAGE_MAP")) %>% 
+          filter(`DATABASE` == "ecoli_vf" ) %>% 
+          select(!c("DATABASE")) %>% 
+          mutate(across(where(is_character), as_factor))
+        Create_DT(x = Virulence_Genes, filter = "top", caption = '')
+      }
     }
   }
 }
-
 ```
 <br>
 
@@ -1648,7 +1671,7 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
           }
           
         }           
-      } else {
+      } else { # no run MLST
         if (all(Virulence_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
            draw(
                 Heatmap(Virulence_Genes_matrix, 
@@ -1658,11 +1681,11 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                         col = "#63BE7B",
                         cluster_rows = FALSE,
                         cluster_columns = FALSE,
-                        left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                            which = "row",
-                                                            simple_anno_size = unit(4, "mm"),
-                                                            annotation_name_side = "bottom",
-                                                            gap = unit(0.5, 'mm')),
+                        # left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                        #                                     which = "row",
+                        #                                     simple_anno_size = unit(4, "mm"),
+                        #                                     annotation_name_side = "bottom",
+                        #                                     gap = unit(0.5, 'mm')),
                         heatmap_legend_param = list(at = c(1), 
                                                labels = c("Presence"),
                                                title = " ",
@@ -1677,11 +1700,11 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                        col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                        cluster_rows = FALSE,
                        cluster_columns = FALSE,
-                       left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                           which = "row",
-                                                           simple_anno_size = unit(4, "mm"),
-                                                           annotation_name_side = "bottom",
-                                                           gap = unit(0.5, 'mm')),
+                       # left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                       #                                     which = "row",
+                       #                                     simple_anno_size = unit(4, "mm"),
+                       #                                     annotation_name_side = "bottom",
+                       #                                     gap = unit(0.5, 'mm')),
                        heatmap_legend_param = list(at = c(1, 0), 
                                               labels = c("Presence", "Absence"),
                                               title = " ",
@@ -1725,7 +1748,7 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350, fig.width=10}
 if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
   if('blast' %in% campype_config_json$virulence_genes$virulence_genes_predictor_tool) {
-    Virulence_Genes_PA <- 
+    Virulence_Genes_PA <-
       read_tsv(file = "Virulence_genes/BLAST_inhouse_virulence_genes/Virulence_genes_BLAST_matrix.tsv", show_col_types = FALSE) %>% 
       slice(-n())
     
@@ -1738,67 +1761,44 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
     Virulence_Res_Genes_matrix <- t(as.matrix(Virulence_Genes_PA_matrix))
     
     virulence_class_annotation <- Virulence_Genes_PA[, c("Protein", "Type")] %>% 
-        select(c("Type")) %>%
-        as.data.frame
+      select(c("Type")) %>%
+      as.data.frame
     
     if(campype_config_json$MLST$run_mlst == TRUE) {
       Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
-        Virulence_Res_Genes_matrix <- tibble::rownames_to_column(Virulence_Res_Genes_matrix, "Sample")
-        
-        Virulence_Res_Genes_matrix_mlst <- Virulence_Res_Genes_matrix  %>% 
-          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+      Virulence_Res_Genes_matrix <- tibble::rownames_to_column(Virulence_Res_Genes_matrix, "Sample")
       
-        mlst_annotation <- Virulence_Res_Genes_matrix_mlst %>% 
-          select(., ST) %>%
-          mutate(across(c(ST),
-                        factor))  %>%
-          as.data.frame
+      Virulence_Res_Genes_matrix_mlst <- Virulence_Res_Genes_matrix  %>% 
+        left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
       
-        Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
-        rownames(Virulence_Res_Genes_matrix) <- Virulence_Res_Genes_matrix$Sample
-        Virulence_Res_Genes_matrix$Sample <- NULL
+      mlst_annotation <- Virulence_Res_Genes_matrix_mlst %>% 
+        select(., ST) %>%
+        mutate(across(c(ST),
+                      factor))  %>%
+        as.data.frame
       
-        Heatmap(Virulence_Res_Genes_matrix,
-                column_names_gp = gpar(fontsize = 6),
-                row_names_gp = gpar(fontsize = 6),
-                width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
-                height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
-                col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                cluster_rows = FALSE,
-                cluster_columns = FALSE,
-                left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                    which = "row",
-                                                    simple_anno_size = unit(4, "mm"),
-                                                    annotation_name_side = "bottom",
-                                                    gap = unit(0.5, 'mm')),
-                top_annotation = HeatmapAnnotation(df = virulence_class_annotation,
-                                                   which = "col", 
-                                                   simple_anno_size = unit(4, "mm"), 
-                                                   annotation_name_side = "left", 
-                                                   gap = unit(1, 'mm')), 
-                heatmap_legend_param = list(at = c(1, 0), 
-                                            labels = c("Presence", "Absence"),
-                                            title = " ",
-                                            color_bar = "discrete"))
-        
+      Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
+      rownames(Virulence_Res_Genes_matrix) <- Virulence_Res_Genes_matrix$Sample
+      Virulence_Res_Genes_matrix$Sample <- NULL
+      
       if(campype_config_json$MLST$include_cc == TRUE) {
         Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
         Virulence_Res_Genes_matrix <- tibble::rownames_to_column(Virulence_Res_Genes_matrix, "Sample")
         
         Virulence_Res_Genes_matrix_mlst <- Virulence_Res_Genes_matrix  %>% 
           left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
-      
+        
         mlst_annotation <- Virulence_Res_Genes_matrix_mlst %>% 
           select(., ST, `Clonal Complex`) %>%
           mutate(across(c(ST),
                         factor))  %>%
           as.data.frame
-      
+        
         Virulence_Res_Genes_matrix <- as.data.frame(Virulence_Res_Genes_matrix)
         rownames(Virulence_Res_Genes_matrix) <- Virulence_Res_Genes_matrix$Sample
         Virulence_Res_Genes_matrix$Sample <- NULL
-      
-        Heatmap(Virulence_Res_Genes_matrix,
+        
+        Heatmap(as.matrix(Virulence_Res_Genes_matrix),
                 column_names_gp = gpar(fontsize = 6),
                 row_names_gp = gpar(fontsize = 6),
                 width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
@@ -1815,30 +1815,53 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                                                    which = "col", 
                                                    simple_anno_size = unit(4, "mm"), 
                                                    annotation_name_side = "left", 
-                                                   gap = unit(1, 'mm')), 
+                                                   gap = unit(1, 'mm')),
                 heatmap_legend_param = list(at = c(1, 0), 
                                             labels = c("Presence", "Absence"),
                                             title = " ",
                                             color_bar = "discrete"))
+        } else { # no CC
+          Heatmap(as.matrix(Virulence_Res_Genes_matrix),
+                  column_names_gp = gpar(fontsize = 6),
+                  row_names_gp = gpar(fontsize = 6),
+                  width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
+                  height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
+                  col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                  cluster_rows = FALSE,
+                  cluster_columns = FALSE,
+                  left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                      which = "row",
+                                                      simple_anno_size = unit(4, "mm"),
+                                                      annotation_name_side = "bottom",
+                                                      gap = unit(0.5, 'mm')),
+                  top_annotation = HeatmapAnnotation(df = virulence_class_annotation,
+                                                     which = "col", 
+                                                     simple_anno_size = unit(4, "mm"), 
+                                                     annotation_name_side = "left", 
+                                                     gap = unit(1, 'mm')), 
+                  heatmap_legend_param = list(at = c(1, 0), 
+                                              labels = c("Presence", "Absence"),
+                                              title = " ",
+                                              color_bar = "discrete"))
+          }
+      
+      } else { # no MLST
+        Heatmap(as.matrix(Virulence_Res_Genes_matrix), 
+                column_names_gp = gpar(fontsize = 6), 
+                row_names_gp = gpar(fontsize = 6), 
+                width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
+                height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
+                col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                cluster_rows = FALSE,  
+                top_annotation = HeatmapAnnotation(df = virulence_class_annotation,
+                                                   which = "col", 
+                                                   simple_anno_size = unit(4, "mm"), 
+                                                   annotation_name_side = "left", 
+                                                   gap = unit(1, 'mm')), 
+                heatmap_legend_param = list(at = c(1, 0), 
+                                            labels = c("Presence", "Absence"),
+                                            color_bar = "discrete"))
       }
-    } else {
-      Heatmap(Virulence_Res_Genes_matrix, 
-              column_names_gp = gpar(fontsize = 6), 
-              row_names_gp = gpar(fontsize = 6), 
-              width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
-              height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
-              col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-              cluster_rows = FALSE,  
-              top_annotation = HeatmapAnnotation(df = virulence_class_annotation,
-                                                 which = "col", 
-                                                 simple_anno_size = unit(4, "mm"), 
-                                                 annotation_name_side = "left", 
-                                                 gap = unit(1, 'mm')), 
-              heatmap_legend_param = list(at = c(1, 0), 
-                                          labels = c("Presence", "Absence"),
-                                          title = " ",
-                                          color_bar = "discrete"))
-    }
   }
 }
 ```
