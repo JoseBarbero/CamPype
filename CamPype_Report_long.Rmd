@@ -1248,114 +1248,69 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 
 #### Point mutations conferring antibiotic resistance
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
-if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
-    pander(cat("<br>", "Following table shows known point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below", toString(campype_config_json$antimicrobial_resistance_genes$amrfinder$mincov), "% and identity below", toString(campype_config_json$antimicrobial_resistance_genes$amrfinder$minid), "% was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMRFinder_matrix.tsv") == FALSE) {
+  pander(cat("Resistance caused by point mutations is not included for mixing genus (only for Campylobacter spp.).", "  \n"))
+  
+} else { #Point mutations for Campylobacter spp.
+  if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+    if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+      pander(cat("<br>", "Following table shows known point mutations by screening the draft genomes against the [Pathogen Detection Reference Gene Catalog]( https://www.ncbi.nlm.nih.gov/pathogens/isolates#/refgene) by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Any hit with coverage below", toString(campype_config_json$antimicrobial_resistance_genes$amrfinder$mincov), "% and identity below", toString(campype_config_json$antimicrobial_resistance_genes$amrfinder$minid), "% was removed.", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available)."))
+    }
   }
-}
-    
-if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
-    AMR_pmut <- 
-      read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
-      mutate(across(where(is_character), as_factor)) %>% 
-      filter(`Element subtype` == "POINT" ) %>% 
-      select(-c("Scope", "Element type", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
-    
-    Create_DT(x = AMR_pmut, filter = "top", caption = '')
-  }
-}
 
-if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
-    pander(cat("<br>", "Following figure represents known point mutations in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as minimum coverage of", toString(campype_config_json$antimicrobial_resistance_genes$amrfinder$mincov),  "% and minimum identity of", toString(campype_config_json$antimicrobial_resistance_genes$amrfinder$minid), "%."))
+  if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+    if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+      AMR_pmut <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
+        mutate(across(where(is_character), as_factor)) %>% 
+        filter(`Element subtype` == "POINT" ) %>% 
+        select(-c("Scope", "Element type", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
+      
+      Create_DT(x = AMR_pmut, filter = "top", caption = '')
+    }
   }
+
+
+  if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+    if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+      pander(cat("<br>", "Following figure represents known point mutations in each draft genome by using [AMRFinderPlus]( https://www.ncbi.nlm.nih.gov/pathogens/antimicrobial-resistance/AMRFinder). Presence is represented as minimum coverage of", toString(campype_config_json$antimicrobial_resistance_genes$amrfinder$mincov),  "% and minimum identity of", toString(campype_config_json$antimicrobial_resistance_genes$amrfinder$minid), "%."))
+    }
+  }
+
 }
 ```
-  
-```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350}
-if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
-  if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
-    AMR_pmut_matrix <- 
-      read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
-      pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Class", values_to = "Point mutation") %>%
-      mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Point mutation`, "^-$"))) %>%
-      mutate(`Point mutation` = strsplit(as.character(`Point mutation`), ",")) %>% 
-      unnest(`Point mutation`) %>%
-      mutate(across(where(is_character), as_factor))
+<br>
 
-    resistance_class_pmut_annotation <- AMR_pmut_matrix[, c("Resistance Class", "Point mutation")] %>%
-      distinct() %>% 
-      filter(`Point mutation` != "-") %>%
-      select(c("Resistance Class")) %>%
-      as.data.frame
-    
-    if(campype_config_json$MLST$run_mlst == TRUE) {
-      AMR_pmut_matrix <- AMR_pmut_matrix  %>% 
-          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 350}
+if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMRFinder_matrix.tsv") == TRUE) {
+
+  if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
+    if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
+      AMR_pmut_matrix <- 
+        read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMRFinder_matrix.tsv", show_col_types = FALSE) %>%
+        pivot_longer(data = ., cols = !c(Sample), names_to = "Resistance Class", values_to = "Point mutation") %>%
+        mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Point mutation`, "^-$"))) %>%
+        mutate(`Point mutation` = strsplit(as.character(`Point mutation`), ",")) %>% 
+        unnest(`Point mutation`) %>%
+        mutate(across(where(is_character), as_factor))
       
-      pmut_heatmap <- AMR_pmut_matrix %>%
-          select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
-          distinct() %>%
-          pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
-          select(., -any_of('-')) %>%
-          column_to_rownames(var="Sample") %>% 
-          base::as.matrix()
-                
-      if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
-          pmut_heatmap <- Heatmap(pmut_heatmap,
-                                  name = " ",
-                                  col = "#63BE7B",
-                                  cluster_rows = FALSE,
-                                  cluster_columns = FALSE,
-                                  top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
-                                                                     which = "col",
-                                                                     simple_anno_size = unit(4, "mm"),
-                                                                     annotation_name_side = "left",
-                                                                     gap = unit(1, 'mm')),
-                                  left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                                      which = "row",
-                                                                      simple_anno_size = unit(4, "mm"),
-                                                                      annotation_name_side = "bottom",
-                                                                      gap = unit(0.5, 'mm')),
-                                  heatmap_legend_param = list(at = c(1), 
-                                                         labels = c("Presence"),
-                                                         title = " ",
-                                                         color_bar = "discrete")
-                          )
-       } else { # 1 and 0 values
-          pmut_heatmap <- Heatmap(pmut_heatmap,
-                          name = " ",
-                          col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                          cluster_rows = FALSE,
-                          cluster_columns = FALSE,
-                          top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
-                                                             which = "col",
-                                                             simple_anno_size = unit(4, "mm"),
-                                                             annotation_name_side = "left",
-                                                             gap = unit(1, 'mm')),
-                          left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                              which = "row",
-                                                              simple_anno_size = unit(4, "mm"),
-                                                              annotation_name_side = "bottom",
-                                                              gap = unit(0.5, 'mm')),
-                          heatmap_legend_param = list(at = c(1, 0), 
-                                                      labels = c("Presence", "Absence "),
-                                                      title = " ",
-                                                       color_bar = "discrete"))
-       }
-        
-      if(campype_config_json$MLST$include_cc == TRUE) {
+      resistance_class_pmut_annotation <- AMR_pmut_matrix[, c("Resistance Class", "Point mutation")] %>%
+        distinct() %>% 
+        filter(`Point mutation` != "-") %>%
+        select(c("Resistance Class")) %>%
+        as.data.frame
+      
+      if(campype_config_json$MLST$run_mlst == TRUE) {
         AMR_pmut_matrix <- AMR_pmut_matrix  %>% 
-          left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
-      
+          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+        
         pmut_heatmap <- AMR_pmut_matrix %>%
           select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
           distinct() %>%
           pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
           select(., -any_of('-')) %>%
           column_to_rownames(var="Sample") %>% 
-          base::as.matrix() 
+          base::as.matrix()
         
         if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
           pmut_heatmap <- Heatmap(pmut_heatmap,
@@ -1377,72 +1332,128 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                          labels = c("Presence"),
                                                          title = " ",
                                                          color_bar = "discrete")
-                          )
-       } else { # 1 and 0 values
-          pmut_heatmap <- Heatmap(pmut_heatmap,
-                          name = " ",
-                          col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                          cluster_rows = FALSE,
-                          cluster_columns = FALSE,
-                          top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
-                                                             which = "col",
-                                                             simple_anno_size = unit(4, "mm"),
-                                                             annotation_name_side = "left",
-                                                             gap = unit(1, 'mm')),
-                          left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                                                              which = "row",
-                                                              simple_anno_size = unit(4, "mm"),
-                                                              annotation_name_side = "bottom",
-                                                              gap = unit(0.5, 'mm')),
-                          heatmap_legend_param = list(at = c(1, 0), 
-                                                      labels = c("Presence", "Absence "),
-                                                      title = " ",
-                                                       color_bar = "discrete"))
-       }
-       
-      } else {
-      pmut_heatmap <- AMR_pmut_matrix %>%
-        select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
-        distinct() %>%
-        pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
-        select(., -any_of('-')) %>%
-        column_to_rownames(var="Sample") %>% 
-        base::as.matrix()
-      
-      if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
-          pmut_heatmap <- Heatmap(pmut_heatmap,
-                                  name = " ",
-                                  col = "#63BE7B",
-                                  cluster_rows = FALSE,
-                                  cluster_columns = FALSE,
-                                  top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
-                                                                     which = "col",
-                                                                     simple_anno_size = unit(4, "mm"),
-                                                                     annotation_name_side = "left",
-                                                                     gap = unit(1, 'mm')),
-                                  heatmap_legend_param = list(at = c(1), 
-                                                         labels = c("Presence"),
-                                                         title = " ",
-                                                         color_bar = "discrete")
-                          )
-       } else { # 1 and 0 values
-          pmut_heatmap <- Heatmap(pmut_heatmap,
-                          name = " ",
-                          col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
-                          cluster_rows = FALSE,
-                          cluster_columns = FALSE,
-                          top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
-                                                             which = "col",
-                                                             simple_anno_size = unit(4, "mm"),
-                                                             annotation_name_side = "left",
-                                                             gap = unit(1, 'mm')),
-                          heatmap_legend_param = list(at = c(1, 0), 
-                                                      labels = c("Presence", "Absence "),
-                                                      title = " ",
-                                                       color_bar = "discrete"))
-       }
+                                  )
+          } else { # 1 and 0 values
+            pmut_heatmap <- Heatmap(pmut_heatmap,
+                                    name = " ",
+                                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                                    cluster_rows = FALSE,
+                                    cluster_columns = FALSE,
+                                    top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                                       which = "col",
+                                                                       simple_anno_size = unit(4, "mm"),
+                                                                       annotation_name_side = "left",
+                                                                       gap = unit(1, 'mm')),
+                                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                                        which = "row",
+                                                                        simple_anno_size = unit(4, "mm"),
+                                                                        annotation_name_side = "bottom",
+                                                                        gap = unit(0.5, 'mm')),
+                                    heatmap_legend_param = list(at = c(1, 0), 
+                                                                labels = c("Presence", "Absence "),
+                                                                title = " ",
+                                                                color_bar = "discrete"))
+            }
+        
+        if(campype_config_json$MLST$include_cc == TRUE) {
+          AMR_pmut_matrix <- AMR_pmut_matrix  %>%
+            left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
+          
+          pmut_heatmap <- AMR_pmut_matrix %>%
+            select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
+            distinct() %>%
+            pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
+            select(., -any_of('-')) %>%
+            column_to_rownames(var="Sample") %>% 
+            base::as.matrix() 
+          
+          if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
+            pmut_heatmap <- Heatmap(pmut_heatmap,
+                                    name = " ",
+                                    col = "#63BE7B",
+                                    cluster_rows = FALSE,
+                                    cluster_columns = FALSE,
+                                    top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                                       which = "col",
+                                                                       simple_anno_size = unit(4, "mm"),
+                                                                       annotation_name_side = "left",
+                                                                       gap = unit(1, 'mm')),
+                                    left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                                        which = "row",
+                                                                        simple_anno_size = unit(4, "mm"),
+                                                                        annotation_name_side = "bottom",
+                                                                        gap = unit(0.5, 'mm')),
+                                    heatmap_legend_param = list(at = c(1),
+                                                                labels = c("Presence"),
+                                                                title = " ",
+                                                                color_bar = "discrete")
+                                    )
+            } else { # 1 and 0 values
+              pmut_heatmap <- Heatmap(pmut_heatmap,
+                                      name = " ",
+                                      col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                                      cluster_rows = FALSE,
+                                      cluster_columns = FALSE,
+                                      top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                                         which = "col",
+                                                                         simple_anno_size = unit(4, "mm"),
+                                                                         annotation_name_side = "left",
+                                                                         gap = unit(1, 'mm')),
+                                      left_annotation = HeatmapAnnotation(df = mlst_annotation,
+                                                                          which = "row",
+                                                                          simple_anno_size = unit(4, "mm"),
+                                                                          annotation_name_side = "bottom",
+                                                                          gap = unit(0.5, 'mm')),
+                                      heatmap_legend_param = list(at = c(1, 0), 
+                                                                  labels = c("Presence", "Absence "),
+                                                                  title = " ",
+                                                                  color_bar = "discrete"))
+              }
+          
+          } else {
+            pmut_heatmap <- AMR_pmut_matrix %>%
+              select(c(Sample, `Point mutation`, `Presence / Absence`)) %>%
+              distinct() %>%
+              pivot_wider(data = ., names_from = `Point mutation`, values_from = `Presence / Absence`, values_fill = 0) %>%
+              select(., -any_of('-')) %>%
+              column_to_rownames(var="Sample") %>% 
+              base::as.matrix()
+            
+            if (all(pmut_heatmap == 1) == TRUE) { # presence matrix (only 1 values)
+              pmut_heatmap <- Heatmap(pmut_heatmap,
+                                      name = " ",
+                                      col = "#63BE7B",
+                                      cluster_rows = FALSE,
+                                      cluster_columns = FALSE,
+                                      top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                                         which = "col",
+                                                                         simple_anno_size = unit(4, "mm"),
+                                                                         annotation_name_side = "left",
+                                                                         gap = unit(1, 'mm')),
+                                      heatmap_legend_param = list(at = c(1), 
+                                                                  labels = c("Presence"),
+                                                                  title = " ",
+                                                                  color_bar = "discrete")
+                                      )
+              } else { # 1 and 0 values
+                pmut_heatmap <- Heatmap(pmut_heatmap,
+                                        name = " ",
+                                        col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
+                                        cluster_rows = FALSE,
+                                        cluster_columns = FALSE,
+                                        top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
+                                                                           which = "col",
+                                                                           simple_anno_size = unit(4, "mm"),
+                                                                           annotation_name_side = "left",
+                                                                           gap = unit(1, 'mm')),
+                                        heatmap_legend_param = list(at = c(1, 0), 
+                                                                    labels = c("Presence", "Absence "),
+                                                                    title = " ",
+                                                                    color_bar = "discrete"))
+              }
+            }
+        pmut_heatmap
       }
-    pmut_heatmap
     }
   }
 }

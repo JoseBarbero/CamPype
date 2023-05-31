@@ -44,7 +44,7 @@ config = {
     },
     "antimicrobial_resistance_genes":{
         "run_antimicrobial_resistance_genes_prediction": True, #Set this to True or False if you want to search for antimicrobial resistance genes or not. Default: True
-        "antimicrobial_resistance_genes_predictor_tool": ["abricate", "amrfinder"], # Select as many tools as desired to identify virulence genes: abricate and/or amrfinder. Keep in mind that abricate uses BLASTn and AMRFinder uses blastp. Be aware to run genome annotation if using AMRFinder! Default: ["abricate", "amrfinder"] 
+        "antimicrobial_resistance_genes_predictor_tool": ["abricate", "amrfinder"], # Select as many tools as desired to identify virulence genes: abricate and/or amrfinder. Keep in mind that abricate uses BLASTn and AMRFinder uses blastp. Be aware to run genome annotation if using AMRFinder! For Campylobacter jejuni and Campylobacter coli strains, resistance caused by point mutations will be screened as well. Default: ["abricate", "amrfinder"] 
         "abricate": {
             "antimicrobial_resistance_databases": ["argannot", "card", "megares", "ncbi", "resfinder"], # Select as many databases as desired from ABRicate to identify antimicrobial resistance genes: argannot, card, ecoh, ecoli_vf, megares, ncbi or/and resfinder. Remember, ABRicate uses blastn. Default: ["argannot", "card", "megares", "ncbi", "resfinder"]
             "mincov": 80, # Minimum DNA % coverage for considering a virulence gene as present. Default: 80
