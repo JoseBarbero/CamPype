@@ -429,13 +429,26 @@ def mlst_call(input_dir, reference_file, output_dir, output_filename, threads=No
     if threads:
         arguments.extend(["--threads", str(threads)])
 
-    return call(arguments, stdout=output_file)
+    status = call(arguments, stdout=output_file)
+    output_file.close()
+
+    # Reformat output with header
+    mlst_data = pd.read_csv(output_dir+"/"+output_filename, sep="\t", header=None)
+    mlst_data.columns = ["Sample", "Genus", "ST", *[f"locus_{i+1}" for i in range(7)]]
+    # Sample column (index) is a string
+    mlst_data["Sample"] = mlst_data["Sample"].astype(str)
+    # Filter df to keep only the basename of the index column
+    mlst_data["Sample"] = mlst_data["Sample"].str.split("/").str[-1]
+    mlst_data["Sample"] = mlst_data["Sample"].str.split(".").str[0]
+    
+    mlst_data.to_csv(output_dir+"/"+output_filename, sep="\t", index=False)
+    return status
 
 
 def mlst_postprocessing(mlst_file, output_file):
     col_names = ["Sample", "Genus", "ST"]
     output_data = pd.DataFrame()
-    mlst_df = pd.read_csv(mlst_file, delimiter="\t", header=None)
+    mlst_df = pd.read_csv(mlst_file, delimiter="\t")
 
     url = "http://rest.pubmlst.org/db/pubmlst_campylobacter_seqdef/schemes/1/profiles_csv"
     urlData = requests.get(url).content
@@ -443,9 +456,9 @@ def mlst_postprocessing(mlst_file, output_file):
 
     for _, row in mlst_df.iterrows():
         new_row = []
-        new_row.append(os.path.basename(row[0]).split(".fast")[0])  # Basename
-        new_row.append(row[1])                                  # Genus
-        new_row.append(row[2])                                  # ST
+        new_row.append(row["Sample"])
+        new_row.append(row["Genus"])
+        new_row.append(row["ST"])
         for column in mlst_df.columns[3:]:
             if not row[column].split("(")[0] in col_names:
                 col_names.append(row[column].split("(")[0])
@@ -572,7 +585,7 @@ def abricate_presence_absence_matrix(abricate_file, p_a_matrix_file, samples, da
 
 
 
-def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, annotation_dir, gff_dir, genus, db_name, output_dir, ref_genome_basename=None, threads=None):
+def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, annotation_dir, gff_dir, samples_genus, db_name, output_dir, ref_genome_basename=None, threads=None):
     has_header = False
 
     samples = samples_basenames
@@ -592,8 +605,8 @@ def amrfinder_call(amrfinder_out_file, resume_file, samples_basenames, annotatio
                         "-i", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["minid"]/100),
                         "-c", str(cfg.config["antimicrobial_resistance_genes"]["amrfinder"]["mincov"]/100),
                         "-o", output_dir+"/"+sample+".txt"]
-            if genus == "Campylobacter":
-                arguments.extend(["--organism", genus])
+            if samples_genus[sample] == "Campylobacter":
+                arguments.extend(["--organism", samples_genus[sample]])
             if threads:
                 arguments.extend(["--threads", str(threads)])
                 
@@ -1305,24 +1318,15 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             # Sample column (index) is a string
             mlst_data.index = mlst_data.index.astype(str)
         else:
-            # Read only the first 3 columns
-            mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0, usecols=[0,1,2], header=None)
-            mlst_data.columns = ["Genus", "ST"]
-            # Rename index as Sample
-            mlst_data.index.name = "Sample"
+            mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
             # Sample column (index) is a string
             mlst_data.index = mlst_data.index.astype(str)
-            # Filter df to keep only the basename of the index column
-            mlst_data.index = mlst_data.index.str.split("/").str[-1]
-            mlst_data.index = mlst_data.index.str.split(".").str[0]
-            # Print index values
-            print(mlst_data.index.values)
 
-
-    if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
-        vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
-        vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
-        vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
+    if  cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
+        if "blast" in cfg.config["virulence_genes"]["virulence_genes_predictor_tool"]:
+            vir_matrix = pd.read_csv(vir_matrix_file, sep="\t", skipfooter=1, engine="python")
+            vir_total_by_categories = vir_matrix.groupby(["Type"]).sum().sum(axis=1).to_dict()
+            vir_types_summary = vir_matrix.groupby(["Type"]).sum().to_dict()
 
     fasta_mode = cfg.config["assembled_genomes"]
 
@@ -1556,18 +1560,19 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             occurrences = 0     # Total number of occurrences of that category in Campylobacter_custom_VFDB.txt
             total_occurrences = 0
             if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
-                # Information from VF_matrix
-                # For each sample its column has the sum of genes present from each category
-                virulence_dict = {}
-                for category, _ in vir_total_by_categories.items():
-                    with open(custom_VFDB) as custom_DB:
-                        occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
-                        total_occurrences += occurrences
-                    virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
-                df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
-                virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
-                
-                report_dict.update(virulence_dict)
+                if "blast" in cfg.config["virulence_genes"]["virulence_genes_predictor_tool"]:
+                    # Information from VF_matrix
+                    # For each sample its column has the sum of genes present from each category
+                    virulence_dict = {}
+                    for category, _ in vir_total_by_categories.items():
+                        with open(custom_VFDB) as custom_DB:
+                            occurrences = sum(category.lower() in line.split(" ")[1].lower() for line in custom_DB if line.startswith(">"))
+                            total_occurrences += occurrences
+                        virulence_dict[category+"("+str(occurrences)+")"] = vir_types_summary[sample][category]
+                    df_2nd_column_block = [*virulence_dict.keys()]     # Column blocks to sort columns in final file
+                    virulence_dict["Total ("+str(total_occurrences)+")"] = vir_matrix.groupby(["Type"]).sum()[sample].sum()
+                    
+                    report_dict.update(virulence_dict)
 
 
             if cfg.config["run_variant_calling"] and cfg.config["reference_genome"]["file"]:
@@ -1704,6 +1709,9 @@ if __name__ == "__main__":
     decompressed_samples_rv = dict()
     decompressed_samples = dict()
 
+    samples_genus = dict()
+    samples_species = dict()
+
     # Number of threads
     n_threads = cfg.config["n_threads"]
 
@@ -1775,6 +1783,9 @@ if __name__ == "__main__":
     if reference_genome_file:
         reference_genome_filename = reference_genome_file.split("/")[-1]
         reference_genome_basename = reference_genome_filename.split(".")[-2]
+
+        samples_genus[reference_genome_basename] = cfg.config["reference_genome"]["genus"]
+        samples_species[reference_genome_basename] = cfg.config["reference_genome"]["species"]
         
         print(Banner(f"\nProcessing reference sequence ({reference_genome_basename}) before your genomes of interest  \n"), flush=True)
 
@@ -1851,8 +1862,8 @@ if __name__ == "__main__":
         
         sample_fw = data["FW"]
         sample_rv = data["RV"]
-        genus = data["Genus"]
-        species = data["Species"]
+        samples_genus[sample_basename] = data["Genus"]
+        samples_species[sample_basename] = data["Species"]
 
         step_counter = 1 # Just to let the user know the number of each step
         sample_counter += 1
@@ -1914,8 +1925,8 @@ if __name__ == "__main__":
                                                            threads = n_threads)
                 kraken_reports.append((sample_basename, kraken_out_report_file))
                 if not genus or not species:
-                    genus = kraken_genus
-                    species = kraken_species
+                    samples_genus[sample_basename] = kraken_genus
+                    samples_species[sample_basename] = kraken_species
                 step_counter += 1
 
 
@@ -2002,8 +2013,8 @@ if __name__ == "__main__":
                                                            fw_file=sample_fw,
                                                            threads = n_threads)
                 if not genus or not species:
-                    genus = kraken_genus
-                    species = kraken_species
+                    samples_genus[sample_basename] = kraken_genus
+                    samples_species[sample_basename] = kraken_species
                 kraken_reports.append((sample_basename, kraken_out_report_file))
                 step_counter += 1
             
@@ -2058,7 +2069,7 @@ if __name__ == "__main__":
                         contigs_file=draft_contigs,
                         output_dir=dfast_dir+"/"+sample_basename,
                         sample_basename=sample_basename,
-                        organism=genus+" "+species,
+                        organism=samples_genus[sample_basename]+" "+samples_species[sample_basename],
                     threads = n_threads)
                 step_counter += 1
 
@@ -2076,8 +2087,8 @@ if __name__ == "__main__":
                             output_dir=prokka_dir+"/"+sample_basename,
                             prefix=sample_basename,
                             input_file=draft_contigs,
-                            genus=genus,
-                            species=species,
+                            genus=samples_genus[sample_basename],
+                            species=samples_species[sample_basename],
                             strain=sample_basename,
                             proteins=cfg.config["reference_genome"]["proteins"],
                             rawproduct=cfg.config["annotation"]["prokka"]["rawproduct"],
@@ -2361,10 +2372,12 @@ if __name__ == "__main__":
             else:
                 reference_genome_basename = None
             amrfinder_call(amrfinder_out_file, amrfinder_resume_file, amrfinder_samples, 
-                           annotation_dir, gff_dir, genus, amrfinder_db_name, amr_analysis_dir_amrfinder,
+                           annotation_dir, gff_dir, samples_genus, amrfinder_db_name, amr_analysis_dir_amrfinder,
                            ref_genome_basename=reference_genome_basename,
                            threads = n_threads)
-            amrfinder_get_point_mutations(amrfinder_out_file, amrfinder_point_mutations_file)
+            # If all the samples genus are "Campylobacter"
+            if all(value == "Campylobacter" for value in samples_genus.values()):
+                amrfinder_get_point_mutations(amrfinder_out_file, amrfinder_point_mutations_file)
 
     # Roary call
     if cfg.config["pangenome"]["run_pangenome"]:
