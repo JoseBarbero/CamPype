@@ -28,17 +28,17 @@ def read_input_files(indexfile):
         indexfile {string} -- Filename (and route) of the file containing inputs.
     
     Returns:
-        files_data {list of tuples} -- List of tuples each containing forward read file path, reverse read file path and file basename (just the sample number).
+        files_data {dict} -- Dict containing forward read file path, reverse read file path and file basename (just the sample number).
     """
     files_df = pd.read_csv(indexfile, sep="\t")
     # Replace nans with empty strings
     files_df = files_df.fillna("")
-    files_data = []
+    files_data = dict()
     for _, row in files_df.iterrows():
-        files_data.append((str(row["Samples"]), {"FW": str(row["Forward"]), 
-                                                 "RV": str(row["Reverse"]), 
-                                                 "Genus": str(row["Genus"]), 
-                                                 "Species": str(row["Species"])}))
+        files_data[str(row["Samples"])] = {"FW": str(row["Forward"]), 
+                                          "RV": str(row["Reverse"]), 
+                                          "Genus": str(row["Genus"]), 
+                                          "Species": str(row["Species"])}
     return files_data
 
 def trimmomatic_call(input_file1, input_file2, phred, trimfile,
@@ -383,7 +383,11 @@ def quast_call(input_file, output_dir, min_contig_len, threads=None):
     if threads:
         arguments.extend(["--threads", str(threads)])
 
-    return call(arguments)
+    state = call(arguments)
+
+    # 
+
+    return state
 
 
 def quast_report_unification(input_dir, samples, output_dir):
@@ -1287,7 +1291,7 @@ def get_flash_reads_table(extended, notcombined1, notcombined2, sample_name, out
     return data_dict
 
 
-def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, kraken_combined_report, info_post_flash, mlst_file, vir_matrix_file, snippy_summary, custom_VFDB, amrfinder_matrix_file=False, reference_genome_basename=None):
+def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_dir, out_dir, info_pre_QC, info_post_QC, kraken_combined_report, info_post_flash, mlst_file, vir_matrix_file, snippy_summary, custom_VFDB, amrfinder_matrix_file=False, reference_genome_basename=None, input_files_data=None):
     """
     Creates the final report.
     
@@ -1306,6 +1310,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         vir_matrix_file {string} -- Matrix file containing virulence genes information.
         snippy_summary {string} -- Snippy summary file.
         reference_genome_basename {string} -- Reference genome basename.
+        input_files_data {dict} -- Dictionary containing input files information.
     """
 
     assembly_report = pd.read_csv(assembly_dir+"/"+"quality_assembly_report.tsv", sep="\t")
@@ -1362,20 +1367,20 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
 
             if sample == reference_genome_basename:
                 assembly_report = ref_assembly_report
-            
+
             # "Contigs": Number of contigs of the genome (> 500bp).
-            n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample])
+            sample_file_basename = ".".join(input_files_data[sample]["FW"].split("/")[-1].split(".")[:-1])
+            n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample_file_basename])
             
             # "GenomeLen": Length (bp) of the genome.
-            genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample])
+            genome_len = int(assembly_report.loc[assembly_report['Assembly'].isin(["Total length"])][sample_file_basename])
 
             # "N50": “Length of the smallest contig in the set that contains the fewest (largest) contigs whose combined length represents at least 50% of the assembly” (Miller et al., 2010).
-            n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample])
+            n50 = float(assembly_report.loc[assembly_report['Assembly'].isin(["N50"])][sample_file_basename])
             
             # "GC": GC content (%) of the draft genome
-            gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample])
+            gc = float(assembly_report.loc[assembly_report['Assembly'].isin(["GC (%)"])][sample_file_basename])
 
-            
             if  sample != reference_genome_basename:
                 if not fasta_mode:
 
@@ -1664,7 +1669,8 @@ if __name__ == "__main__":
     os.mkdir(prinseq_dir)
     if cfg.config["species_identification"]["run_species_identification"]:
         os.mkdir(kraken_dir)
-    os.mkdir(spades_dir)
+    if not fasta_mode:
+        os.mkdir(spades_dir)
     os.mkdir(contigs_dir)
     os.mkdir(mauve_dir)
     os.mkdir(snps_dir)
@@ -1717,7 +1723,7 @@ if __name__ == "__main__":
 
     # Check if any of the input files does not have species/genus information
     abort_flag = False
-    for sample_basename, data in read_input_files("input_files.csv"):
+    for sample_basename, data in read_input_files("input_files.csv").items():
         if not data["Genus"] or not data["Species"]:
             if not cfg.config["species_identification"]["run_species_identification"]:
                 print("ERROR: Please, fill in the genus and species information for sample", sample_basename, "or set species_identification parameter to True in campype_config.py")
@@ -1726,7 +1732,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Checking correct input files format in fasta mode
-    for sample_basename, data in read_input_files("input_files.csv"):
+    for sample_basename, data in read_input_files("input_files.csv").items():
         sample_fw = data["FW"]
         sample_rv = data["RV"]
         
@@ -1858,7 +1864,7 @@ if __name__ == "__main__":
     kraken_reports = []
     n_samples = len(read_input_files("input_files.csv"))
 
-    for sample_basename, data in read_input_files("input_files.csv"):
+    for sample_basename, data in read_input_files("input_files.csv").items():
         
         sample_fw = data["FW"]
         sample_rv = data["RV"]
@@ -2419,7 +2425,8 @@ if __name__ == "__main__":
                         snippy_summary=snippy_summary_outfile,
                         custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
                         amrfinder_matrix_file=amrfinder_matrix_file,
-                        reference_genome_basename=reference_genome_basename)
+                        reference_genome_basename=reference_genome_basename,
+                        input_files_data=read_input_files("input_files.csv"))
     else:
         generate_report(samples_basenames,                    
                         prinseq_dir, 
@@ -2435,7 +2442,9 @@ if __name__ == "__main__":
                         blast_proteins_dir+"/Virulence_genes_BLAST_matrix.tsv",
                         snippy_summary=snippy_summary_outfile,
                         custom_VFDB=blast_proteins_dir+"/"+proteins_database_name,
-                        amrfinder_matrix_file=amrfinder_matrix_file)
+                        amrfinder_matrix_file=amrfinder_matrix_file,
+                        input_files_data=read_input_files("input_files.csv"))
+                    
 
 
     # Remove temporal folders
