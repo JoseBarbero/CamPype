@@ -101,6 +101,10 @@ Rscript -e "rmarkdown::render('CamPype_Report_short.Rmd', params = list(director
 In both cases, you will have to change ```'~/path/to/data'``` with the corresponding path of the CamPype output directory containing the output files required to create the summary HTML report.
 
 
+## Test CamPype
+You can test CamPype with the raw reads (fastq) or assembled genomes (fasta) you will find in this [link](https://zenodo.org/record/7993839). An example of HTML report can found here when using raw reads (with its corresponding HTML report for the raw reads quality control analysis) or here when using assembled genones.
+
+
 ## How to update CamPype (Linux)
 
 We recommend to update CamPype when newer versions are launched:
