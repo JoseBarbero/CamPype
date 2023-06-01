@@ -1367,7 +1367,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                 sample_file_basename = sample.replace("-", "_")
             else:
                 sample_file = input_files_data[sample]["FW"]
-                sample_file_basename = ".".join(input_files_data[sample]["FW"].split("/")[-1].split(".f")[:-1]).replace("-", "_")
+                sample_file_basename = input_files_data[sample]["FW"].split("/")[-1].split(".")[0].replace("-", "_")
             
             # "Contigs": Number of contigs of the genome (> 500bp).
             n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample_file_basename])
