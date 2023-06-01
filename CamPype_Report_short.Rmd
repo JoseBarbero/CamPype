@@ -2035,32 +2035,50 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if (campype_config_json$run_variant_calling == TRUE) {
   if(campype_config_json$MLST$run_mlst == TRUE) {
-    if (file.exists("SNP_SNIPPY/Genomic_variants_summary.tsv") == TRUE) { # When snippy is run
-      Genomic_variants <- 
-        read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
-        relocate(Sample) %>%
-        mutate(Sample = as.factor(Sample)) %>%
-        left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
-    
-      cat("Following table shows genomic variants in each draft genome against the reference genome you indicated using [Snippy](https://github.com/tseemann/snippy).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
-      Create_DT(x = Genomic_variants, filter = "top", caption = '')
-      } else { # when reference genome is not indicated, but run_variant_calling = TRUE and snippy is not run
-        cat("The analysis of genomic variants was not run because no reference genome was indicated in the configuration file")
-        }
-  
-    } else {
+    if(campype_config_json$MLST$include_cc == TRUE) {
       if (file.exists("SNP_SNIPPY/Genomic_variants_summary.tsv") == TRUE) { # When snippy is run
         Genomic_variants <- 
           read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
-          relocate(Sample)
+          relocate(Sample) %>%
+          mutate(Sample = as.factor(Sample)) %>%
+          left_join(x = ., y = MLST %>% select(Sample, ST, `Clonal Complex`), by = "Sample")
         
         cat("Following table shows genomic variants in each draft genome against the reference genome you indicated using [Snippy](https://github.com/tseemann/snippy).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
-        Create_DT(x = Genomic_variants, filter = "top", caption = '') 
-        } else { # when reference genome is not indicated, but run_variant_calling = TRUE and snippy is not run
-          cat("The analysis of genomic variants was not run because no reference genome was indicated in the configuration file")
-        }
+        Create_DT(x = Genomic_variants, filter = "top", caption = '')
+        
+      } else { # when reference genome is not indicated, but run_variant_calling = TRUE and snippy is not run
+        cat("The analysis of genomic variants was not run because no reference genome was indicated in the configuration file")
+      }
+      
+    } else { # No CC, only MLST
+      if (file.exists("SNP_SNIPPY/Genomic_variants_summary.tsv") == TRUE) { # When snippy is run
+        Genomic_variants <- 
+          read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
+          relocate(Sample) %>%
+          mutate(Sample = as.factor(Sample)) %>%
+          left_join(x = ., y = MLST %>% select(Sample, ST), by = "Sample")
+        
+        cat("Following table shows genomic variants in each draft genome against the reference genome you indicated using [Snippy](https://github.com/tseemann/snippy).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
+        Create_DT(x = Genomic_variants, filter = "top", caption = '')
+        
+      } else { # when reference genome is not indicated, but run_variant_calling = TRUE and snippy is not run
+        cat("The analysis of genomic variants was not run because no reference genome was indicated in the configuration file")
+      }
     }
-
+    
+  } else { # no run MLST
+    if (file.exists("SNP_SNIPPY/Genomic_variants_summary.tsv") == TRUE) { # When snippy is run
+      Genomic_variants <- 
+        read_tsv(file = "SNP_SNIPPY/Genomic_variants_summary.tsv", show_col_types = FALSE) %>% 
+        relocate(Sample)
+      
+      cat("Following table shows genomic variants in each draft genome against the reference genome you indicated using [Snippy](https://github.com/tseemann/snippy).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
+      Create_DT(x = Genomic_variants, filter = "top", caption = '') 
+    } else { # when reference genome is not indicated, but run_variant_calling = TRUE and snippy is not run
+      cat("The analysis of genomic variants was not run because no reference genome was indicated in the configuration file")
+    }
+  }
+  
 } else {
   pander("You deactivated the genomic variants calling analysis!")
 }
