@@ -385,8 +385,6 @@ def quast_call(input_file, output_dir, min_contig_len, threads=None):
 
     state = call(arguments)
 
-    # 
-
     return state
 
 
@@ -1318,14 +1316,9 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
         ref_assembly_report = pd.read_csv(assembly_dir+"/"+reference_genome_basename+"/"+reference_genome_basename+"_assembly_statistics/"+"report.tsv", sep="\t")
     
     if cfg.config["MLST"]["run_mlst"]:
-        if cfg.config["MLST"]["include_cc"]:
-            mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
-            # Sample column (index) is a string
-            mlst_data.index = mlst_data.index.astype(str)
-        else:
-            mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
-            # Sample column (index) is a string
-            mlst_data.index = mlst_data.index.astype(str)
+        mlst_data = pd.read_csv(mlst_file, sep="\t", index_col=0)
+        # Sample column (index) is a string
+        mlst_data.index = mlst_data.index.astype(str)
 
     if  cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
         if "blast" in cfg.config["virulence_genes"]["virulence_genes_predictor_tool"]:
@@ -1367,9 +1360,16 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
 
             if sample == reference_genome_basename:
                 assembly_report = ref_assembly_report
+                sample_file_basename = reference_genome_basename
 
+            # Sample names are different if they come to Quast from the original files or from a tool
+            if cfg.config["reference_genome"]["file"]:
+                sample_file_basename = sample.replace("-", "_")
+            else:
+                sample_file = input_files_data[sample]["FW"]
+                sample_file_basename = ".".join(input_files_data[sample]["FW"].split("/")[-1].split(".f")[:-1]).replace("-", "_")
+            
             # "Contigs": Number of contigs of the genome (> 500bp).
-            sample_file_basename = ".".join(input_files_data[sample]["FW"].split("/")[-1].split(".")[:-1])
             n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample_file_basename])
             
             # "GenomeLen": Length (bp) of the genome.
