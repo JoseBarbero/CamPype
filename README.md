@@ -52,7 +52,7 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
     | sample_ID  | /path/to/your/forward/fastq2_file.fastq | /path/to/your/reverse/fastq2_file.fastq | YourStrainGenus | YourStrainSpecies
     | sample_ID  | /path/to/your/forward/fastq3_file.fastq | /path/to/your/reverse/fastq3_file.fastq | YourStrainGenus | YourStrainSpecies
 
-    This structure must be respected anyway in that file. Make sure headers haven't changed! $\textcolor{red}{\textsf{Be careful with typos!!!}}$
+    This structure must be respected anyway in that file. Make sure headers haven't changed and samples ID do not contain the dot symbol ```.``` $\textcolor{red}{\textsf{Be careful with typos!!!}}$
     
 1. Set the modules you want to run in the CamPype/workflow_config.py file. There you will set your own running parameters for each tool and the select your tools of interest when possible.
 
