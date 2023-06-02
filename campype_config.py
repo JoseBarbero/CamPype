@@ -79,7 +79,7 @@ config = {
             "minid": 60 # Minimum DNA % identity for considering a plasmid as present. Default: 60
         }
     },
-    "run_variant_calling": True, # Set this to True or False if you want to run the variant calling step. Default: True
+    "run_variant_calling": False, # Set this to True or False if you want to run the variant calling step. Remember to indicate an appropiate reference genome file in fasta format. Default: False
     "pangenome":{
         "run_pangenome": True, # Set this to True or False if you want to run the pangenome construction step. Remember that "run_annotation" must be to True to allow the pangenome construction. Default: True
         "no_split_paralogs": True, # Set this to True (do not split paralogs) or False (split paralogs). Default: True
