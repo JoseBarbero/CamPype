@@ -1366,8 +1366,12 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             if cfg.config["reference_genome"]["file"]:
                 sample_file_basename = sample.replace("-", "_")
             else:
-                sample_file = input_files_data[sample]["FW"]
-                sample_file_basename = input_files_data[sample]["FW"].split("/")[-1].split(".")[0].replace("-", "_")
+                if fasta_mode:
+                    sample_file = input_files_data[sample]["FW"]
+                    sample_file_basename = input_files_data[sample]["FW"].split("/")[-1].split(".")[0].replace("-", "_")
+                else:
+                    sample_file_basename = sample.replace("-", "_")
+
             
             # "Contigs": Number of contigs of the genome (> 500bp).
             n_contigs = int(assembly_report.loc[assembly_report['Assembly'].isin(["# contigs"])][sample_file_basename])
