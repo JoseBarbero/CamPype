@@ -59,6 +59,23 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
 1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. If you want to use a different bacteria, we strongly recommend you to adapt the configuration of CamPype as previously explained. In particular, you must modify the ```reference_genome```, deactivate the option ```include_cc```, and use abricate for virulence genes searching or/and use your own virulence genes database with BLAST instead (indicate this accordingly in the CamPype/workflow_config.py file). $\textcolor{red}{\textsf{Be careful if you want to analyse a mix of bacterial species}}$, we recommend you to delete a ```reference_genome``` and deactivate the option ```run_variant_calling```.
 
 
+## Test CamPype
+An optional test can be run to check the correct installation of CamPype.
+1. Activate the CamPype's environment:
+    ```bash
+    $ conda activate campype
+    ```
+1. Go to CamPype's directory:
+    ```bash
+    $ cd your/path/to/CamPype
+    ```
+1. Run the CamPype's test:
+    ```bash
+    $ campype_test.sh
+    ```   
+An example of the HTML report you will get can be found here.
+
+
 ## Running CamPype
 
 1. Activate the CamPype's environment:
@@ -81,13 +98,15 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
     ```
     The results will be located in the output directoy of CamPype named as you indicated in the CamPype/workflow_config.py file. If you want to store these results in the same directory where the quality control analysis data are, remember to indicate that directory in the configuration file. 
     
-1. \(*) You can deactivate the environment when you are finished:
+1. You can deactivate the environment when you are finished:
     ```bash
     $ conda deactivate
     ```
 
 ## Output
-The results of CamPype are stored in very detailed directories for each analysis, with separate subdirectories for each tool and isolate. The files will be generated for analysis tracking due to execution error. An interactive HTML summary report will be generated at the end of the analysis to simplify the task of data visualization and interpretation. This HTML file can be opened on any Web browser. An example of report can be found here.
+The results of CamPype are stored in very detailed directories for each analysis, with separate subdirectories for each tool and isolate. The files will be generated for analysis tracking due to execution error. An interactive HTML summary report will be generated at the end of the analysis to simplify the task of data visualization and interpretation. This HTML file can be opened on any Web browser. Examples of reports can be found here:
+* [Analysis with 5 Campylobacter jejuni and 5 Campylobacter coli](https://josebarbero.github.io/CamPype/example_report/CamPype_report.html)
+* [Analysis with 44 assembled genomes of Escherichia coli](link)
 
 You can generate the report after CamPype analysis by executing the following command in the Linux terminal:
 * For raw fastq reads as input:
@@ -99,10 +118,6 @@ Rscript -e "rmarkdown::render('CamPype_Report_long.Rmd', params = list(directory
 Rscript -e "rmarkdown::render('CamPype_Report_short.Rmd', params = list(directory = '~/path/to/data'))"
 ```
 In both cases, you will have to change ```'~/path/to/data'``` with the corresponding path of the CamPype output directory containing the output files required to create the summary HTML report.
-
-
-## Test CamPype
-You can test CamPype with the raw reads (fastq) or assembled genomes (fasta) you will find in this [link](https://zenodo.org/record/7993839). An example of HTML report can found here when using raw reads (with its corresponding HTML report for the raw reads quality control analysis) or here when using assembled genones.
 
 
 ## How to update CamPype (Linux)
