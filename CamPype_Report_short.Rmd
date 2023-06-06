@@ -39,6 +39,13 @@ library(ggtree)
 ```
 
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+# Create output directory to store figures
+if (!dir.exists("html_report_figures")) {
+   dir.create("html_report_figures")
+}
+```  
+
+```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 # Loading the configuration file to extract parameters into the report text
 campype_config_json <- fromJSON(file = "campype_config.json")
 ```
@@ -90,7 +97,7 @@ if(campype_config_json$MLST$run_mlst == TRUE) {
   } else {
     cat("Following table shows the Sequence Type (ST) and MLST allelic profile for each isolate using [mlst](https://github.com/tseemann/mlst).", "  \n", "<br>", "Below each column name you will find a *filter box* that you can use to filter the table by columns. You can also filter by more than one column and export this new *subset* table into a separated file (see the export buttons available).")
     MLST <- 
-      read_tsv(file = "MLST/MLST.txt", show_col_types = FALSE) %>% #Comprobar cómo queda el archivo cuando include_cc == FALSE
+      read_tsv(file = "MLST/MLST.txt", show_col_types = FALSE) %>%
       mutate_all(as.character) %>%
       mutate_if(is.character, ~replace_na(., "Other"))
     Create_DT(x = MLST, filter = "top", caption = '')
@@ -177,565 +184,586 @@ Create_DT(x = assembly, filter = "top", caption = '')
 if(campype_config_json$MLST$run_mlst == TRUE) {
   order_assembly <- assembly$Sample
   MLST <- MLST[match(order_assembly, MLST$Sample), ]
+  assembly <- assembly[order(assembly$ST),] #reorder assembly for plots
 }
 ```
 
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
-
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 cat("##### Number of contigs\n\n")
 options("scipen" = 100, "digits" = 0)
 if(campype_config_json$MLST$run_mlst == TRUE) {
-  Number_of_contigs <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = Contigs, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST"))
+  Number_of_contigs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = Contigs, fill = ST)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST")
+  
   if(campype_config_json$MLST$include_cc == TRUE) {
-    Number_of_contigs <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = Contigs, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    Number_of_contigs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = Contigs, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of contigs", title = "", fill = "ST") +
+      facet_grid(~`Clonal Complex`, scales = "free", space = "free")
   }
+  
 } else {
-  Number_of_contigs <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = Contigs)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Number of contigs", title = ""))
+  Number_of_contigs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = Contigs)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(), 
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "Number of contigs", title = "")
 }
-Number_of_contigs 
+
+ggplotly(Number_of_contigs)
+
+png(filename = "html_report_figures/assembly_number_of_contigs.png", width = 3000, height = 2500, res = 300)
+if (exists("Number_of_contigs") == TRUE) {
+  Number_of_contigs
+}
+invisible(dev.off())
 ```
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 cat("##### Draft genome length\n\n")
 options("digits" = 0)
 if(campype_config_json$MLST$run_mlst == TRUE) {
-  Draft_genome_length <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = GenomeLen, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "ST"))
+  Draft_genome_length <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = GenomeLen, fill = ST)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "ST")
   if(campype_config_json$MLST$include_cc == TRUE) {
-    Draft_genome_length <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = GenomeLen, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    Draft_genome_length <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = GenomeLen, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Genome lengh (bp)", title = "", fill = "ST") +
+      facet_grid(~`Clonal Complex`, scales = "free", space = "free")
   }
 } else {
-  Draft_genome_length <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = GenomeLen)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Genome lengh (bp)", title = ""))
+  Draft_genome_length <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = GenomeLen)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(), 
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "Genome lengh (bp)", title = "")
 }
-Draft_genome_length 
+ggplotly(Draft_genome_length)
+
+png(filename = "html_report_figures/assembly_draft_genome_length.png", width = 3000, height = 2500, res = 300)
+if (exists("Draft_genome_length") == TRUE) {
+  Draft_genome_length
+}
+invisible(dev.off())
 ```
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 cat("##### Average contig length\n\n")
 options("digits" = 0)
 if(campype_config_json$MLST$run_mlst == TRUE) {
-  Contig_length <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = ContigLen, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "ST"))
+  Contig_length <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = ContigLen, fill = ST)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "ST")
   if(campype_config_json$MLST$include_cc == TRUE) {
-    Contig_length <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = ContigLen, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    Contig_length <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = ContigLen, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Average contig length (bp)", title = "", fill = "ST") +
+      facet_grid(~`Clonal Complex`, scales = "free", space = "free")
   }
 } else {
-  Contig_length <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = ContigLen)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "Average contig length (bp)", title = ""))
+  Contig_length <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = ContigLen)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(), 
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "Average contig length (bp)", title = "")
 }
-Contig_length
+ggplotly(Contig_length)
+
+png(filename = "html_report_figures/assembly_contig_length.png", width = 3000, height = 2500, res = 300)
+if (exists("Contig_length") == TRUE) {
+  Contig_length
+}
+invisible(dev.off())
 ```
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 cat("##### N50\n\n")
 options("digits" = 0)
 if(campype_config_json$MLST$run_mlst == TRUE) {
-  N50 <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = N50, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "N50", title = "", fill = "ST"))
+  N50 <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = N50, fill = ST)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "N50", title = "", fill = "ST")
   if(campype_config_json$MLST$include_cc == TRUE) {
-    N50 <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = N50, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "N50", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    N50 <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = N50, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "N50", title = "", fill = "ST") +
+      facet_grid(~`Clonal Complex`, scales = "free", space = "free")
   }
 } else {
-  N50 <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = N50)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "N50", title = ""))
+  N50 <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = N50)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(), 
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "N50", title = "")
 }
-N50
+ggplotly(N50)
+
+png(filename = "html_report_figures/assembly_N50.png", width = 3000, height = 2500, res = 300)
+if (exists("N50") == TRUE) {
+  N50
+}
+invisible(dev.off())
 ```
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 cat("##### GC Content\n\n")
 options("scipen" = 100, "digits" = 0)
 if(campype_config_json$MLST$run_mlst == TRUE) {
-  GC_content <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = GC, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "GC", title = "", fill = "ST"))
+  GC_content <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = GC, fill = ST)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(),
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "GC", title = "", fill = "ST")
   if(campype_config_json$MLST$include_cc == TRUE) {
-    GC_content <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = GC, fill = ST)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "GC", title = "", fill = "ST") +
-          facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+    GC_content <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = GC, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "GC", title = "", fill = "ST") +
+      facet_grid(~`Clonal Complex`, scales = "free", space = "free")
   }
 } else {
-  GC_content <-
-    ggplotly(
-      ggplot(data = assembly, aes(x = Sample, y = GC)) +
-        geom_bar(stat = "identity") +
-        theme(panel.border = element_blank(), 
-              panel.background = element_rect(colour = "grey90"),
-              panel.grid.minor = element_blank(),
-              panel.grid.major = element_blank(),
-              axis.text = element_text(size = 10),
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank(),
-              axis.title.y = element_blank(),
-              axis.ticks = element_blank()) +
-        labs(x = "Samples", y = "GC", title = ""))
+  GC_content <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = GC)) +
+    geom_bar(stat = "identity") +
+    theme(panel.border = element_blank(), 
+          panel.background = element_rect(colour = "grey90"),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          axis.text = element_text(size = 10),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.ticks = element_blank()) +
+    labs(x = "Samples", y = "GC", title = "")
 }
-GC_content 
+ggplotly(GC_content)
+
+png(filename = "html_report_figures/assembly_GC_content.png", width = 3000, height = 2500, res = 300)
+if (exists("GC_content") == TRUE) {
+  GC_content
+}
+invisible(dev.off())
 ```
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(campype_config_json$annotation$run_annotation == TRUE) {
   cat("##### Number of CDS\n")
   options("scipen" = 100, "digits" = 0)
   if(campype_config_json$MLST$run_mlst == TRUE) {
-    Number_CDS <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = CDS, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST"))
+    Number_CDS <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = CDS, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST")
     if(campype_config_json$MLST$include_cc == TRUE) {
-      Number_CDS <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = CDS, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST") +
-            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+      Number_CDS <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = CDS, fill = ST)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "Number of CDS", title = "", fill = "ST") +
+        facet_grid(~`Clonal Complex`, scales = "free", space = "free")
     }
   } else {
-    Number_CDS <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = CDS)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(), 
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of CDS", title = ""))
+    Number_CDS <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = CDS)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(), 
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of CDS", title = "")
   }
+  
+  ggplotly(Number_CDS)
+}
+
+png(filename = "html_report_figures/annotation_number_CDS.png", width = 3000, height = 2500, res = 300)
+if (exists("Number_CDS") == TRUE) {
   Number_CDS
 }
+invisible(dev.off())
 ```
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(campype_config_json$annotation$run_annotation == TRUE) {
   cat("##### Hypothetical proteins\n")
   options("scipen" = 100, "digits" = 0)
   if(campype_config_json$MLST$run_mlst == TRUE) {
-    Number_hypothetical_proteins <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST"))
+    Number_hypothetical_proteins <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = `Hypothetical proteins`, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST")
     if(campype_config_json$MLST$include_cc == TRUE) {
-      Number_hypothetical_proteins <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST") +
-            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+      Number_hypothetical_proteins <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = `Hypothetical proteins`, fill = ST)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "Number of hypothetical proteins", title = "", fill = "ST") +
+        facet_grid(~`Clonal Complex`, scales = "free", space = "free")
     }
   } else {
-    Number_hypothetical_proteins <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = `Hypothetical proteins`)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(), 
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of hypothetical proteins", title = ""))
+    Number_hypothetical_proteins <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = `Hypothetical proteins`)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(), 
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of hypothetical proteins", title = "")
   }
-  Number_hypothetical_proteins 
+  
+  ggplotly(Number_hypothetical_proteins)
 }
+
+png(filename = "html_report_figures/annotation_hypothetical_proteins.png", width = 3000, height = 2500, res = 300)
+if (exists("Number_hypothetical_proteins") == TRUE) {
+  Number_hypothetical_proteins
+}
+invisible(dev.off())
 ```
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(campype_config_json$annotation$run_annotation == TRUE) {
   cat("##### Number of CRISPRs\n")
   options("scipen" = 100, "digits" = 0)
   if(campype_config_json$MLST$run_mlst == TRUE) {
-    Number_CRISPRs <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = CRISPRs, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") + 
-            scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
-  }
+    Number_CRISPRs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = CRISPRs, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") + 
+      scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))
     if(campype_config_json$MLST$include_cc == TRUE) {
-      Number_CRISPRs <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = CRISPRs, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
-            facet_grid(~`Clonal Complex`, scales = "free", space = "free") + 
-            scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+      Number_CRISPRs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = CRISPRs, fill = ST)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "Number of CRISPRs", title = "", fill = "ST") +
+        facet_grid(~`Clonal Complex`, scales = "free", space = "free") + 
+        scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))
+    }
   } else {
-    Number_CRISPRs <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = CRISPRs)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(), 
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of CRISPRs", title = "") + 
-          scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1))))))
+    Number_CRISPRs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = CRISPRs)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(), 
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of CRISPRs", title = "") + 
+      scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(0, (max(x) + 1) * 1.1)))))
   }
+  ggplotly(Number_CRISPRs)
+}
+
+png(filename = "html_report_figures/annotation_CRISPRs.png", width = 3000, height = 2500, res = 300)
+if (exists("Number_CRISPRs") == TRUE) {
   Number_CRISPRs
 }
+invisible(dev.off())
 ```
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(campype_config_json$annotation$run_annotation == TRUE) {
   cat("##### Number of rRNAs\n")
   options("scipen" = 100, "digits" = 0)
   if(campype_config_json$MLST$run_mlst == TRUE) {
-    Number_rRNAs <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = rRNAs, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST"))
+    Number_rRNAs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = rRNAs, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST")
     if(campype_config_json$MLST$include_cc == TRUE) {
-      Number_rRNAs <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = rRNAs, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST") +
-            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+      Number_rRNAs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = rRNAs, fill = ST)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "Number of rRNAs", title = "", fill = "ST") +
+        facet_grid(~`Clonal Complex`, scales = "free", space = "free")
     }
   } else {
-    Number_rRNAs <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = rRNAs)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(), 
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of rRNAs", title = ""))
+    Number_rRNAs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = rRNAs)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(), 
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of rRNAs", title = "")
   }
+  ggplotly(Number_rRNAs)
+}
+
+png(filename = "html_report_figures/annotation_rRNAs.png", width = 3000, height = 2500, res = 300)
+if (exists("Number_rRNAs") == TRUE) {
   Number_rRNAs
 }
+invisible(dev.off())
 ```
-
+[Back to index](#index)
+<br>
 
 ```{r, results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(campype_config_json$annotation$run_annotation == TRUE) {
   cat("##### Number of tRNAs\n")
   options("scipen" = 100, "digits" = 0)
   if(campype_config_json$MLST$run_mlst == TRUE) {
-    Number_tRNAs <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = tRNAs, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST"))
+    Number_tRNAs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = tRNAs, fill = ST)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(),
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST")
     if(campype_config_json$MLST$include_cc == TRUE) {
-      Number_tRNAs <-
-        ggplotly(
-          ggplot(data = assembly, aes(x = Sample, y = tRNAs, fill = ST)) +
-            geom_bar(stat = "identity") +
-            theme(panel.border = element_blank(),
-                  panel.background = element_rect(colour = "grey90"),
-                  panel.grid.minor = element_blank(),
-                  panel.grid.major = element_blank(),
-                  axis.text = element_text(size = 10),
-                  axis.text.x = element_text(angle = 45, hjust = 1),
-                  axis.title.x = element_blank(),
-                  axis.title.y = element_blank(),
-                  axis.ticks = element_blank()) +
-            labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST") +
-            facet_grid(~`Clonal Complex`, scales = "free", space = "free"))
+      Number_tRNAs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = tRNAs, fill = ST)) +
+        geom_bar(stat = "identity") +
+        theme(panel.border = element_blank(),
+              panel.background = element_rect(colour = "grey90"),
+              panel.grid.minor = element_blank(),
+              panel.grid.major = element_blank(),
+              axis.text = element_text(size = 10),
+              axis.text.x = element_text(angle = 45, hjust = 1),
+              axis.title.x = element_blank(),
+              axis.title.y = element_blank(),
+              axis.ticks = element_blank()) +
+        labs(x = "Samples", y = "Number of tRNAs", title = "", fill = "ST") +
+        facet_grid(~`Clonal Complex`, scales = "free", space = "free")
     }
   } else {
-    Number_tRNAs <-
-      ggplotly(
-        ggplot(data = assembly, aes(x = Sample, y = tRNAs)) +
-          geom_bar(stat = "identity") +
-          theme(panel.border = element_blank(), 
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(angle = 45, hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank()) +
-          labs(x = "Samples", y = "Number of tRNAs", title = ""))
+    Number_tRNAs <- ggplot(data = assembly, aes(x = factor(Sample, levels=Sample), y = tRNAs)) +
+      geom_bar(stat = "identity") +
+      theme(panel.border = element_blank(), 
+            panel.background = element_rect(colour = "grey90"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            axis.text = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.ticks = element_blank()) +
+      labs(x = "Samples", y = "Number of tRNAs", title = "")
   }
+  ggplotly(Number_tRNAs)
+}
+
+png(filename = "html_report_figures/annotation_tRNAs.png", width = 3000, height = 2500, res = 300)
+if (exists("Number_tRNAs") == TRUE) {
   Number_tRNAs
 }
+invisible(dev.off())
 ```
-<br>
 [Back to index](#index)
 <br>
 
@@ -800,7 +828,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 
       AMR_heatmap <- AMR_matrix %>%
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
-          distinct() %>% #NUEEEVA
+          distinct() %>%
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
           select(., -`-`) %>%
           remove_rownames %>% 
@@ -811,6 +839,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                   col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                   cluster_rows = FALSE,
                   cluster_columns = FALSE,
+                  row_names_gp = gpar(fontsize = 12 - nrow(.)/7),
                   top_annotation = HeatmapAnnotation(df = resistance_class_annotation,
                                                      which = "col", 
                                                      simple_anno_size = unit(4, "mm"), 
@@ -840,7 +869,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 
         AMR_heatmap <- AMR_matrix %>%
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
-          distinct() %>% #NUEEEVA
+          distinct() %>%
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
           select(., -`-`) %>%
           remove_rownames %>% 
@@ -851,6 +880,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                   col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                   cluster_rows = FALSE,
                   cluster_columns = FALSE,
+                  row_names_gp = gpar(fontsize = 12 - nrow(.)/7),
                   top_annotation = HeatmapAnnotation(df = resistance_class_annotation,
                                                      which = "col", 
                                                      simple_anno_size = unit(4, "mm"), 
@@ -869,7 +899,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
     } else {
       AMR_heatmap <- AMR_matrix %>%
         select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
-        distinct() %>% #NUEEEVA
+        distinct() %>%
         pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
         select(., -`-`) %>%
         remove_rownames %>% 
@@ -880,6 +910,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                 col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                 cluster_rows = FALSE,
                 cluster_columns = FALSE,
+                row_names_gp = gpar(fontsize = 12 - nrow(.)/7),
                 top_annotation = HeatmapAnnotation(df = resistance_class_annotation,
                                                    which = "col", 
                                                    simple_anno_size = unit(4, "mm"), 
@@ -891,15 +922,22 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                             color_bar = "discrete"))
     }
     AMR_heatmap
+  
   }
 }
+
+png(filename = "html_report_figures/AMR_AMRFinder_genes_heatmap.png", width = 3000, height = 2500, res = 300)
+if (exists("AMR_heatmap") == TRUE) {
+  AMR_heatmap
+}
+invisible(dev.off())
 ```
 <br>
 
 #### Point mutations conferring antibiotic resistance
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
 if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMRFinder_matrix.tsv") == FALSE) {
-  pander(cat("Resistance caused by point mutations is only included for *Campylobacter* spp. (not for mixing genus)", "  \n"))
+  pander(cat("Resistance caused by point mutations is only included for *Campylobacter* spp. (and not for mixing genus)", "  \n"))
   
 } else { #Point mutations for Campylobacter spp.
   if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
@@ -996,6 +1034,7 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
                                     col = "#63BE7B",
                                     cluster_rows = FALSE,
                                     cluster_columns = FALSE,
+                                    row_names_gp = gpar(fontsize = 12 - nrow(pmut_heatmap)/7),
                                     top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
                                                                        which = "col",
                                                                        simple_anno_size = unit(4, "mm"),
@@ -1017,6 +1056,7 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
                                       col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                                       cluster_rows = FALSE,
                                       cluster_columns = FALSE,
+                                      row_names_gp = gpar(fontsize = 12 - nrow(pmut_heatmap)/7),
                                       top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
                                                                          which = "col",
                                                                          simple_anno_size = unit(4, "mm"),
@@ -1039,6 +1079,7 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
                                     col = "#63BE7B",
                                     cluster_rows = FALSE,
                                     cluster_columns = FALSE,
+                                    row_names_gp = gpar(fontsize = 12 - nrow(pmut_heatmap)/7),
                                     top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
                                                                        which = "col",
                                                                        simple_anno_size = unit(4, "mm"),
@@ -1060,6 +1101,7 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
                                       col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                                       cluster_rows = FALSE,
                                       cluster_columns = FALSE,
+                                      row_names_gp = gpar(fontsize = 12 - nrow(pmut_heatmap)/7),
                                       top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
                                                                          which = "col",
                                                                          simple_anno_size = unit(4, "mm"),
@@ -1091,6 +1133,7 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
                                     col = "#63BE7B",
                                     cluster_rows = FALSE,
                                     cluster_columns = FALSE,
+                                    row_names_gp = gpar(fontsize = 12 - nrow(pmut_heatmap)/7),
                                     top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
                                                                        which = "col",
                                                                        simple_anno_size = unit(4, "mm"),
@@ -1106,6 +1149,7 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
                                       col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                                       cluster_rows = FALSE,
                                       cluster_columns = FALSE,
+                                      row_names_gp = gpar(fontsize = 12 - nrow(pmut_heatmap)/7),
                                       top_annotation = HeatmapAnnotation(df = resistance_class_pmut_annotation,
                                                                          which = "col",
                                                                          simple_anno_size = unit(4, "mm"),
@@ -1119,6 +1163,13 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
           }
           
       pmut_heatmap
+      
+      png(filename = "html_report_figures/AMR_AMRFinder_point_mutations_heatmap.png", width = 3000, height = 2500, res = 300)
+      if (exists("pmut_heatmap") == TRUE) {
+        pmut_heatmap
+      }
+      invisible(dev.off())
+      
     }
   }
 }
@@ -1262,7 +1313,6 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
 
 #### Select the database {.tabset .tabset-fade .tabset-pills}
 
-
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, fig.align='left', fig.width=10, fig.height=5}
 if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistance_genes_prediction == TRUE) {
   if('abricate' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
@@ -1272,6 +1322,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
     
     DBs <- levels(factor(Anti_Res_Genes_PA$DATABASE))
     
+    plot_list = list()
     for (i in seq_along(DBs)) {
       cat('#####',DBs[i],' \n')
       Anti_Res_Genes_PA.i <- NULL
@@ -1286,8 +1337,8 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
         select(c("RESISTANCE")) %>%
         as.data.frame
       
-      if(DBs[i] == "card" | DBs[i] == "ncbi") {
-        top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+      if(DBs[i] == "ncbi") {
+        top_annotation = HeatmapAnnotation(df = resistance_class_annotation,
                                            which = "col", 
                                            simple_anno_size = unit(4, "mm"), 
                                            annotation_name_side = "left", 
@@ -1314,8 +1365,8 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           rownames(Anti_Res_Genes_matrix) <- Anti_Res_Genes_matrix$Sample
           Anti_Res_Genes_matrix$Sample <- NULL
           
-          if(DBs[i] == "card" | DBs[i] == "ncbi") {
-            top_annotation = HeatmapAnnotation(df = resistance_class_annotation, #que solo aparezca esta anotación cuando DBs = card or ncbi.
+          if(DBs[i] == "ncbi") {
+            top_annotation = HeatmapAnnotation(df = resistance_class_annotation, 
                                                which = "col", 
                                                simple_anno_size = unit(4, "mm"),
                                                annotation_name_side = "left", 
@@ -1325,14 +1376,13 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           }
           
           if (all(Anti_Res_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
-            draw(
-              Heatmap(as.matrix(Anti_Res_Genes_matrix), 
-                      width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                      height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+            p <- Heatmap(as.matrix(Anti_Res_Genes_matrix), 
                       column_title = paste("Database = ", DBs[i], sep = ""),
                       col = "#63BE7B",
                       cluster_rows = FALSE,
                       cluster_columns = FALSE,
+                      row_names_gp = gpar(fontsize = 12 - nrow(Anti_Res_Genes_matrix)/5),
+                      column_names_gp = gpar(fontsize = 6),
                       top_annotation = top_annotation, 
                       left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                           which = "row",
@@ -1343,16 +1393,17 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                   labels = c("Presence"),
                                                   title = " ",
                                                   color_bar = "discrete"))
-            )
+            draw(p)
+            plot_list[[i]] <- p
+
           } else { # 1 and 0 values
-            draw(
-              Heatmap(as.matrix(Anti_Res_Genes_matrix), 
-                      width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                      height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+            p <- Heatmap(as.matrix(Anti_Res_Genes_matrix), 
                       column_title = paste("Database = ", DBs[i], sep = ""),
                       col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                       cluster_rows = FALSE,
                       cluster_columns = FALSE,
+                      row_names_gp = gpar(fontsize = 12 - nrow(Anti_Res_Genes_matrix)/5),
+                      column_names_gp = gpar(fontsize = 6),
                       top_annotation = top_annotation, 
                       left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                           which = "row",
@@ -1363,9 +1414,11 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                              labels = c("Presence", "Absence"),
                                              title = " ",
                                              color_bar = "discrete"))
-            )
+            draw(p)
+            plot_list[[i]] <- p
+
           }
-        } else { #ERROR: if(campype_config_json$MLST$include_cc == TRUE) { 
+        } else { # Only MLST
           Anti_Res_Genes_matrix <- as.data.frame(Anti_Res_Genes_matrix)
           Anti_Res_Genes_matrix <- tibble::rownames_to_column(Anti_Res_Genes_matrix, "Sample")
         
@@ -1383,14 +1436,13 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           Anti_Res_Genes_matrix$Sample <- NULL
 
           if (all(Anti_Res_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
-             draw(
-                Heatmap(as.matrix(Anti_Res_Genes_matrix), 
-                        width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                        height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+             p <- Heatmap(as.matrix(Anti_Res_Genes_matrix), 
                         column_title = paste("Database = ", DBs[i], sep = ""),
                         col = "#63BE7B",
                         cluster_rows = FALSE,
                         cluster_columns = FALSE,
+                        row_names_gp = gpar(fontsize = 12 - nrow(Anti_Res_Genes_matrix)/5),
+                        column_names_gp = gpar(fontsize = 6),
                         top_annotation = top_annotation, 
                         left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                             which = "row",
@@ -1401,16 +1453,17 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                      labels = c("Presence"),
                                                      title = " ",
                                                      color_bar = "discrete"))
-              )
+             draw(p)
+             plot_list[[i]] <- p
+
           } else { # 1 and 0 values
-            draw(
-                Heatmap(as.matrix(Anti_Res_Genes_matrix), 
-                        width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                        height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+            p <- Heatmap(as.matrix(Anti_Res_Genes_matrix), 
                         column_title = paste("Database = ", DBs[i], sep = ""),
                         col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                         cluster_rows = FALSE,
                         cluster_columns = FALSE,
+                        row_names_gp = gpar(fontsize = 12 - nrow(Anti_Res_Genes_matrix)/5),
+                        column_names_gp = gpar(fontsize = 6),
                         top_annotation = top_annotation, 
                         left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                             which = "row",
@@ -1421,47 +1474,59 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
                                                labels = c("Presence", "Absence"),
                                                title = " ",
                                                color_bar = "discrete"))
-              )
+            draw(p)
+            plot_list[[i]] <- p
           }
 
         }
       } else { #No run mlst
         if (all(Anti_Res_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
-            draw(
-              Heatmap(as.matrix(Anti_Res_Genes_matrix), 
-                      width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                      height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+            p <- Heatmap(as.matrix(Anti_Res_Genes_matrix), 
                       column_title = paste("Database = ", DBs[i], sep = ""),
                       col = "#63BE7B",
                       cluster_rows = FALSE,
                       cluster_columns = FALSE,
+                      row_names_gp = gpar(fontsize = 12 - nrow(Anti_Res_Genes_matrix)/5),
+                      column_names_gp = gpar(fontsize = 6),
                       top_annotation = top_annotation, 
                       heatmap_legend_param = list(at = c(1), 
                                                   labels = c("Presence"),
                                                   title = " ",
                                                   color_bar = "discrete"))
-            )
+            draw(p)
+            plot_list[[i]] <- p
+
           } else { # 1 and 0 values
-            draw(
-              Heatmap(as.matrix(Anti_Res_Genes_matrix), 
-                      width = ncol(Anti_Res_Genes_matrix)*unit(4, "mm"), 
-                      height = nrow(Anti_Res_Genes_matrix)*unit(4, "mm"),  
+            p <- Heatmap(as.matrix(Anti_Res_Genes_matrix), 
                       column_title = paste("Database = ", DBs[i], sep = ""),
                       col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                       cluster_rows = FALSE,
                       cluster_columns = FALSE,
+                      row_names_gp = gpar(fontsize = 12 - nrow(Anti_Res_Genes_matrix)/5), 
+                      column_names_gp = gpar(fontsize = 6),
                       top_annotation = top_annotation, 
                       heatmap_legend_param = list(at = c(1, 0), 
                                              labels = c("Presence", "Absence"),
                                              title = " ",
                                              color_bar = "discrete"))
-            )
+            draw(p)
+            plot_list[[i]] <- p
           }
       }
       cat(' \n \n')
+      
+      
     }
+    
+    for (i in 1:length(plot_list)) {
+      png(filename = paste("html_report_figures/AMR_abricate_", DBs[i], "_genes_heatmap.png", sep=""), width = 3000, height = 2500, res = 300)
+      print(plot_list[[i]])
+      invisible(dev.off())
+    }
+    
   }
 }
+
 ```
 <br>
 <br>
@@ -1542,6 +1607,7 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
     
     DBs <- levels(factor(Virulence_Genes_PA$DATABASE))
     
+    plot_list = list()
     for (i in seq_along(DBs)) {
       Virulence_Genes_PA.i <- NULL
       Virulence_Genes_PA.i_data <- Virulence_Genes_PA[Virulence_Genes_PA$DATABASE == DBs[i],]
@@ -1574,14 +1640,13 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
           Virulence_Genes_matrix$Sample <- NULL
         
           if (all(Virulence_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
-             draw(
-                Heatmap(Virulence_Genes_matrix, 
-                        width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                        height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+             p <- Heatmap(Virulence_Genes_matrix, 
                         column_title = paste("Database = ", DBs[i], sep = ""),
                         col = "#63BE7B",
                         cluster_rows = FALSE,
                         cluster_columns = FALSE,
+                        row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Genes_matrix)/7),
+                        column_names_gp = gpar(fontsize = 6),
                         left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                             which = "row",
                                                             simple_anno_size = unit(4, "mm"),
@@ -1590,17 +1655,17 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                         heatmap_legend_param = list(at = c(1), 
                                                labels = c("Presence"),
                                                title = " ",
-                                               color_bar = "discrete")
-             ))  
+                                               color_bar = "discrete"))
+           draw(p)
+           plot_list[[i]] <- p
           } else { # 1 and 0 values
-            draw(
-                Heatmap(Virulence_Genes_matrix, 
-                       width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                       height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+            p <- Heatmap(Virulence_Genes_matrix, 
                        column_title = paste("Database = ", DBs[i], sep = ""),
                        col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                        cluster_rows = FALSE,
                        cluster_columns = FALSE,
+                       row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Genes_matrix)/7), 
+                       column_names_gp = gpar(fontsize = 6),
                        left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                            which = "row",
                                                            simple_anno_size = unit(4, "mm"),
@@ -1609,8 +1674,9 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                        heatmap_legend_param = list(at = c(1, 0), 
                                               labels = c("Presence", "Absence"),
                                               title = " ",
-                                              color_bar = "discrete")
-            ))
+                                              color_bar = "discrete"))
+           draw(p)
+           plot_list[[i]] <- p
           }
           
         } else{
@@ -1631,14 +1697,13 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
           Virulence_Genes_matrix$Sample <- NULL
         
           if (all(Virulence_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
-             draw(
-                Heatmap(Virulence_Genes_matrix, 
-                        width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                        height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+             p <- Heatmap(Virulence_Genes_matrix, 
                         column_title = paste("Database = ", DBs[i], sep = ""),
                         col = "#63BE7B",
                         cluster_rows = FALSE,
                         cluster_columns = FALSE,
+                        row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Genes_matrix)/7),
+                        column_names_gp = gpar(fontsize = 6),
                         left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                             which = "row",
                                                             simple_anno_size = unit(4, "mm"),
@@ -1647,17 +1712,17 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                         heatmap_legend_param = list(at = c(1), 
                                                labels = c("Presence"),
                                                title = " ",
-                                               color_bar = "discrete")
-             ))  
+                                               color_bar = "discrete"))
+           draw(p)
+           plot_list[[i]] <- p
           } else { # 1 and 0 values
-            draw(
-                Heatmap(Virulence_Genes_matrix, 
-                       width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                       height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+            p <- Heatmap(Virulence_Genes_matrix, 
                        column_title = paste("Database = ", DBs[i], sep = ""),
                        col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                        cluster_rows = FALSE,
                        cluster_columns = FALSE,
+                       row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Genes_matrix)/7),
+                       column_names_gp = gpar(fontsize = 6),
                        left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                            which = "row",
                                                            simple_anno_size = unit(4, "mm"),
@@ -1666,55 +1731,54 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                        heatmap_legend_param = list(at = c(1, 0), 
                                               labels = c("Presence", "Absence"),
                                               title = " ",
-                                              color_bar = "discrete")
-            ))
+                                              color_bar = "discrete"))
+           draw(p)
+           plot_list[[i]] <- p
           }
           
         }           
       } else { # no run MLST
         if (all(Virulence_Genes_matrix == 1) == TRUE) { # presence matrix (only 1 values)
-           draw(
-                Heatmap(Virulence_Genes_matrix, 
-                        width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                        height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+           p <- Heatmap(Virulence_Genes_matrix, 
                         column_title = paste("Database = ", DBs[i], sep = ""),
                         col = "#63BE7B",
                         cluster_rows = FALSE,
                         cluster_columns = FALSE,
-                        # left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                        #                                     which = "row",
-                        #                                     simple_anno_size = unit(4, "mm"),
-                        #                                     annotation_name_side = "bottom",
-                        #                                     gap = unit(0.5, 'mm')),
+                        row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Genes_matrix)/7),
+                        column_names_gp = gpar(fontsize = 6),
                         heatmap_legend_param = list(at = c(1), 
                                                labels = c("Presence"),
                                                title = " ",
-                                               color_bar = "discrete")
-             ))  
+                                               color_bar = "discrete"))
+           draw(p)
+           plot_list[[i]] <- p
+            
         } else { # 1 and 0 values
-          draw(
-                Heatmap(Virulence_Genes_matrix, 
-                       width = ncol(Virulence_Genes_matrix)*unit(4, "mm"), 
-                       height = nrow(Virulence_Genes_matrix)*unit(4, "mm"),  
+          p <- Heatmap(Virulence_Genes_matrix, 
                        column_title = paste("Database = ", DBs[i], sep = ""),
                        col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                        cluster_rows = FALSE,
                        cluster_columns = FALSE,
-                       # left_annotation = HeatmapAnnotation(df = mlst_annotation,
-                       #                                     which = "row",
-                       #                                     simple_anno_size = unit(4, "mm"),
-                       #                                     annotation_name_side = "bottom",
-                       #                                     gap = unit(0.5, 'mm')),
+                       row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Genes_matrix)/7),
+                       column_names_gp = gpar(fontsize = 6),
                        heatmap_legend_param = list(at = c(1, 0), 
                                               labels = c("Presence", "Absence"),
                                               title = " ",
-                                              color_bar = "discrete")
-          ))
+                                              color_bar = "discrete"))
+           draw(p)
+           plot_list[[i]] <- p
         }
           
       }
       cat(' \n \n')
     }
+    
+    for (i in 1:length(plot_list)) {
+      png(filename = paste("html_report_figures/VF_abricate_", DBs[i], "_genes_heatmap.png", sep=""), width = 5000, height = 2500, res = 300)
+      print(plot_list[[i]])
+      invisible(dev.off())
+    }
+
   }
 }
 ```
@@ -1798,14 +1862,12 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
         rownames(Virulence_Res_Genes_matrix) <- Virulence_Res_Genes_matrix$Sample
         Virulence_Res_Genes_matrix$Sample <- NULL
         
-        Heatmap(as.matrix(Virulence_Res_Genes_matrix),
-                column_names_gp = gpar(fontsize = 6),
-                row_names_gp = gpar(fontsize = 6),
-                width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
-                height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
+        p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix),
                 col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                 cluster_rows = FALSE,
                 cluster_columns = FALSE,
+                row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Res_Genes_matrix)/7),
+                column_names_gp = gpar(fontsize = 12 - ncol(Virulence_Res_Genes_matrix)/7),
                 left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                     which = "row",
                                                     simple_anno_size = unit(4, "mm"),
@@ -1821,14 +1883,12 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                                             title = " ",
                                             color_bar = "discrete"))
         } else { # no CC
-          Heatmap(as.matrix(Virulence_Res_Genes_matrix),
-                  column_names_gp = gpar(fontsize = 6),
-                  row_names_gp = gpar(fontsize = 6),
-                  width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
-                  height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
+          p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix),
                   col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                   cluster_rows = FALSE,
                   cluster_columns = FALSE,
+                  row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Res_Genes_matrix)/7),
+                  column_names_gp = gpar(fontsize = 12 - ncol(Virulence_Res_Genes_matrix)/7),
                   left_annotation = HeatmapAnnotation(df = mlst_annotation,
                                                       which = "row",
                                                       simple_anno_size = unit(4, "mm"),
@@ -1846,13 +1906,11 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
           }
       
       } else { # no MLST
-        Heatmap(as.matrix(Virulence_Res_Genes_matrix), 
-                column_names_gp = gpar(fontsize = 6), 
-                row_names_gp = gpar(fontsize = 6), 
-                width = ncol(Virulence_Res_Genes_matrix)*unit(2, "mm"), 
-                height = nrow(Virulence_Res_Genes_matrix)*unit(2, "mm"),
+        p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix), 
                 col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                 cluster_rows = FALSE,  
+                row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Res_Genes_matrix)/7),
+                column_names_gp = gpar(fontsize = 12 - ncol(Virulence_Res_Genes_matrix)/7),
                 top_annotation = HeatmapAnnotation(df = virulence_class_annotation,
                                                    which = "col", 
                                                    simple_anno_size = unit(4, "mm"), 
@@ -1862,8 +1920,17 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                                             labels = c("Presence", "Absence"),
                                             color_bar = "discrete"))
       }
+    p
+    
+    png(filename = "html_report_figures/Vf_blast_genes_heatmap.png", width = 3000, height = 2500, res = 300)
+    if (exists("p") == TRUE) {
+      p
+    }
+    invisible(dev.off())
+    
   }
 }
+
 ```
 <br>
 
@@ -1921,7 +1988,7 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
     mutate(across(percentage, round, 0))
   
   #First figure: pangenome summary statistics pie chart
-  Pangenome_genes_summary %>% ggplot(data = ., 
+  Pangenome_genes_summary <- Pangenome_genes_summary %>% ggplot(data = ., 
                                      aes(x = "", y = .[[3]], fill = .[[1]])) +
     geom_bar(stat = "identity", width = 1, color="white") +
     coord_polar("y", start = 0) + 
@@ -1942,7 +2009,15 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
                color = "black",
                position = position_stack(vjust = 0.5),
                show.legend = FALSE)
+  
+  Pangenome_genes_summary
+
 }
+png(filename = "html_report_figures/pangenome_genes_pieplot.png", width = 3000, height = 2500, res = 300)
+if (exists("Pangenome_genes_summary") == TRUE) {
+  Pangenome_genes_summary
+}
+invisible(dev.off())
 ```
 <br>
 
@@ -1964,7 +2039,7 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
 
   Pangenome_frequency$Genomes <- Pangenome_frequency_Genomes$Genomes
   
-  Pangenome_frequency %>% 
+  Pangenome_frequency <- Pangenome_frequency %>% 
     ggplot(data = ., aes(x = Genomes)) +
     geom_bar(stat = "count") +
     theme_classic() +
@@ -1974,7 +2049,15 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
       legend.position = "right",
       plot.title = element_text(size = 12, hjust = 0.5, face = "bold"),
   )
+  
+  Pangenome_frequency
+
 }
+png(filename = "html_report_figures/pangenome_genes_frequency.png", width = 3000, height = 2500, res = 300)
+if (exists("Pangenome_frequency") == TRUE) {
+  Pangenome_frequency
+}
+invisible(dev.off())
 ```
 <br>
 
@@ -1982,22 +2065,30 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
 if(campype_config_json$pangenome$run_pangenome == TRUE) {
   #Third figure: phylogenetic tree
   tree <- ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
-  ggtree(tree, size=1/5) + #Size refers to thickness of branches
+  pangenome_tree <- ggtree(tree, size=1/5) + #Size refers to thickness of branches
     ggtitle("Phylogenetic tree based on presence/absence of accesory genes") +
-    geom_tiplab(size=4,
+    geom_tiplab(size=2,
                 align=FALSE,  #Align tree labels to the end of each leaf
                 linesize=0.5) + #line size of line if align = TRUE
-    geom_treescale(offset = -0.3) +
+    geom_treescale(offset = -1) +
     theme(plot.title = element_text(size = 12, hjust = 0.5, face = "bold")) +
     coord_cartesian(clip="off") #prevents labels from being clipped off
+  
+  pangenome_tree
+  
 }
+png(filename = "html_report_figures/pangenome_tree.png", width = 3000, height = 2500, res = 300)
+if (exists("pangenome_tree") == TRUE) {
+  pangenome_tree
+}
+invisible(dev.off())
 ```
 <br>
 
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE, dpi = 80, fig.width=9}
 
 if(campype_config_json$pangenome$run_pangenome == TRUE) {
-  #Foruth figure: pangenome with phylogenetic tree 
+  #Fourth figure: pangenome with phylogenetic tree 
   cat("Binary heatmap shows the presence (grey) and absence (white) of genes. Phylogeny for each isolate is shown on the left and was constructed based on accesory genes from the pangenome.", "<br>")
   pangenome <- read_delim(file = "Roary_pangenome/gene_presence_absence.Rtab", delim = "\t", show_col_types = FALSE) %>%
   mutate(across(where(is.character), as.factor)) %>%
@@ -2009,12 +2100,12 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
 
   tree <- ape::read.tree(file = "Roary_pangenome/accessory_binary_genes.fa.newick")
   tree_graph <- ggtree(tree, size=1/5) + #Size refers to thickness of branches
-    geom_tiplab(size=4,
+    geom_tiplab(size=2,
                 align=FALSE,  #Align tree labels to the end of each leaf
                 linesize=0.5) + #line size of line if align = TRUE
-    geom_treescale(offset = -0.3)
+    geom_treescale(offset = -1)
     
-  gheatmap(p = tree_graph, 
+  pangenome_tree_matrix <- gheatmap(p = tree_graph, 
            data = pangenome,
            offset = 7, 
            width = 10,
@@ -2024,7 +2115,16 @@ if(campype_config_json$pangenome$run_pangenome == TRUE) {
     scale_fill_manual(breaks=c("1", "0"),
                       values=c("black", "white")) +
     theme(legend.position = 'none')
+  
+  pangenome_tree_matrix
+  
+
 }
+png(filename = "html_report_figures/pangenome_tree_matrix.png", width = 4000, height = 2500, res = 300)
+if (exists("pangenome_tree_matrix") == TRUE) {
+  pangenome_tree_matrix
+}
+invisible(dev.off())
 ```
 <br>
 
@@ -2097,7 +2197,8 @@ summary_draft_genome <-
   rename(`Sequence Type` =  any_of("ST")) %>%
   rename(`Clonal Complex` =  any_of("clonal_complex")) %>%
   rename(`Species percentage` = any_of("Species_percentage")) %>% 
-  mutate(across(where(is_character), as_factor))
+  mutate(across(where(is_character), as_factor)) %>% 
+  select_if(~!(all(is.na(.)) && names(.) == "Clonal_Complex")) # Remove empty columns
 
 # Replace Unknown ST or CC by Other
 if ("Clonal Complex" %in% colnames(summary_draft_genome)) {
