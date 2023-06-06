@@ -73,7 +73,7 @@ An optional test can be run to check the correct installation of CamPype.
     ```bash
     $ campype_test.sh
     ```   
-An example of the HTML report you will get can be found here.
+An example of the HTML report you will get can be found [here](https://josebarbero.github.io/CamPype/example_report/CamPype_test).
 
 
 ## Running CamPype
@@ -106,7 +106,7 @@ An example of the HTML report you will get can be found here.
 ## Output
 The results of CamPype are stored in very detailed directories for each analysis, with separate subdirectories for each tool and isolate. The files will be generated for analysis tracking due to execution error. An interactive HTML summary report will be generated at the end of the analysis to simplify the task of data visualization and interpretation, although the figures can also be found in the html_report_figures directory within CamPype output directory. This HTML file can be opened on any Web browser. Examples of reports can be found here:
 * [Analysis with 5 Campylobacter jejuni and 5 Campylobacter coli (raw reads)](https://josebarbero.github.io/CamPype/example_report/CamPype_Report_long_first_case_study.html)
-* [Analysis with 44 Escherichia coli (assembled genomes)](link)
+* [Analysis with 44 Escherichia coli (assembled genomes)](https://josebarbero.github.io/CamPype/example_report/CamPype_Report_short_second_case_study)
 
 You can generate the report after CamPype analysis by executing the following command in the Linux terminal:
 * For raw fastq reads as input:
