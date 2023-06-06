@@ -90,7 +90,7 @@ An example of the HTML report you will get can be found [here](https://josebarbe
     ```bash
     $ bash -i campype_qc
     ```   
-    A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast visualization in the directory fastq_quality_control, that will be located inside the output directoy of CamPype named as you indicated in the CamPype/workflow_config.py file. Check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to understand these results.
+    A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast visualization in the directory fastq_quality_control, that will be located inside the output directoy of CamPype named as you indicated in the CamPype/workflow_config.py file. An example of this report can be found [here](https://josebarbero.github.io/CamPype/example_report/multiqc_report_first_case_study.html). We recommend you to check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to understand these results.
     
 1. Once you have set the configuration, run CamPype:
     ```bash
