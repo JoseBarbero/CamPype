@@ -117,7 +117,6 @@ campype_config.json
 Util*
 Test*
 TEST*
-test*
 
 # R 
 *.Rproj
