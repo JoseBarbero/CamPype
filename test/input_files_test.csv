@@ -1,4 +1,4 @@
 Samples	Forward	Reverse	Genus	Species
-C0459	campype_validation/SRR13362802_1.fastq.gz	campype_validation/SRR13362802_2.fastq.gz	Campylobacter	jejuni
-C0551	campype_validation/SRR13362790_1.fastq.gz	campype_validation/SRR13362790_2.fastq.gz	Campylobacter	coli
-C0582	campype_validation/SRR13362773_1.fastq.gz	campype_validation/SRR13362773_2.fastq.gz	Campylobacter	jejuni
+C0459	test/SRR13362802_1.fastq.gz	test/SRR13362802_2.fastq.gz	Campylobacter	jejuni
+C0551	test/SRR13362790_1.fastq.gz	test/SRR13362790_2.fastq.gz	Campylobacter	coli
+C0582	test/SRR13362773_1.fastq.gz	test/SRR13362773_2.fastq.gz	Campylobacter	jejuni
