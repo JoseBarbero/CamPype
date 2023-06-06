@@ -2311,7 +2311,7 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
         rownames(Virulence_Res_Genes_matrix) <- Virulence_Res_Genes_matrix$Sample
         Virulence_Res_Genes_matrix$Sample <- NULL
         
-        p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix),
+        vir_blast_p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix),
                      col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                      cluster_rows = FALSE,
                      cluster_columns = FALSE,
@@ -2331,8 +2331,10 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                                                  labels = c("Presence", "Absence"),
                                                  title = " ",
                                                  color_bar = "discrete"))
+        
+        vir_blast_p
       } else { # no CC
-        p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix),
+        vir_blast_p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix),
                      col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                      cluster_rows = FALSE,
                      cluster_columns = FALSE,
@@ -2352,10 +2354,12 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                                                  labels = c("Presence", "Absence"),
                                                  title = " ",
                                                  color_bar = "discrete"))
+        
+        vir_blast_p
       }
       
     } else { # no MLST
-      p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix), 
+      vir_blast_p <- Heatmap(as.matrix(Virulence_Res_Genes_matrix), 
                    col = colorRampPalette(c("#F8696B", "#63BE7B"))(2),
                    cluster_rows = FALSE,  
                    row_names_gp = gpar(fontsize = 12 - nrow(Virulence_Res_Genes_matrix)/7),
@@ -2368,17 +2372,14 @@ if(campype_config_json$virulence_genes$run_virulence_genes_prediction == TRUE) {
                    heatmap_legend_param = list(at = c(1, 0), 
                                                labels = c("Presence", "Absence"),
                                                color_bar = "discrete"))
+      
+      vir_blast_p
     }
-
-    
   }
-
 }
-p
-
 png(filename = "html_report_figures/VF_blast_genes_heatmap.png", width = 3000, height = 2500, res = 300)
-if (exists("p") == TRUE) {
-  p
+if (exists("vir_blast_p") == TRUE) {
+  vir_blast_p
 }
 invisible(dev.off())
 ```
