@@ -105,13 +105,13 @@ venv.bak/
 
 # aux files
 input_files.csv
-Wombat_OUTPUT*
+CamPype_OUTPUT*
 
 # VSCode configuration
 .vscode
 
 # Auto-generated json config file
-wombat_config.json
+campype_config.json
 
 # Dev utils
 Util*
