@@ -105,75 +105,99 @@ Create_DT(x = BeforeQC, caption = '')
 ##### Number of reads R1
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = BeforeQC, aes(x = Sample, y = R1Reads)) +
+R1 <- ggplot(data = BeforeQC, aes(x = Sample, y = R1Reads)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank())
-)
+        panel.background = element_rect(colour = "grey90"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank())
+
+ggplotly(R1)
+
+png(filename = "html_report_figures/reads_R1.png", width = 3000, height = 2500, res = 300)
+if (exists("R1") == TRUE) {
+  R1
+}
+invisible(dev.off())
 ```
 
 ##### Average read length R1
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = BeforeQC, aes(x = Sample, y = R1LenMean)) +
+av_R1 <-ggplot(data = BeforeQC, aes(x = Sample, y = R1LenMean)) +
   geom_bar(stat = "identity") +
   geom_errorbar(aes(ymin = R1LenMean - R1LenSd, ymax = R1LenMean + R1LenSd), width = 0.18) +
   theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank())
-)
+        panel.background = element_rect(colour = "grey90"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank())
+
+ggplotly(av_R1)
+
+png(filename = "html_report_figures/reads_average_R1.png", width = 3000, height = 2500, res = 300)
+if (exists("av_R1") == TRUE) {
+  av_R1
+}
+invisible(dev.off())
 ```
 
 ##### Number of reads R2
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = BeforeQC, aes(x = Sample, y = R2Reads)) +
+R2 <- ggplot(data = BeforeQC, aes(x = Sample, y = R2Reads)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank())
-)
+        panel.background = element_rect(colour = "grey90"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank())
+
+ggplotly(R2)
+
+png(filename = "html_report_figures/reads_R2.png", width = 3000, height = 2500, res = 300)
+if (exists("R2") == TRUE) {
+  R2
+}
+invisible(dev.off())
 ```
 
 ##### Average read length R2
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = BeforeQC, aes(x = Sample, y = R2LenMean)) +
+av_R2 <- ggplot(data = BeforeQC, aes(x = Sample, y = R2LenMean)) +
   geom_bar(stat = "identity") +
   geom_errorbar(aes(ymin = R2LenMean - R2LenSd, ymax = R2LenMean + R2LenSd), width = 0.18) +
   theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank())
-)
+        panel.background = element_rect(colour = "grey90"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank())
+
+ggplotly(av_R2)
+
+png(filename = "html_report_figures/reads_average_R2.png", width = 3000, height = 2500, res = 300)
+if (exists("av_R2") == TRUE) {
+  av_R2
+}
+invisible(dev.off())
 ```
 
 ### After QC
@@ -203,75 +227,99 @@ Create_DT(x = AfterQC, caption = '')
 ##### Number of reads R1
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = AfterQC, aes(x = Sample, y = R1ReadsQC)) +
+R1_qc <- ggplot(data = AfterQC, aes(x = Sample, y = R1ReadsQC)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank())
-)
+        panel.background = element_rect(colour = "grey90"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank())
+
+ggplotly(R1_qc)
+
+png(filename = "html_report_figures/reads_qc_R1.png", width = 3000, height = 2500, res = 300)
+if (exists("R1_qc") == TRUE) {
+  R1_qc
+}
+invisible(dev.off())
 ```
 
 ##### Average read length R1
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = AfterQC, aes(x = Sample, y = R1LenMeanQC)) +
+av_qc_R1 <- ggplot(data = AfterQC, aes(x = Sample, y = R1LenMeanQC)) +
   geom_bar(stat = "identity") +
   geom_errorbar(aes(ymin = R1LenMeanQC - R1LenSdQC, ymax = R1LenMeanQC + R1LenSdQC), width = 0.18) +
   theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank())
-)
+        panel.background = element_rect(colour = "grey90"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank())
+
+ggplotly(av_qc_R1)
+
+png(filename = "html_report_figures/reads_average_qc_R1.png", width = 3000, height = 2500, res = 300)
+if (exists("av_qc_R1") == TRUE) {
+  av_qc_R1
+}
+invisible(dev.off())
 ```
 
 ##### Number of reads R2
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = AfterQC, aes(x = Sample, y = R2ReadsQC)) +
+R2_qc <- ggplot(data = AfterQC, aes(x = Sample, y = R2ReadsQC)) +
   geom_bar(stat = "identity") +
   theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank())
-)
+        panel.background = element_rect(colour = "grey90"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank())
+
+ggplotly(R2_qc)
+
+png(filename = "html_report_figures/reads_qc_R2.png", width = 3000, height = 2500, res = 300)
+if (exists("R2_qc") == TRUE) {
+  R2_qc
+}
+invisible(dev.off())
 ```
 
 ##### Average read length R2
 ```{r, echo=FALSE}
 options("scipen" = 100, "digits" = 0)
-ggplotly(
-ggplot(data = AfterQC, aes(x = Sample, y = R2LenMeanQC)) +
+av_qc_R2 <- ggplot(data = AfterQC, aes(x = Sample, y = R2LenMeanQC)) +
   geom_bar(stat = "identity") +
   geom_errorbar(aes(ymin = R2LenMeanQC - R2LenSdQC, ymax = R2LenMeanQC + R2LenSdQC), width = 0.18) +
   theme(panel.border = element_blank(),
-                panel.background = element_rect(colour = "grey90"),
-                panel.grid.minor = element_blank(),
-                panel.grid.major = element_blank(),
-                axis.text = element_text(size = 10),
-                axis.text.x = element_text(hjust = 1),
-                axis.title.x = element_blank(),
-                axis.title.y = element_blank(),
-                axis.ticks = element_blank())
-)
+        panel.background = element_rect(colour = "grey90"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.text = element_text(size = 10),
+        axis.text.x = element_text(hjust = 1),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.ticks = element_blank())
+
+ggplotly(av_qc_R2)
+
+png(filename = "html_report_figures/reads_average_qc_R2.png", width = 3000, height = 2500, res = 300)
+if (exists("av_qc_R2") == TRUE) {
+  av_qc_R2
+}
+invisible(dev.off())
 ```
 <br>
 [Back to index](#index)
@@ -297,10 +345,9 @@ if(campype_config_json$merge_reads == TRUE) {
 #### Select the parameter {.tabset .tabset-fade .tabset-pills}
 ##### Percentage of joined reads
 ```{r results='asis', warning=FALSE, message=FALSE, echo=FALSE}
+options("scipen" = 100, "digits" = 0)
 if(campype_config_json$merge_reads == TRUE) {
-  options("scipen" = 100, "digits" = 0)
-  ggplotly(
-  ggplot(data = FLASH_Reads, aes(x = Sample, y = `JoinReads (%)`)) +
+  joined_reads_perc <- ggplot(data = FLASH_Reads, aes(x = Sample, y = `JoinReads (%)`)) +
     geom_bar(stat = "identity") +
     theme(panel.border = element_blank(),
           panel.background = element_rect(colour = "grey90"),
@@ -310,16 +357,23 @@ if(campype_config_json$merge_reads == TRUE) {
           axis.text.x = element_text(hjust = 1),
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.ticks = element_blank()))
+          axis.ticks = element_blank())
+  
+  ggplotly(joined_reads_perc)
 }
+
+png(filename = "html_report_figures/reads_extension_percentage_joined.png", width = 3000, height = 2500, res = 300)
+if (exists("joined_reads_perc") == TRUE) {
+  joined_reads_perc
+}
+invisible(dev.off())
 ```
 
 ##### Number of joined reads
 ```{r results='asis', echo=FALSE}
+options("scipen" = 100, "digits" = 0)
 if(campype_config_json$merge_reads == TRUE) {
-  options("scipen" = 100, "digits" = 0)
-  ggplotly(
-  ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinReads)) +
+  joined_reads <- ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinReads)) +
     geom_bar(stat = "identity") +
     theme(panel.border = element_blank(),
           panel.background = element_rect(colour = "grey90"),
@@ -329,16 +383,23 @@ if(campype_config_json$merge_reads == TRUE) {
           axis.text.x = element_text(hjust = 1),
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.ticks = element_blank()))
+          axis.ticks = element_blank())
+  
+    ggplotly(joined_reads)
 }
+
+png(filename = "html_report_figures/reads_extension_joined.png", width = 3000, height = 2500, res = 300)
+if (exists("joined_reads") == TRUE) {
+  joined_reads
+}
+invisible(dev.off())
 ```
 
 ##### Average joined reads length
 ```{r results='asis', echo=FALSE}
+options("scipen" = 100, "digits" = 0)
 if(campype_config_json$merge_reads == TRUE) {
-  options("scipen" = 100, "digits" = 0)
-  ggplotly(
-  ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinLenMeanReads)) +
+  av_joined_reads <- ggplot(data = FLASH_Reads, aes(x = Sample, y = JoinLenMeanReads)) +
     geom_bar(stat = "identity") +
     geom_errorbar(aes(ymin = JoinLenMeanReads - JoinLenSdReads, ymax = JoinLenMeanReads + JoinLenSdReads), width = 0.18) +
     theme(panel.border = element_blank(),
@@ -349,16 +410,23 @@ if(campype_config_json$merge_reads == TRUE) {
           axis.text.x = element_text(hjust = 1),
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.ticks = element_blank()))
+          axis.ticks = element_blank())
+  
+    ggplotly(av_joined_reads)
 }
+
+png(filename = "html_report_figures/reads_extension_average_joined.png", width = 3000, height = 2500, res = 300)
+if (exists("av_joined_reads") == TRUE) {
+  av_joined_reads
+}
+invisible(dev.off())
 ```
 
 ##### Number of unjoined R1 reads
 ```{r results='asis', echo=FALSE}
+options("scipen" = 100, "digits" = 0)
 if(campype_config_json$merge_reads == TRUE) {
-  options("scipen" = 100, "digits" = 0)
-  ggplotly(
-  ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1Reads)) +
+  unjoined_R1 <- ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1Reads)) +
     geom_bar(stat = "identity") +
     theme(panel.border = element_blank(),
           panel.background = element_rect(colour = "grey90"),
@@ -368,16 +436,23 @@ if(campype_config_json$merge_reads == TRUE) {
           axis.text.x = element_text(hjust = 1),
           axis.title.x = element_blank(),
           axis.title.y = element_blank(),
-          axis.ticks = element_blank()))
+          axis.ticks = element_blank())
+  
+    ggplotly(unjoined_R1)
 }
+
+png(filename = "html_report_figures/reads_extension_unjoined_R1.png", width = 3000, height = 2500, res = 300)
+if (exists("unjoined_R1") == TRUE) {
+  unjoined_R1
+}
+invisible(dev.off())
 ```
 
 ##### Average unjoined R1 reads length
 ```{r results='asis', echo=FALSE}
+options("scipen" = 100, "digits" = 0)
 if(campype_config_json$merge_reads == TRUE) {
-  options("scipen" = 100, "digits" = 0)
-  ggplotly(
-    ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1LenMeanReads)) +
+  av_joined_R1_reads <- ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR1LenMeanReads)) +
       geom_bar(stat = "identity") +
       geom_errorbar(aes(ymin = UnjoinR1LenMeanReads - UnjoinR1LenSdReads, ymax = UnjoinR1LenMeanReads + UnjoinR1LenSdReads), width = 0.18) +
       theme(panel.border = element_blank(),
@@ -388,16 +463,23 @@ if(campype_config_json$merge_reads == TRUE) {
             axis.text.x = element_text(hjust = 1),
             axis.title.x = element_blank(),
             axis.title.y = element_blank(),
-            axis.ticks = element_blank()))
+            axis.ticks = element_blank())
+    
+    ggplotly(av_joined_R1_reads)
 }
+    
+png(filename = "html_report_figures/reads_extension_average_unjoined_R1.png", width = 3000, height = 2500, res = 300)
+if (exists("av_joined_R1_reads") == TRUE) {
+  av_joined_R1_reads
+}
+invisible(dev.off())
 ```
 
 ##### Number of unjoined R2 reads
 ```{r results='asis', echo=FALSE}
+options("scipen" = 100, "digits" = 0)
 if(campype_config_json$merge_reads == TRUE) {
-  options("scipen" = 100, "digits" = 0)
-  ggplotly(
-  ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2Reads)) +
+  unjoined_R2 <- ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2Reads)) +
     geom_bar(stat = "identity") +
       theme(panel.border = element_blank(),
             panel.background = element_rect(colour = "grey90"),
@@ -407,16 +489,23 @@ if(campype_config_json$merge_reads == TRUE) {
             axis.text.x = element_text(hjust = 1),
             axis.title.x = element_blank(),
             axis.title.y = element_blank(),
-            axis.ticks = element_blank()))
-}
+            axis.ticks = element_blank())
+
+    ggplotly(unjoined_R2)
+}    
+
+png(filename = "html_report_figures/reads_extension_unjoined_R2.png", width = 3000, height = 2500, res = 300)
+if (exists("unjoined_R2") == TRUE) {
+  unjoined_R2
+  }
+invisible(dev.off())  
 ```
 
 ##### Average unjoined R2 reads length
 ```{r results='asis', echo=FALSE}
+options("scipen" = 100, "digits" = 0)
 if(campype_config_json$merge_reads == TRUE) {
-  options("scipen" = 100, "digits" = 0)
-  ggplotly(
-    ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2LenMeanReads)) +
+  av_joined_R2_reads <- ggplot(data = FLASH_Reads, aes(x = Sample, y = UnjoinR2LenMeanReads)) +
       geom_bar(stat = "identity") +
       geom_errorbar(aes(ymin = UnjoinR2LenMeanReads - UnjoinR2LenSdReads, ymax = UnjoinR2LenMeanReads + UnjoinR2LenSdReads), width = 0.18) +
       theme(panel.border = element_blank(),
@@ -427,8 +516,16 @@ if(campype_config_json$merge_reads == TRUE) {
             axis.text.x = element_text(hjust = 1),
             axis.title.x = element_blank(),
             axis.title.y = element_blank(),
-            axis.ticks = element_blank()))
+            axis.ticks = element_blank())
+    
+    ggplotly(av_joined_R2_reads)
 }
+
+png(filename = "html_report_figures/reads_extension_average_unjoined_R2.png", width = 3000, height = 2500, res = 300)
+if (exists("av_joined_R2_reads") == TRUE) {
+  av_joined_R2_reads
+}
+invisible(dev.off())
 ```
 <br>
 [Back to index](#index)
