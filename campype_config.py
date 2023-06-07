@@ -1,12 +1,12 @@
 config = {
-    "output_directory": ".",    # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.). Default: "."
+    "output_directory": ".", # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.). Default: "."
     "custom_output_name": "", # Custom name for the output directory. Default: "" (if this parameter is empty: "CamPype_OUTPUT_YYYYMMDD_HHMMSS")
-    "n_threads": 28,   # Number of threads to use. Default: None (takes threads defined by default by each tool). Default: 28
-    "reference_genome": {   # OPTIONAL (if you don't want to use it, just leave every parameter empty)
-        "file": "reference_files/NCTC11168.fasta",    # Required if you want to reorder genome contigs against a reference genome and search for SNPs
-        "genus": "Campylobacter",   
-        "species": "jejuni",    
-        "strain": "NCTC11168",
+    "n_threads": 28, # Number of threads to use. Default: None (takes threads defined by default by each tool). Default: 28
+    "reference_genome": { # OPTIONAL (if you don't want to use it, just leave every parameter empty)
+        "file": "", # Required if you want to reorder genome contigs against a reference genome and search for SNPs. If you want to analyse Campylobacter jejuni isolates, we recommend you to type "reference_files/NCTC11168.fasta"
+        "genus": "", # Genus of reference genome
+        "species": "", # Species of reference genome
+        "strain": "NCTC11168", # If you are using Campylobacter jejuni NCTC 11168 as reference genomes, we recommend you to type "NCTC11168"
         "proteins": "reference_files/NCTC11168_NCBI.gb", # Required if you want to reduce annotation mismatches using PROKKA compared to a reference genome and get detailed information of SNPS. Genome sequence is required at the end of the file for successful execution 
     },
     "assembled_genomes": False, # Skip read quality control and assembly if set to True (you need fasta files as input). If not, set it to False. Default: False
