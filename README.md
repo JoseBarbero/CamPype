@@ -175,7 +175,7 @@ $\textcolor{red}{\textsf{Make sure you don't have anything important in this dir
 ## Citation
 Please cite CamPype whenever you use it as:
 
-Irene Ortega-Sanz, Jose A. Barbero and Antonio Canepa. CamPype. Available at [https://github.com/JoseBarbero/CamPype](https://github.com/JoseBarbero/CamPype)
+Ortega-Sanz, I., Barbero-Aparicio, J.A., Canepa-Oneto, A. et al. CamPype: an open-source workflow for automated bacterial whole-genome sequencing analysis focused on Campylobacter. BMC Bioinformatics 24, 291 (2023). https://doi.org/10.1186/s12859-023-05414-w
 
 
 ## Contact
