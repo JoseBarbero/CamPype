@@ -108,13 +108,15 @@ The results of CamPype are stored in very detailed directories for each analysis
 * [Analysis with 5 Campylobacter jejuni and 5 Campylobacter coli (raw reads)](https://josebarbero.github.io/CamPype/example_report/CamPype_Report_long_first_case_study.html)
 * [Analysis with 44 Escherichia coli (assembled genomes)](https://josebarbero.github.io/CamPype/example_report/CamPype_Report_short_second_case_study)
 
-You can generate the report after CamPype analysis by executing the following command in the Linux terminal:
+You can generate the report after CamPype analysis by executing the following commands in the Linux terminal:
 * For raw fastq reads as input:
 ```
+conda activate campypeR
 Rscript -e "rmarkdown::render('CamPype_Report_long.Rmd', params = list(directory = '~/path/to/data'))"
 ```
 * For assembled genomes as input:
 ```
+conda activate campypeR
 Rscript -e "rmarkdown::render('CamPype_Report_short.Rmd', params = list(directory = '~/path/to/data'))"
 ```
 In both cases, you will have to change ```'~/path/to/data'``` with the corresponding path of the CamPype output directory containing the output files required to create the summary HTML report.
