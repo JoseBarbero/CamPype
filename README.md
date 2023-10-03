@@ -40,6 +40,15 @@ Software or databases are indicated in boxes, while discontinuous boxes indicate
     $ install_kraken.sh
     ```
 
+## Installation (different than Linux)
+For beginners and anyone using a host operative system different than Linux, we have created a virtual machine (VM) with CamPype installed to be imported in VirtualBox so that you can use the workflow. 
+1. First, you will need to download and install VirtualBox following the instructions you will find [here](https://www.virtualbox.org/wiki/Downloads).
+2. Download the VM [here](https://zenodo.org/record/8402470).
+3. Import the VM following the instructions you will find [here](https://docs.oracle.com/en/virtualization/virtualbox/6.0/user/ovf.html).
+
+The VM is ready for use. However, in case you encounter problems related to space left in the virual disk, we suggest you to resize it following this [instructions](https://www.howtogeek.com/124622/how-to-enlarge-a-virtual-machines-disk-in-virtualbox-or-vmware/#:~:text=Use%20the%20Virtual%20Media%20Manager%20in%20VirtualBox,-VirtualBox%206%20added&text=To%20access%20it%2C%20click%20File,%22%20when%20you're%20done).
+
+
 ## Set input files and configuration
 
 CamPype can run on two modes depending on the input files. The FASTQ mode analyses (un)compressed raw reads in fastq format, while the FASTA mode analyses assembled genomes in fasta format.
