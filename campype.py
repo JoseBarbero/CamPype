@@ -1765,7 +1765,7 @@ if __name__ == "__main__":
                         call("gunzip -c " + sample_fw, stdout=fw_file, shell=True)
                     decompressed_samples[sample_basename] = output_folder + "/" + sample_fw.split("/")[-1].split(".")[0] + ".fasta"
             else:
-                if not sample_fw.split(".")[-1] in ["fasta", "fa", "fna"]:
+                if not sample_fw.split(".")[-1] in ["fasta", "fa", "fna", "fq"]:
                     print("WRONG INPUT FORMAT:", sample_fw, flush=True)
                     print("Input must be a valid fasta format file.", flush=True)
                     sys.exit(1)

@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # Run quality control (FastQC and MultiQC)  
     print(Banner(f"\nFastq reads quality control analysis: FastQC\n"), flush=True)
 
-    for sample_basename, data in read_input_files("input_files.csv"):
+    for sample_basename, data in read_input_files("input_files.csv").items():
         
         sample_fw = data["FW"]
         sample_rv = data["RV"]    
