@@ -2,7 +2,7 @@ config = {
     "output_directory": ".", # "." is CamPype's directory (you need to have writing permissions to save CamPype's output in certain directories.). Default: "."
     "custom_output_name": "", # Custom name for the output directory. Default: "" (if this parameter is empty: "CamPype_OUTPUT_YYYYMMDD_HHMMSS")
     "n_threads": 28, # Number of threads to use. Default: None (takes threads defined by default by each tool). Default: 28
-    "reference_genome": { # OPTIONAL (if you don't want to use it, just leave every parameter empty)
+    "reference_genome": { # OPTIONAL: Select a reference genome of the same species you are analyzing or if you don't want to use it, just leave every parameter empty
         "file": "", # Required if you want to reorder genome contigs against a reference genome and search for SNPs. If you want to analyse Campylobacter jejuni isolates, we recommend you to type "reference_files/NCTC11168.fasta"
         "genus": "", # Genus of reference genome
         "species": "", # Species of reference genome
