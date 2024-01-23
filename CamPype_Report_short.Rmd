@@ -830,7 +830,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
           distinct() %>%
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
-          select(., -`-`) %>%
+          {if ("-" %in% colnames(.)) select(., -`-`)} %>%
           remove_rownames %>% 
           column_to_rownames(var="Sample") %>% 
           base::as.matrix() %>%  
@@ -871,7 +871,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
           select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
           distinct() %>%
           pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
-          select(., -`-`) %>%
+          {if ("-" %in% colnames(.)) select(., -`-`)} %>%
           remove_rownames %>% 
           column_to_rownames(var="Sample") %>% 
           base::as.matrix() %>%  
@@ -901,7 +901,7 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
         select(c(Sample, `Gene symbol`, `Presence / Absence`)) %>%
         distinct() %>%
         pivot_wider(data = ., names_from = `Gene symbol`, values_from = `Presence / Absence`, values_fill = 0) %>% 
-        select(., -`-`) %>%
+        {if ("-" %in% colnames(.)) select(., -`-`)} %>%
         remove_rownames %>% 
         column_to_rownames(var="Sample") %>% 
         base::as.matrix() %>%  
