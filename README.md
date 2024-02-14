@@ -63,9 +63,9 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
 
     This structure must be respected anyway in that file ($\textcolor{red}{\textsf{tab as a delimiter}}$). Make sure headers haven't changed and samples ID do not contain the dot symbol ```.``` $\textcolor{red}{\textsf{Be careful with typos!!!}}$
     
-1. Set the modules you want to run in the CamPype/workflow_config.py file. There you will set your own running parameters for each tool and the select your tools of interest when possible.
+1. Set the modules you want to run in the CamPype/campype_config.py file. There you will set your own running parameters for each tool and the select your tools of interest when possible.
 
-1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. If you want to use a different bacteria, we strongly recommend you to adapt the configuration of CamPype as previously explained. In particular, you must modify the ```reference_genome```, deactivate the option ```include_cc```, and use abricate for virulence genes searching or/and use your own virulence genes database with BLAST instead (indicate this accordingly in the CamPype/workflow_config.py file). $\textcolor{red}{\textsf{Be careful if you want to analyse a mix of bacterial species}}$, we recommend you to delete a ```reference_genome``` and deactivate the option ```run_variant_calling```.
+1. Default settings are configured for <em>Campylobacter jejuni/coli</em>. If you want to use a different bacteria, we strongly recommend you to adapt the configuration of CamPype as previously explained. In particular, you must modify the ```reference_genome```, deactivate the option ```include_cc```, and use abricate for virulence genes searching or/and use your own virulence genes database with BLAST instead (indicate this accordingly in the CamPype/campype_config.py file). $\textcolor{red}{\textsf{Be careful if you want to analyse a mix of bacterial species}}$, we recommend you to delete a ```reference_genome``` and deactivate the option ```run_variant_calling```.
 
 
 ## Test CamPype
@@ -99,13 +99,13 @@ An example of the HTML report you will get can be found [here](https://josebarbe
     ```bash
     $ bash -i campype_qc
     ```   
-    A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast visualization in the directory fastq_quality_control, that will be located inside the output directoy of CamPype named as you indicated in the CamPype/workflow_config.py file. An example of this report can be found [here](https://josebarbero.github.io/CamPype/example_report/multiqc_report_first_case_study.html). We recommend you to check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to understand these results.
+    A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast visualization in the directory fastq_quality_control, that will be located inside the output directoy of CamPype named as you indicated in the CamPype/campype_config.py file. An example of this report can be found [here](https://josebarbero.github.io/CamPype/example_report/multiqc_report_first_case_study.html). We recommend you to check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to understand these results.
     
 1. Once you have set the configuration, run CamPype:
     ```bash
     $ bash -i campype
     ```
-    The results will be located in the output directoy of CamPype named as you indicated in the CamPype/workflow_config.py file. If you want to store these results in the same directory where the quality control analysis data are, remember to indicate that directory in the configuration file. 
+    The results will be located in the output directoy of CamPype named as you indicated in the CamPype/campype_config.py file. If you want to store these results in the same directory where the quality control analysis data are, remember to indicate that directory in the configuration file. 
     
 1. You can deactivate the environment when you are finished:
     ```bash
