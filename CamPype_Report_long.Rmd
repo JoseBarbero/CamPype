@@ -1255,7 +1255,8 @@ if(campype_config_json$antimicrobial_resistance_genes$run_antimicrobial_resistan
       read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_genes_AMRFinder_matrix.tsv", show_col_types = FALSE) %>% 
       pivot_longer(data = ., cols = !c(Sample, DATABASE), names_to = "Resistance Class", values_to = "Gene symbol") %>%
       mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Gene symbol`, "^-$"))) %>%
-      mutate(across(where(is_character), as_factor))
+      mutate(across(where(is_character), as_factor)) %>% 
+      mutate(Sample = as.character(Sample))
     
     resistance_class_annotation <- AMR_matrix[, c("Resistance Class", "Gene symbol")] %>% 
     distinct() %>% 
@@ -1399,7 +1400,7 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
     if('amrfinder' %in% campype_config_json$antimicrobial_resistance_genes$antimicrobial_resistance_genes_predictor_tool) {
       AMR_pmut <- 
         read_tsv(file = "Antimicrobial_resistance_genes/AMRFinder/AMR_AMRFinder.tsv", show_col_types = FALSE) %>% 
-        mutate(across(where(is_character), as_factor)) %>% 
+        mutate(across(where(is_character), as_factor)) %>%
         filter(`Element subtype` == "POINT" ) %>% 
         select(-c("Scope", "Element type", "Element subtype", "Method", "Target length", "Reference sequence length", "Alignment length", "Accession of closest sequence", "Name of closest sequence", "HMM id", "HMM description"))
       
@@ -1429,7 +1430,8 @@ if(file.exists("Antimicrobial_resistance_genes/AMRFinder/AMR_point_mutations_AMR
         mutate(.data = ., "Presence / Absence" = as.numeric(!str_detect(`Point mutation`, "^-$"))) %>%
         mutate(`Point mutation` = strsplit(as.character(`Point mutation`), ",")) %>% 
         unnest(`Point mutation`) %>%
-        mutate(across(where(is_character), as_factor))
+        mutate(across(where(is_character), as_factor)) %>%
+        mutate(Sample = as.character(Sample))
       
       resistance_class_pmut_annotation <- AMR_pmut_matrix[, c("Resistance Class", "Point mutation")] %>%
         distinct() %>% 
