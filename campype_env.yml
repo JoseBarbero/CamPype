@@ -484,4 +484,3 @@ dependencies:
     - sphinxcontrib-serializinghtml==1.1.5
     - terminal-banner==0.2.0
     - zipp==3.15.0
-prefix: /home/jabarbero/anaconda3/envs/campype
