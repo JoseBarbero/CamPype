@@ -48,6 +48,21 @@ For beginners and anyone using a host operative system different than Linux, we 
 
 The VM is ready for use. However, in case you encounter problems related to space left in the virual disk, we suggest you to resize it following this [instructions](https://www.howtogeek.com/124622/how-to-enlarge-a-virtual-machines-disk-in-virtualbox-or-vmware/#:~:text=Use%20the%20Virtual%20Media%20Manager%20in%20VirtualBox,-VirtualBox%206%20added&text=To%20access%20it%2C%20click%20File,%22%20when%20you're%20done).
 
+## Installation (docker)
+1. Make sure Docker is installed on your machine
+2. Run [feel free to use any image tag you want]
+    ```bash
+    docker build . -t campype:latest
+     ```
+3. Run
+    ```bash
+    docker run -it campype:latest bash
+    ```
+4. You are now inside the container which contains an installed version of CamPype. 
+You can follow the instructions for using CamPype on Linux.
+5. You can exit the container with the command `exit`. 
+If you want to reuse the same container in the future (i.e. if there's data you've generated and want to access), 
+use `docker container ls -a` to view old containers, and access the container by its id with `docker start -i CONTAINER_ID`
 
 ## Set input files and configuration
 
