@@ -13,31 +13,31 @@ Software or databases are indicated in boxes, while discontinuous boxes indicate
 
 1. Clone this repository:
     ```bash
-    $ git clone https://github.com/JoseBarbero/CamPype.git
+    git clone https://github.com/JoseBarbero/CamPype.git
     ```
 1. Go to CamPype's directory:
     ```bash
-    $ cd CamPype
+    cd CamPype
     ```
 1. Create the environment with conda:
     ```bash
-    $ conda config --append channels conda-forge
-    $ conda config --append channels bioconda
-    $ conda env create -f campype_env.yml 
-    $ conda env create -f campype_env_aux.yml 
+    conda config --append channels conda-forge
+    conda config --append channels bioconda
+    conda env create -f campype_env.yml 
+    conda env create -f campype_env_aux.yml 
     ```
     The creation of the conda environments will take some minutes, be patient.
 
 1. After conda environments were created, update the databases of AMRFinder, Prokka and ABRicate:
     ```
-    $ conda activate campype
-    $ amrfinder -u
-    $ prokka --setupdb
-    $ abricate --setupdb
+    conda activate campype
+    amrfinder -u
+    prokka --setupdb
+    abricate --setupdb
     ```
 1. Additionally, CamPype allows you to check for read contamination and determine bacteria taxonomy using Kraken2. The installation of Kraken2 is optional to avoid possible storage limitations as it requires the use of a heavy database that requires high free disk space, but it is not needed for Campype if you are not interested in this analysis. If you want to install this module, at least 8 GB will be occupied to store the MiniKraken_8GB_202003 database. This database is enough for bacteria identification and CamPype performance, but if you have enough disk space, you can download and install "Standard Kraken2 Databases" following the instructions [here](https://lomanlab.github.io/mockcommunity/mc_databases.html) for better sensitivity. To install Kraken2 in CamPype, make sure you are in CamPype's directory and run:
     ```bash
-    $ ./install_kraken.sh
+    ./install_kraken.sh
     ```
 
 ## Installation (different than Linux)
@@ -87,15 +87,15 @@ CamPype can run on two modes depending on the input files. The FASTQ mode analys
 An optional test can be run to check the correct installation of CamPype.
 1. Activate the CamPype's environment:
     ```bash
-    $ conda activate campype
+    conda activate campype
     ```
 1. Go to CamPype's directory:
     ```bash
-    $ cd your/path/to/CamPype
+    cd your/path/to/CamPype
     ```
 1. Run the CamPype's test:
     ```bash
-    $ campype_test.sh
+    ./campype_test.sh
     ```   
 An example of the HTML report you will get can be found [here](https://josebarbero.github.io/CamPype/example_report/CamPype_test).
 
@@ -104,27 +104,27 @@ An example of the HTML report you will get can be found [here](https://josebarbe
 
 1. Activate the CamPype's environment:
     ```bash
-    $ conda activate campype
+    conda activate campype
     ```
 1. Go to CamPype's directory:
     ```bash
-    $ cd your/path/to/CamPype
+    cd your/path/to/CamPype
     ```
 1. In case you want to run CamPype in the FASTQ mode, we encourage you to perform first a quality control step to check how good are your raw reads and adjust the read quality control filtering step (remember to include the path of the fastq files in the CamPype/input_files.csv file):
     ```bash
-    $ bash -i campype_qc
+    bash -i campype_qc
     ```   
     A quality control analysis will be performed in each fastq file and a summary HTML report will be generated for fast visualization in the directory fastq_quality_control, that will be located inside the output directoy of CamPype named as you indicated in the CamPype/campype_config.py file. An example of this report can be found [here](https://josebarbero.github.io/CamPype/example_report/multiqc_report_first_case_study.html). We recommend you to check this [video](https://www.youtube.com/watch?v=bz93ReOv87Y) to know how to understand these results.
     
 1. Once you have set the configuration, run CamPype:
     ```bash
-    $ bash -i campype
+    bash -i campype
     ```
     The results will be located in the output directoy of CamPype named as you indicated in the CamPype/campype_config.py file. If you want to store these results in the same directory where the quality control analysis data are, remember to indicate that directory in the configuration file. 
     
 1. You can deactivate the environment when you are finished:
     ```bash
-    $ conda deactivate
+    conda deactivate
     ```
 
 ## Output
@@ -152,13 +152,13 @@ We recommend to update CamPype when newer versions are launched:
 
 1. Make sure you are not in CamPype conda environment
     ```bash
-    $ conda deactivate
+    conda deactivate
     ```
 1. Save a copy of your configuration files. Updating CamPype will overwrite you configuration files because this files properties may change with newer versions of CamPype.
 
 1. Run ./updatecampype
     ```bash
-    $ ./updatecampype
+    ./updatecampype
     ```
 You should answer YES to the first question (Are you sure you want to remove your configuration files?) to update configuration files and YES to the second question (Proceed ([y]/n)?) to update all the packages and tools included in CamPype. This might take several minutes.
 
@@ -167,18 +167,18 @@ You should answer YES to the first question (Are you sure you want to remove you
 
 1. Go to CamPype's directory
     ```bash
-    $ cd your/path/to/CamPype
+    cd your/path/to/CamPype
     ```
 1. Make sure you are not in CamPype conda environment
     ```bash
-    $ conda deactivate
+    conda deactivate
     ```
 $\textcolor{red}{\textsf{Be careful, the CamPype directory and every file within will be removed.}}$ 
 $\textcolor{red}{\textsf{Make sure you don't have anything important in this directory (results, data, etc).}}$
 
 1. Run ./uninstallcampype
     ```bash
-    $ ./uninstallcampype
+    ./uninstallcampype
     ```
 
 ## FAQ
@@ -194,7 +194,7 @@ $\textcolor{red}{\textsf{Make sure you don't have anything important in this dir
 
 * If you find missing font problems running Mauve, you should install the required fonts:
   ```bash
-  $ sudo apt-get install ttf-dejavu
+  sudo apt-get install ttf-dejavu
   ```
 
 
