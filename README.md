@@ -205,4 +205,4 @@ Ortega-Sanz, I., Barbero-Aparicio, J.A., Canepa-Oneto, A. et al. CamPype: an ope
 
 
 ## Contact
-For questions, bugs and suggestions, please open a new issue or contact us at iortega@ubu.es or jabarbero@ubu.es.
+For questions, bugs and suggestions, please open a new issue or contact us through email to irene.ortegasanz@ugent.be or jabarbero@ubu.es.
