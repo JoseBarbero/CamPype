@@ -2168,6 +2168,8 @@ if __name__ == "__main__":
             mlst_data_file = mlst_dir+"/MLST_and_CC.txt"
         else:
             mlst_data_file = mlst_dir+"/"+mlst_out_file
+    else:
+        mlst_data_file = None
 
     # Virulence genes
     if cfg.config["virulence_genes"]["run_virulence_genes_prediction"]:
