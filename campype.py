@@ -436,7 +436,7 @@ def mlst_call(input_dir, reference_file, output_dir, output_filename, threads=No
 
     # Reformat output with header
     mlst_data = pd.read_csv(output_dir+"/"+output_filename, sep="\t", header=None)
-    mlst_data.columns = ["Sample", "Genus", "ST", *[f"locus_{i+1}" for i in range(7)]]
+    mlst_data.columns = ["Sample", "Schema", "ST", *[f"locus_{i+1}" for i in range(7)]]
     # Sample column (index) is a string
     mlst_data["Sample"] = mlst_data["Sample"].astype(str)
     # Filter df to keep only the basename of the index column
@@ -448,18 +448,32 @@ def mlst_call(input_dir, reference_file, output_dir, output_filename, threads=No
 
 
 def mlst_postprocessing(mlst_file, output_file):
-    col_names = ["Sample", "Genus", "ST"]
+    """
+    Post process MLST output.
+
+    Adds clonal complex to the output file.
+
+    Arguments:
+        mlst_file {string} -- MLST output file.
+        output_file {string} -- Output file.
+    """
+    col_names = ["Sample", "Schema", "ST"]
     output_data = pd.DataFrame()
     mlst_df = pd.read_csv(mlst_file, delimiter="\t")
 
-    url = "http://rest.pubmlst.org/db/pubmlst_campylobacter_seqdef/schemes/1/profiles_csv"
+    url_map_file = "resources/pubmlst_schemes_urls.csv"
+    url_map = pd.read_csv(url_map_file, delimiter=",")
+
+    scheme = mlst_df["Schema"].values[0]
+    url = url_map.loc[url_map["SCHEME"] == scheme]["URL"].values[0]
+
     urlData = requests.get(url).content
     database = pd.read_csv(StringIO(urlData.decode('utf-8')), sep="\t")
 
     for _, row in mlst_df.iterrows():
         new_row = []
         new_row.append(row["Sample"])
-        new_row.append(row["Genus"])
+        new_row.append(row["Schema"])
         new_row.append(row["ST"])
         for column in mlst_df.columns[3:]:
             if not row[column].split("(")[0] in col_names:
@@ -486,6 +500,7 @@ def mlst_postprocessing(mlst_file, output_file):
         output_data["Sample"] = output_data["Sample"].astype(str)
         print('MLST post processing:')
         print(output_data)
+
     output_data.to_csv(output_file, index=False, sep="\t")
 
 
