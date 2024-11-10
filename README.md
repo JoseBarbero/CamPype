@@ -164,6 +164,27 @@ We recommend to update CamPype when newer versions are launched:
     ```
 You should answer YES to the first question (Are you sure you want to remove your configuration files?) to update configuration files and YES to the second question (Proceed ([y]/n)?) to update all the packages and tools included in CamPype. This might take several minutes.
 
+## How to update databases
+The databases of AMRFinder and ABRicate can be updated without the need of updating CamPype. To update the database of AMRFinder, run ```amrfinder -u```
+
+To update the databases of ABRicate, run:
+```bash
+abricate-get_db --db [resfinder | argannot | ncbi | ecoh | megares | card | ecoli_vf | plasmidfinder | vfdb] --force
+```
+
+Only one database can be updated at once. In ABRicate 1.0.1, only for certain databases you have to manually edit the file ```abricate-get_db``` that you will find in ```./anaconda3/envs/campype/bin```:
+* To update the NCBI database, edit first line 249 before running previous command. This line has to be exactly like this:
+  ```bash
+  my $src = "$AFP/AMR_CDS.fa"
+  ```
+* To update the megares database, edit first line 350 before running previous command. This line has to be exactly like this:
+  ```bash
+  download(' https://www.meglab.org/downloads/megares_v3.00.zip', $zip);
+  ```
+
+You can always check the date of the ABRicate databases by running: ```abricate --list```
+
+
 
 ## How to uninstall CamPype (Linux)
 
