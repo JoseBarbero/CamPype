@@ -201,9 +201,9 @@ $\textcolor{red}{\textsf{Make sure you don't have anything important in this dir
 
 
 ## News
-The following functionalities will be included in CamPype as soon as posible:
+The following functionalities will be included in CamPype as soon as possible:
 - Our in-house Campylobacter virulence-associated genes database will be expanded to up to 333 different gene sequences. Meanwhile, the database can be found in our [latest publication](https://doi.org/10.1016/j.ijfoodmicro.2024.110940)
-- CamPype will support the assignment of Clonal Complexes to any scheme included in the PubMLST database.
+- CamPype will support the assignment of Clonal Complexes to any MLST scheme included in the PubMLST database.
 - Tools and packages will be updated to the latest version.
 
 
