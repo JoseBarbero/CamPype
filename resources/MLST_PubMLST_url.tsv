@@ -17,7 +17,7 @@ bhyodysenteriae	http://rest.pubmlst.org/db/pubmlst_brachyspira_seqdef/schemes/2/
 bifidobacterium	NA
 bintermedia	http://rest.pubmlst.org/db/pubmlst_brachyspira_seqdef/schemes/3/profiles_csv
 blicheniformis	http://rest.pubmlst.org/db/pubmlst_blicheniformis_seqdef/schemes/14/profiles_csv
-bordetella	bigsdb.pasteur.fr/api/db/pubmlst_bordetella_seqdef/schemes/3/profiles_csv
+bordetella	http://bigsdb.pasteur.fr/api/db/pubmlst_bordetella_seqdef/schemes/3/profiles_csv
 borrelia	http://rest.pubmlst.org/db/pubmlst_borrelia_seqdef/schemes/1/profiles_csv
 bpilosicoli	http://rest.pubmlst.org/db/pubmlst_brachyspira_seqdef/schemes/4/profiles_csv
 bpseudomallei	http://rest.pubmlst.org/db/pubmlst_bpseudomallei_seqdef/schemes/1/profiles_csv
