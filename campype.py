@@ -461,11 +461,12 @@ def mlst_postprocessing(mlst_file, output_file):
     output_data = pd.DataFrame()
     mlst_df = pd.read_csv(mlst_file, delimiter="\t")
 
-    url_map_file = "resources/pubmlst_schemes_urls.csv"
-    url_map = pd.read_csv(url_map_file, delimiter=",")
+    #url_map_file = "resources/pubmlst_schemes_urls.csv"
+    url_map_file = "resources/MLST_PubMLST_url.tsv"
+    url_map = pd.read_csv(url_map_file, delimiter="\t")
 
     scheme = mlst_df["Schema"].values[0]
-    url = url_map.loc[url_map["SCHEME"] == scheme]["URL"].values[0]
+    url = url_map.loc[url_map["MLST_scheme"] == scheme]["URL"].values[0]
 
     urlData = requests.get(url).content
     database = pd.read_csv(StringIO(urlData.decode('utf-8')), sep="\t")
