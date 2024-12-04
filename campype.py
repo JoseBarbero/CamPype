@@ -469,7 +469,7 @@ def split_mlst_output(mlst_file, output_dir):
     for schema in mlst_data["Schema"].unique():
         schema_data = mlst_data[mlst_data["Schema"] == schema]
         schema_data = schema_data.rename(columns={"Schema": "MLST_scheme"})
-        new_filename = output_dir+"/MLST_"+schema+".txt"
+        new_filename = output_dir+"/MLST_"+schema+".csv"
         schema_data.to_csv(new_filename, sep="\t", index=False)
         new_mlst_files.append(new_filename)
     
@@ -2237,7 +2237,7 @@ if __name__ == "__main__":
 
     # MLST call
     if cfg.config["MLST"]["run_mlst"]:
-        mlst_out_file = "MLST.txt"
+        mlst_out_file = "MLST.csv"
         print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
         step_counter += 1
         mlst_files = mlst_call(input_dir=draft_contigs_dir,  
@@ -2249,7 +2249,7 @@ if __name__ == "__main__":
         if cfg.config["MLST"]["include_cc"]:
             mlst_data_file = []
             for mlst_file in mlst_files:
-                cc_file = CC_assignment(mlst_file, os.path.splitext(mlst_file)[0]+"_and_CC.txt")
+                cc_file = CC_assignment(mlst_file, os.path.splitext(mlst_file)[0]+"_and_CC.csv")
                 mlst_data_file.append(cc_file)
             mlst_data_file = mlst_data_file
         else:
