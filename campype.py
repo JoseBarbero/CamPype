@@ -414,7 +414,7 @@ def mlst_call(input_dir, reference_file, output_dir, output_filename, threads=No
         output_filename {string} -- Output file name (and route).
     
     Returns:
-        {int} -- Execution state (0 if everything is all right)
+        {list} -- List of MLST files.
     """
     
     output_file = open(output_dir+"/"+output_filename, "w")
@@ -444,10 +444,96 @@ def mlst_call(input_dir, reference_file, output_dir, output_filename, threads=No
     mlst_data["Sample"] = mlst_data["Sample"].str.split(".").str[0]
     
     mlst_data.to_csv(output_dir+"/"+output_filename, sep="\t", index=False)
-    return status
 
+    mlst_files = mlst_postprocessing(output_dir+"/"+output_filename, output_dir)
 
-def mlst_postprocessing(mlst_file, output_file):
+    return mlst_files
+
+def split_mlst_output(mlst_file, output_dir):
+    """
+    Split MLST output by schema.
+
+    Arguments:
+        mlst_file {string} -- MLST output file.
+        output_dir {string} -- Output directory.
+
+    Returns:
+        {list} -- List of new MLST files.
+    """
+    # MLST.txt file is going to be split into as many files as different labels are in column 2 (Schema),
+    # including the name of those labels in the resulting files.
+
+    mlst_data = pd.read_csv(mlst_file, sep="\t")
+    new_mlst_files = []
+
+    for schema in mlst_data["Schema"].unique():
+        schema_data = mlst_data[mlst_data["Schema"] == schema]
+        schema_data = schema_data.rename(columns={"Schema": "MLST_scheme"})
+        new_filename = output_dir+"/MLST_"+schema+".txt"
+        schema_data.to_csv(new_filename, sep="\t", index=False)
+        new_mlst_files.append(new_filename)
+    
+    # Remove original MLST file
+    # os.remove(mlst_file)
+
+    return new_mlst_files
+
+def get_CC(row, database):
+    """
+    Auxiliary function to get clonal complex from MLST data.
+    """
+    try:
+        st = int(row["ST"])
+        if len(database.loc[database["ST"] == st]["clonal_complex"].values) > 0:
+            return database.loc[database["ST"] == st]["clonal_complex"].values[0]
+        else:
+            return "Other"
+    except ValueError:
+        return "Other"
+
+def CC_assignment(mlst_file, output_file):
+    """
+    Assign clonal complexes to MLST output.
+
+    Arguments:
+        mlst_file {string} -- MLST output file.
+        output_file {string} -- Output file.
+    """
+    
+    mlst_df = pd.read_csv(mlst_file, delimiter="\t")
+
+    url_map_file = "resources/MLST_PubMLST_url.tsv"
+    url_map = pd.read_csv(url_map_file, delimiter="\t")
+
+    scheme = mlst_df["MLST_scheme"].values[0]
+    url = url_map.loc[url_map["MLST_scheme"] == scheme]["URL"].values[0]
+
+    # If url is NA, then we don't have a database for that scheme
+    if url == "NA":
+        print("No database available for scheme "+scheme)
+        return
+
+    urlData = requests.get(url).content
+    database = pd.read_csv(StringIO(urlData.decode('utf-8')), sep="\t")
+    
+    # If clonal_complex column doesn't exist, stop and print a message
+    if "clonal_complex" not in database.columns or database["clonal_complex"].isnull().all():
+        print()
+        print("Warning: Clonal Complex assignment cannot be done as no PubMLST scheme is available for the species"+scheme+".")
+        print()
+        return
+
+    # Add clonal_complex column
+    mlst_df["Clonal_complex"] = mlst_df.apply(lambda row: get_CC(row, database), axis=1)
+        
+    # Sample column is a string
+    mlst_df["Sample"] = mlst_df["Sample"].astype(str)
+    
+    mlst_df.to_csv(output_file, index=False, sep="\t")
+
+    return output_file
+
+def mlst_postprocessing(mlst_file, output_dir):
     """
     Post process MLST output.
 
@@ -456,52 +542,34 @@ def mlst_postprocessing(mlst_file, output_file):
     Arguments:
         mlst_file {string} -- MLST output file.
         output_file {string} -- Output file.
+
+    Returns:
+        {list} -- List of new MLST files.
     """
-    col_names = ["Sample", "Schema", "ST"]
-    output_data = pd.DataFrame()
-    mlst_df = pd.read_csv(mlst_file, delimiter="\t")
 
-    url_map_file = "resources/MLST_PubMLST_url.tsv"
-    url_map = pd.read_csv(url_map_file, delimiter="\t")
+    # Split MLST output by schema
+    new_mlst_files = split_mlst_output(mlst_file, output_dir)
 
-    scheme = mlst_df["Schema"].values[0]
-    url = url_map.loc[url_map["MLST_scheme"] == scheme]["URL"].values[0]
+    # Changes format from header "locus_1" to the actual locus name and row values from "locusname(number)" to just the number
+    for new_mlst_file in new_mlst_files:
+        new_format_data = []
+        mlst_df = pd.read_csv(new_mlst_file, delimiter="\t")
+ 
+        for _, row in mlst_df.iterrows():
+            new_row = {}
+            new_row["Sample"] = row["Sample"]
+            new_row["MLST_scheme"] = row["MLST_scheme"]
+            new_row["ST"] = row["ST"]
+            for column in mlst_df.columns[3:]:
+                new_row[row[column].split("(")[0]] = int("".join(filter(str.isdigit, row[column])))
 
-    urlData = requests.get(url).content
-    database = pd.read_csv(StringIO(urlData.decode('utf-8')), sep="\t")
+            new_format_data.append(new_row)
+        new_format_df = pd.DataFrame(new_format_data)
+        new_format_df.to_csv(new_mlst_file, sep="\t", index=False)
 
-    for _, row in mlst_df.iterrows():
-        new_row = []
-        new_row.append(row["Sample"])
-        new_row.append(row["Schema"])
-        new_row.append(row["ST"])
-        for column in mlst_df.columns[3:]:
-            if not row[column].split("(")[0] in col_names:
-                col_names.append(row[column].split("(")[0])
-            new_row.append(int("".join(filter(str.isdigit, row[column]))))
-        
-        # Get clonal complex because it's not returned by MLST (https://github.com/tseemann/mlst/issues/60)
-        if not "clonal_complex" in col_names:
-            col_names.append("clonal_complex")
-        
-        try:
-            st = int(row[2])
-            if len(database.loc[database["ST"] == st]["clonal_complex"].values) > 0:
-                new_row.append(database.loc[database["ST"] == st]["clonal_complex"].values[0])
-            else:
-                new_row.append("Other")
-        except ValueError:
-            new_row.append("Other")
-        
+    return new_mlst_files
 
-
-        output_data = output_data.append(pd.DataFrame([new_row], columns=col_names), ignore_index=True)
-        # Sample column is a string
-        output_data["Sample"] = output_data["Sample"].astype(str)
-        print('MLST post processing:')
-        print(output_data)
-
-    output_data.to_csv(output_file, index=False, sep="\t")
+    
 
 
 def abricate_call(input_dir, output_dir, output_filename, database, mincov=False, minid=False, gene_matrix_file=False, samples=False, threads=None):
@@ -2172,17 +2240,20 @@ if __name__ == "__main__":
         mlst_out_file = "MLST.txt"
         print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
         step_counter += 1
-        mlst_call(input_dir=draft_contigs_dir,  
-                reference_file=reference_genome_file,
-                output_dir=mlst_dir,
-                output_filename=mlst_out_file,
-                threads = n_threads)
+        mlst_files = mlst_call(input_dir=draft_contigs_dir,  
+                                reference_file=reference_genome_file,
+                                output_dir=mlst_dir,
+                                output_filename=mlst_out_file,
+                                threads = n_threads)
+        
         if cfg.config["MLST"]["include_cc"]:
-            # MLST postprocessing
-            mlst_postprocessing(mlst_dir+"/"+mlst_out_file, mlst_dir+"/MLST_and_CC.txt")
-            mlst_data_file = mlst_dir+"/MLST_and_CC.txt"
+            mlst_data_file = []
+            for mlst_file in mlst_files:
+                cc_file = CC_assignment(mlst_file, os.path.splitext(mlst_file)[0]+"_and_CC.txt")
+                mlst_data_file.append(cc_file)
+            mlst_data_file = mlst_data_file
         else:
-            mlst_data_file = mlst_dir+"/"+mlst_out_file
+            mlst_data_file = mlst_files
     else:
         mlst_data_file = None
 
