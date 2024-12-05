@@ -469,7 +469,7 @@ def split_mlst_output(mlst_file, output_dir):
     for schema in mlst_data["Schema"].unique():
         schema_data = mlst_data[mlst_data["Schema"] == schema]
         schema_data = schema_data.rename(columns={"Schema": "MLST_scheme"})
-        new_filename = output_dir+"/MLST_"+schema+".csv"
+        new_filename = output_dir+"/MLST_"+schema+".txt"
         schema_data.to_csv(new_filename, sep="\t", index=False)
         new_mlst_files.append(new_filename)
     
@@ -510,7 +510,9 @@ def CC_assignment(mlst_file, output_file):
 
     # If url is NA, then we don't have a database for that scheme
     if url == "NA":
-        print("No database available for scheme "+scheme)
+        print()
+        print("Warning: No database available for scheme "+scheme+".")
+        print()
         return
 
     urlData = requests.get(url).content
@@ -519,12 +521,12 @@ def CC_assignment(mlst_file, output_file):
     # If clonal_complex column doesn't exist, stop and print a message
     if "clonal_complex" not in database.columns or database["clonal_complex"].isnull().all():
         print()
-        print("Warning: Clonal Complex assignment cannot be done as no PubMLST scheme is available for the species"+scheme+".")
+        print("Warning: Clonal Complex assignment cannot be done as no PubMLST scheme is available for the species "+scheme+".")
         print()
         return
 
     # Add clonal_complex column
-    mlst_df["Clonal_complex"] = mlst_df.apply(lambda row: get_CC(row, database), axis=1)
+    mlst_df["CC"] = mlst_df.apply(lambda row: get_CC(row, database), axis=1)
         
     # Sample column is a string
     mlst_df["Sample"] = mlst_df["Sample"].astype(str)
@@ -566,10 +568,24 @@ def mlst_postprocessing(mlst_file, output_dir):
             new_format_data.append(new_row)
         new_format_df = pd.DataFrame(new_format_data)
         new_format_df.to_csv(new_mlst_file, sep="\t", index=False)
+    
+    # Remove original MLST file
+    os.remove(mlst_file)
 
     return new_mlst_files
 
+
+def create_mlst_summary_file(mlst_files, output_file, columns):
+    """
+    Función auxiliar para crear un archivo resumen de MLST que poder utilizar en el report.
+    """
+    mlst_data = pd.DataFrame(columns=columns)
+    for mlst_file in mlst_files:
+        print(mlst_file)
+        mlst_df = pd.read_csv(mlst_file, sep="\t")
+        mlst_data = mlst_data.append(mlst_df[columns], ignore_index=True)
     
+    mlst_data.to_csv(output_file, sep="\t", index=False)
 
 
 def abricate_call(input_dir, output_dir, output_filename, database, mincov=False, minid=False, gene_matrix_file=False, samples=False, threads=None):
@@ -1201,7 +1217,7 @@ def roary_plots_call(input_newick, input_gene_presence_absence, output_dir):
     Returns:
         {int} -- Execution state (0 if everything is all right)
     """
-    arguments = ["python", "utils/roary_plots.py", input_newick, input_gene_presence_absence]
+    arguments = ["python", "resources/roary_plots.py", input_newick, input_gene_presence_absence]
     ex_state = call(arguments)
     
     # Roary_plots saves output files in the current directory, so we move them to our own
@@ -1412,11 +1428,11 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
     fasta_mode = cfg.config["assembled_genomes"]
 
     if fasta_mode:    
-        df_columns = [ "Sample", "ContigLen", "ST", "clonal_complex", "CDS", "CRISPRs",
+        df_columns = [ "Sample", "ContigLen", "ST", "CC", "CDS", "CRISPRs",
                     "rRNAs", "tRNAs"]
     else:
         df_columns = [ "Sample", "Reads", "ReadLen", "ReadsQC", "ReadsQCLen", "JoinReads", "JoinReadsLen", "Contigs", 
-                    "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "clonal_complex", "CDS", "CRISPRs",
+                    "GenomeLen", "ContigLen", "N50", "GC", "DepthCov (X)", "ST", "CC", "CDS", "CRISPRs",
                     "rRNAs", "tRNAs"]
     
     if cfg.config["species_identification"]["run_species_identification"]:
@@ -1533,9 +1549,11 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
             # Column ST (MLST)
             if cfg.config["MLST"]["run_mlst"]:
                 if cfg.config["MLST"]["include_cc"]:
-                    st = mlst_data.loc[sample]["ST"]
-                    # Column clonal_complex (MLST)
-                    clonal_complex = mlst_data.loc[sample]["clonal_complex"]
+                    # Check in case MLST didn't work for that sample
+                    if sample in mlst_data.index:
+                        st = mlst_data.loc[sample]["ST"]
+                        # Column clonal_complex (MLST)
+                        clonal_complex = mlst_data.loc[sample]["CC"]
                 else:
                     st = mlst_data.loc[sample]["ST"]
                     clonal_complex = None
@@ -1608,7 +1626,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "N50": round(n50, 0),
                             "GC": round(gc, 2),
                             "ST": st,
-                            "clonal_complex": clonal_complex,
+                            "CC": clonal_complex,
                             "CDS": cds,
                             "Hypothetical proteins": round(hy_prot, 0),
                             "CRISPRs": crisprs,
@@ -1629,7 +1647,7 @@ def generate_report(samples, prinseq_dir, assembly_dir, annotation_dir, mauve_di
                             "GC": round(gc, 2),
                             "DepthCov (X)": round(depthcov, 2),
                             "ST": st,
-                            "clonal_complex": clonal_complex,
+                            "CC": clonal_complex,
                             "CDS": cds,
                             "Hypothetical proteins": round(hy_prot, 0),
                             "CRISPRs": crisprs,
@@ -2017,7 +2035,7 @@ if __name__ == "__main__":
                                                            rv_file=prinseq_files["R2"],
                                                            threads = n_threads)
                 kraken_reports.append((sample_basename, kraken_out_report_file))
-                if not genus or not species:
+                if not kraken_genus or not kraken_species:
                     samples_genus[sample_basename] = kraken_genus
                     samples_species[sample_basename] = kraken_species
                 step_counter += 1
@@ -2237,7 +2255,7 @@ if __name__ == "__main__":
 
     # MLST call
     if cfg.config["MLST"]["run_mlst"]:
-        mlst_out_file = "MLST.csv"
+        mlst_out_file = "MLST.txt"
         print(Banner(f"\nStep {step_counter}: MLST\n"), flush=True)
         step_counter += 1
         mlst_files = mlst_call(input_dir=draft_contigs_dir,  
@@ -2247,13 +2265,17 @@ if __name__ == "__main__":
                                 threads = n_threads)
         
         if cfg.config["MLST"]["include_cc"]:
-            mlst_data_file = []
+            mlst_cc_files = []
             for mlst_file in mlst_files:
-                cc_file = CC_assignment(mlst_file, os.path.splitext(mlst_file)[0]+"_and_CC.csv")
-                mlst_data_file.append(cc_file)
-            mlst_data_file = mlst_data_file
+                cc_file = CC_assignment(mlst_file, os.path.splitext(mlst_file)[0]+"_and_CC.txt")
+                if cc_file:
+                    mlst_cc_files.append(cc_file)
+            
+            mlst_data_file = os.path.join(mlst_dir, "MLST_and_CC.txt")
+            create_mlst_summary_file(mlst_cc_files, mlst_data_file, ["Sample", "ST", "CC"])
         else:
-            mlst_data_file = mlst_files
+            mlst_data_file = os.path.join(mlst_dir, "MLST.txt")
+            create_mlst_summary_file(mlst_files, mlst_data_file, ["Sample", "ST"])
     else:
         mlst_data_file = None
 
